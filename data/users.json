@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1",
+    "username": "mehdi.dev",
+    "email": "mehdi@gmail.com",
+    "password": "mehdi123",
+    "fullName": "Mehdi",
+    "avatar": "https://i.pravatar.cc/150?img=11"
+  },
+  {
+    "id": "2",
+    "username": "alex.photo",
+    "email": "alex@gmail.com",
+    "password": "alex123",
+    "fullName": "Alex",
+    "avatar": "https://i.pravatar.cc/150?img=2"
+  },
+  {
+    "id": "3",
+    "username": "maria_art",
+    "email": "maria@gmail.com",
+    "password": "maria123",
+    "fullName": "Maria",
+    "avatar": "https://i.pravatar.cc/150?img=3"
+  }
+]

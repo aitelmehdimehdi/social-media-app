@@ -1,6 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import users from "../data/users.json";
+import { apiPost, setToken, removeToken } from "../utils/api";
+
+// ─── Static mock users (commented out — replaced by real API) ─────────────────
+// import users from "../data/users.json";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,14 +35,13 @@ const SESSION_KEY = "@instagram_user";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setLoading] = useState(true); // true pendant la vérification initiale
+  const [isLoading, setLoading] = useState(true);
 
-  // Restaure la session au démarrage
   useEffect(() => {
     (async () => {
       try {
         const saved = await AsyncStorage.getItem(SESSION_KEY);
-        if (saved) setUser(JSON.parse(saved));
+        if (saved) setUser(JSON.parse(saved) as User);
       } catch (_) {
       } finally {
         setLoading(false);
@@ -47,39 +49,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  // ── Login ──────────────────────────────────────────────────────────────────
+  // ── Login — calls real API ─────────────────────────────────────────────────
   const login = async (
     email: string,
     password: string,
   ): Promise<{ success: boolean; error?: string }> => {
-    // Cherche dans users.json (email OU username accepté)
-    const found = (users as any[]).find(
-      (u) =>
-        (u.email.toLowerCase() === email.toLowerCase() ||
-          u.username.toLowerCase() === email.toLowerCase()) &&
-        u.password === password,
-    );
+    try {
+      const data = await apiPost<{ token: string; user: User }>("/auth/login", {
+        email,
+        password,
+      });
 
-    if (!found) {
-      return { success: false, error: "Email ou mot de passe incorrect." };
+      await setToken(data.token);
+      await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(data.user));
+      setUser(data.user);
+      return { success: true };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : "Login failed",
+      };
     }
-
-    // Sauvegarde la session (sans le mot de passe)
-    const sessionUser: User = {
-      id: found.id,
-      username: found.username,
-      email: found.email,
-      fullName: found.fullName,
-      avatar: found.avatar,
-    };
-
-    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
-    setUser(sessionUser);
-    return { success: true };
   };
 
   // ── Logout ─────────────────────────────────────────────────────────────────
   const logout = async () => {
+    await removeToken();
     await AsyncStorage.removeItem(SESSION_KEY);
     setUser(null);
   };

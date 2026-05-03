@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"d:\\\\MEHDI\\\\Study\\\\WISD\\\\S2\\\\dev-mobile\\\\projet\\\\social-media\\\\frontend\" -Recurse -Directory | Select-Object -First 30 | ForEach-Object { $_.FullName })",
+      "Bash(Get-ChildItem \"d:\\\\MEHDI\\\\Study\\\\WISD\\\\S2\\\\dev-mobile\\\\projet\\\\social-media\\\\frontend\\\\app\" -Recurse -Name)",
+      "Bash(Get-ChildItem -Path \"d:\\\\MEHDI\\\\Study\\\\WISD\\\\S2\\\\dev-mobile\\\\projet\\\\social-media\\\\backend\\\\src\\\\auth\\\\\" -File)",
+      "Bash(Get-ChildItem -Path \"d:\\\\MEHDI\\\\Study\\\\WISD\\\\S2\\\\dev-mobile\\\\projet\\\\social-media\\\\backend\\\\src\\\\auth\" -File -Recurse)",
+      "PowerShell(ls -Recurse \"d:\\\\MEHDI\\\\Study\\\\WISD\\\\S2\\\\dev-mobile\\\\projet\\\\social-media\\\\backend\\\\src\\\\auth\" | Where-Object { $_.PSIsContainer -eq $false } | Select-Object FullName)",
+      "PowerShell(Get-ChildItem -Path \"d:\\\\MEHDI\\\\Study\\\\WISD\\\\S2\\\\dev-mobile\\\\projet\\\\social-media\\\\backend\\\\src\\\\auth\" -File -Recurse | ForEach-Object { $_.FullName })",
+      "PowerShell(Get-ChildItem -Path \"d:\\\\MEHDI\\\\Study\\\\WISD\\\\S2\\\\dev-mobile\\\\projet\\\\social-media\\\\backend\\\\src\\\\users\" -File -Recurse | ForEach-Object { $_.FullName })"
+    ]
+  }
+}

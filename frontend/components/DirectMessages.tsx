@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -10,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "../context/ThemeContext";
 import { apiGet } from "../utils/api";
 
 // ─── Static mock data (commented out — replaced by API) ───────────────────────
@@ -30,22 +32,33 @@ type Conversation = {
 // ─── Conversation Item ────────────────────────────────────────────────────────
 
 function ConversationRow({ item }: { item: Conversation }) {
+  const router = useRouter();
+  const { colors } = useTheme();
   return (
-    <TouchableOpacity style={styles.convRow} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={styles.convRow}
+      activeOpacity={0.7}
+      onPress={() =>
+        router.push({
+          pathname: "/conversation/[id]",
+          params: { id: item.id, username: item.username },
+        })
+      }
+    >
       <View style={styles.avatarWrap}>
         <Image source={{ uri: item.avatar ?? "https://i.pravatar.cc/150" }} style={styles.avatar} />
-        {item.online && <View style={styles.onlineDot} />}
+        {item.online && <View style={[styles.onlineDot, { borderColor: colors.background }]} />}
       </View>
       <View style={styles.convInfo}>
-        <Text style={[styles.convName, item.unread > 0 && styles.bold]}>{item.username}</Text>
-        <Text style={[styles.lastMsg, item.unread > 0 && styles.bold]} numberOfLines={1}>
+        <Text style={[styles.convName, { color: colors.text }, item.unread > 0 && styles.bold]}>{item.username}</Text>
+        <Text style={[styles.lastMsg, { color: colors.textSecondary }, item.unread > 0 && { color: colors.text }]} numberOfLines={1}>
           {item.lastMessage}
         </Text>
       </View>
       <View style={styles.convRight}>
-        <Text style={styles.timeText}>{item.time}</Text>
+        <Text style={[styles.timeText, { color: colors.textSecondary }]}>{item.time}</Text>
         {item.unread > 0 && (
-          <View style={styles.badge}>
+          <View style={[styles.badge, { backgroundColor: colors.primary }]}>
             <Text style={styles.badgeText}>{item.unread}</Text>
           </View>
         )}
@@ -57,6 +70,7 @@ function ConversationRow({ item }: { item: Conversation }) {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function DMScreen() {
+  const { colors } = useTheme();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -75,20 +89,20 @@ export default function DMScreen() {
   const online = conversations.filter((c) => c.online);
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Direct messages</Text>
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Direct messages</Text>
         <TouchableOpacity>
           <Text style={styles.composeIcon}>✏️</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.searchBar}>
+      <View style={[styles.searchBar, { backgroundColor: colors.surface }]}>
         <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.text }]}
           placeholder="Search"
-          placeholderTextColor="#8e8e8e"
+          placeholderTextColor={colors.textSecondary}
           value={query}
           onChangeText={setQuery}
         />
@@ -96,7 +110,7 @@ export default function DMScreen() {
 
       {online.length > 0 && (
         <>
-          <Text style={styles.sectionLabel}>Active now</Text>
+          <Text style={[styles.sectionLabel, { color: colors.text }]}>Active now</Text>
           <FlatList
             data={online}
             keyExtractor={(item) => "active-" + item.id}
@@ -107,20 +121,20 @@ export default function DMScreen() {
               <TouchableOpacity style={styles.activeItem}>
                 <View style={styles.avatarWrap}>
                   <Image source={{ uri: item.avatar }} style={styles.activeAvatar} />
-                  <View style={styles.onlineDot} />
+                  <View style={[styles.onlineDot, { borderColor: colors.background }]} />
                 </View>
-                <Text style={styles.activeUsername} numberOfLines={1}>
+                <Text style={[styles.activeUsername, { color: colors.text }]} numberOfLines={1}>
                   {item.username.split(".")[0]}
                 </Text>
               </TouchableOpacity>
             )}
           />
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
         </>
       )}
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} color="#0095f6" />
+        <ActivityIndicator style={{ marginTop: 40 }} color={colors.primary} />
       ) : (
         <FlatList
           data={filtered}
@@ -128,7 +142,7 @@ export default function DMScreen() {
           renderItem={({ item }) => <ConversationRow item={item} />}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               {conversations.length === 0
                 ? "No conversations yet. Run the seed script!"
                 : "No conversations found"}

@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "social-media",
-    "slug": "social-media",
+    "name": "Sharely",
+    "slug": "sharely",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "socialmedia",
+    "scheme": "sharely",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

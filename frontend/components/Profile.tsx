@@ -20,7 +20,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { apiGet, apiPost, apiDelete } from "../utils/api";
+import { apiGet } from "../utils/api";
 
 const { width: W } = Dimensions.get("window");
 const GRID_SIZE = W / 3 - 1;
@@ -138,7 +138,6 @@ export default function ProfileScreen() {
   const [gridPosts, setGridPosts] = useState<GridPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"grid" | "tagged">("grid");
-  const [followed, setFollowed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -146,7 +145,6 @@ export default function ProfileScreen() {
     apiGet<UserProfile>(`/users/${user.id}/profile`)
       .then((data) => {
         setProfile(data);
-        setFollowed(data.isFollowing);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -160,23 +158,6 @@ export default function ProfileScreen() {
       )
       .catch(console.error);
   }, [user]);
-
-  const handleFollowToggle = async () => {
-    if (!profile) return;
-    const next = !followed;
-    setFollowed(next);
-    setProfile((prev) =>
-      prev
-        ? { ...prev, followersCount: prev.followersCount + (next ? 1 : -1) }
-        : prev,
-    );
-    try {
-      if (next) await apiPost(`/users/${profile.id}/follow`);
-      else await apiDelete(`/users/${profile.id}/follow`);
-    } catch (_) {
-      setFollowed(!next);
-    }
-  };
 
   const handleDirectLogout = async () => {
     const confirmed =
@@ -252,20 +233,20 @@ export default function ProfileScreen() {
         {/* Actions */}
         <View style={styles.actionsRow}>
           <TouchableOpacity
-            style={[styles.actionBtn, { backgroundColor: followed ? colors.surface : colors.primary }]}
-            onPress={handleFollowToggle}
+            style={[styles.actionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            activeOpacity={0.8}
           >
-            <Text style={[styles.actionBtnText, { color: followed ? colors.text : "#fff" }]}>
-              {followed ? "Following" : "Follow"}
-            </Text>
+            <Text style={[styles.actionBtnText, { color: colors.text }]}>Edit Profile</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.actionBtnOutline, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            style={[styles.actionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            activeOpacity={0.8}
           >
-            <Text style={[styles.actionBtnOutlineText, { color: colors.text }]}>Message</Text>
+            <Text style={[styles.actionBtnText, { color: colors.text }]}>Share Profile</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionBtnIcon, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            activeOpacity={0.8}
           >
             <Ionicons name="person-add-outline" size={18} color={colors.text} />
           </TouchableOpacity>
@@ -336,11 +317,11 @@ const styles = StyleSheet.create({
   bioName: { fontSize: 14, fontWeight: "700", marginBottom: 3 },
   bioText: { fontSize: 13.5, lineHeight: 19 },
   actionsRow: { flexDirection: "row", paddingHorizontal: 14, gap: 8, marginBottom: 14 },
-  actionBtn: { flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: "center" },
+  actionBtn: { flex: 1, paddingVertical: 9, borderRadius: 50, borderWidth: 1, alignItems: "center" },
   actionBtnText: { fontWeight: "700", fontSize: 14 },
-  actionBtnOutline: { flex: 1, paddingVertical: 8, borderRadius: 8, borderWidth: 1, alignItems: "center" },
+  actionBtnOutline: { flex: 1, paddingVertical: 9, borderRadius: 50, borderWidth: 1, alignItems: "center" },
   actionBtnOutlineText: { fontWeight: "600", fontSize: 14 },
-  actionBtnIcon: { width: 38, paddingVertical: 8, borderRadius: 8, borderWidth: 1, alignItems: "center" },
+  actionBtnIcon: { width: 40, paddingVertical: 9, borderRadius: 50, borderWidth: 1, alignItems: "center" },
   tabBar: { flexDirection: "row", borderTopWidth: 0.5 },
   tab: { flex: 1, paddingVertical: 10, alignItems: "center", borderBottomWidth: 1.5, borderBottomColor: "transparent" },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 1.5 },

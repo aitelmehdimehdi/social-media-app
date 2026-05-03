@@ -8,6 +8,8 @@ import {
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { getToken } from "../utils/api";
+import { API_URL } from "../config/env";
 import {
     ActivityIndicator,
     Alert,
@@ -115,15 +117,44 @@ export default function CameraScreen() {
     }
   };
 
-  const saveToGallery = async () => {
+  const addToStory = async () => {
     if (!preview) return;
     try {
-      await MediaLibrary.saveToLibraryAsync(preview);
-      Alert.alert("Saved!", "Photo saved to your gallery.", [
+      const token = await getToken();
+
+      // Build multipart/form-data with the photo
+      const formData = new FormData();
+      formData.append("file", {
+        uri: preview,
+        type: "image/jpeg",
+        name: "story.jpg",
+      } as any);
+
+      // Upload to Cloudinary via backend
+      const uploadRes = await fetch(`${API_URL}/media/upload`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!uploadRes.ok) throw new Error("Upload failed");
+      const { url } = await uploadRes.json() as { url: string };
+
+      // Create the story record
+      const storyRes = await fetch(`${API_URL}/stories`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ imageUrl: url }),
+      });
+      if (!storyRes.ok) throw new Error("Story creation failed");
+
+      Alert.alert("Story posted!", "Your story will be visible for 24 hours.", [
         { text: "OK", onPress: () => router.back() },
       ]);
-    } catch {
-      Alert.alert("Error", "Could not save photo.");
+    } catch (e) {
+      Alert.alert("Error", (e as Error).message ?? "Could not post story.");
     }
   };
 
@@ -148,7 +179,7 @@ export default function CameraScreen() {
             <Text style={styles.discardText}>Retake</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.addStoryBtn} onPress={saveToGallery}>
+          <TouchableOpacity style={styles.addStoryBtn} onPress={addToStory}>
             <Text style={styles.addStoryText}>Add to Story</Text>
           </TouchableOpacity>
         </View>

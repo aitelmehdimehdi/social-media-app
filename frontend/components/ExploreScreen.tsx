@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
     Dimensions,
     FlatList,
@@ -9,66 +9,82 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "../context/ThemeContext";
+import { apiGet } from "../utils/api";
 
 const { width } = Dimensions.get("window");
 const ITEM_SIZE = width / 3 - 2;
 
-const EXPLORE_ITEMS = Array.from({ length: 18 }, (_, i) => ({
-  id: String(i),
-  image: `https://picsum.photos/seed/${i + 10}/300/300`,
-  isVideo: i % 5 === 0,
-}));
+type ExplorePost = {
+  id: string;
+  imageUrl: string;
+};
 
 export default function ExploreScreen() {
+  const { colors } = useTheme();
+  const [posts, setPosts] = useState<ExplorePost[]>([]);
+
+  useEffect(() => {
+    apiGet<ExplorePost[]>("/posts/feed")
+      .then((data) => setPosts(data.filter((p) => !!p.imageUrl)))
+      .catch(() => setPosts([]));
+  }, []);
+
   return (
-    <SafeAreaView style={styles.screen}>
-      {/* Search Bar */}
-      <View style={styles.searchBar}>
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
+      <View style={[styles.searchBar, { backgroundColor: colors.surface }]}>
         <Text style={styles.searchIcon}>🔍</Text>
-        <Text style={styles.searchPlaceholder}>Search</Text>
+        <Text style={[styles.searchPlaceholder, { color: colors.textSecondary }]}>Search</Text>
       </View>
 
-      {/* Grid */}
-      <FlatList
-        data={EXPLORE_ITEMS}
-        keyExtractor={(item) => item.id}
-        numColumns={3}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.gridItem}>
-            <Image source={{ uri: item.image }} style={styles.gridImage} />
-            {item.isVideo && <Text style={styles.videoIcon}>▶</Text>}
-          </TouchableOpacity>
-        )}
-        ItemSeparatorComponent={() => <View style={{ height: 2 }} />}
-      />
+      {posts.length === 0 ? (
+        <View style={styles.empty}>
+          <Text style={[styles.emptyIcon]}>🔍</Text>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+            No posts to explore yet.
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={posts}
+          keyExtractor={(item) => item.id}
+          numColumns={3}
+          renderItem={({ item }) => (
+            <TouchableOpacity style={styles.gridItem}>
+              <Image source={{ uri: item.imageUrl }} style={styles.gridImage} />
+            </TouchableOpacity>
+          )}
+          ItemSeparatorComponent={() => <View style={{ height: 2 }} />}
+        />
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#fff" },
+  screen: { flex: 1 },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#efefef",
     margin: 10,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   searchIcon: { fontSize: 14, marginRight: 6 },
-  searchPlaceholder: { fontSize: 14, color: "#8e8e8e" },
+  searchPlaceholder: { fontSize: 14 },
   gridItem: {
     width: ITEM_SIZE,
     height: ITEM_SIZE,
     marginHorizontal: 1,
   },
   gridImage: { width: "100%", height: "100%" },
-  videoIcon: {
-    position: "absolute",
-    top: 6,
-    right: 6,
-    color: "#fff",
-    fontSize: 14,
+  empty: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
   },
+  emptyIcon: { fontSize: 48 },
+  emptyText: { fontSize: 15 },
 });

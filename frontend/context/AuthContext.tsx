@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { apiPost, setToken, removeToken } from "../utils/api";
+import { apiPost, setToken, removeToken, setUnauthorizedHandler } from "../utils/api";
 
 // ─── Static mock users (commented out — replaced by real API) ─────────────────
 // import users from "../data/users.json";
@@ -15,13 +15,18 @@ type User = {
   avatar: string;
 };
 
+type RegisterData = {
+  username: string;
+  email: string;
+  password: string;
+  fullName: string;
+};
+
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
-  login: (
-    email: string,
-    password: string,
-  ) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
 };
 
@@ -49,6 +54,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
+  // Any 401 from the API automatically clears the session
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      AsyncStorage.removeItem(SESSION_KEY);
+      setUser(null);
+    });
+  }, []);
+
   // ── Login — calls real API ─────────────────────────────────────────────────
   const login = async (
     email: string,
@@ -72,6 +85,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // ── Register ───────────────────────────────────────────────────────────────
+  const register = async (
+    data: RegisterData,
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const result = await apiPost<{ token: string; user: User }>("/auth/register", data);
+      await setToken(result.token);
+      await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(result.user));
+      setUser(result.user);
+      return { success: true };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : "Registration failed",
+      };
+    }
+  };
+
   // ── Logout ─────────────────────────────────────────────────────────────────
   const logout = async () => {
     await removeToken();
@@ -80,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

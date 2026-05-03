@@ -1,4 +1,3 @@
-import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -14,8 +13,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 
-// ✅ Auth screen N'utilise PAS useTheme — il s'affiche AVANT que ThemeProvider
-// soit accessible au niveau route. Les couleurs sont donc fixes ici.
+// Auth screen renders before ThemeProvider is in scope — colours are fixed here.
+
+// ─── Input field ──────────────────────────────────────────────────────────────
 
 function InputField({
   placeholder,
@@ -23,12 +23,14 @@ function InputField({
   onChangeText,
   secureTextEntry = false,
   keyboardType = "default",
+  autoCapitalize = "none",
 }: {
   placeholder: string;
   value: string;
   onChangeText: (t: string) => void;
   secureTextEntry?: boolean;
   keyboardType?: "default" | "email-address";
+  autoCapitalize?: "none" | "words";
 }) {
   const [focused, setFocused] = useState(false);
   const [visible, setVisible] = useState(!secureTextEntry);
@@ -43,15 +45,12 @@ function InputField({
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry && !visible}
         keyboardType={keyboardType}
-        autoCapitalize="none"
+        autoCapitalize={autoCapitalize}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
       />
       {secureTextEntry && (
-        <TouchableOpacity
-          onPress={() => setVisible(!visible)}
-          style={styles.eyeBtn}
-        >
+        <TouchableOpacity onPress={() => setVisible(!visible)} style={styles.eyeBtn}>
           <Text style={styles.eyeIcon}>{visible ? "👁" : "🙈"}</Text>
         </TouchableOpacity>
       )}
@@ -59,14 +58,32 @@ function InputField({
   );
 }
 
-export default function AuthScreen() {
-  const router = useRouter();
-  const { login } = useAuth();
+// ─── Main screen ──────────────────────────────────────────────────────────────
 
+export default function AuthScreen() {
+  const { login, register } = useAuth();
+
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Login fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  // Register fields
+  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const switchMode = (next: "login" | "register") => {
+    setError("");
+    setMode(next);
+  };
+
+  // ── Login ──────────────────────────────────────────────────────────────────
 
   const handleLogin = async () => {
     setError("");
@@ -77,11 +94,44 @@ export default function AuthScreen() {
     setLoading(true);
     const result = await login(email.trim(), password);
     setLoading(false);
-    if (!result.success) {
-      setError(result.error ?? "Erreur inconnue.");
-    }
-    // ✅ Pas de router.replace() — AuthGuard redirige automatiquement
+    if (!result.success) setError(result.error ?? "Erreur inconnue.");
   };
+
+  // ── Register ───────────────────────────────────────────────────────────────
+
+  const handleRegister = async () => {
+    setError("");
+
+    if (!fullName.trim() || !username.trim() || !regEmail.trim() || !regPassword.trim()) {
+      setError("Veuillez remplir tous les champs.");
+      return;
+    }
+    if (username.trim().length < 3) {
+      setError("Le nom d'utilisateur doit contenir au moins 3 caractères.");
+      return;
+    }
+    if (regPassword.length < 6) {
+      setError("Le mot de passe doit contenir au moins 6 caractères.");
+      return;
+    }
+    if (regPassword !== confirmPassword) {
+      setError("Les mots de passe ne correspondent pas.");
+      return;
+    }
+
+    setLoading(true);
+    const result = await register({
+      fullName: fullName.trim(),
+      username: username.trim().toLowerCase(),
+      email: regEmail.trim().toLowerCase(),
+      password: regPassword,
+    });
+    setLoading(false);
+    if (!result.success) setError(result.error ?? "Erreur inconnue.");
+    // On success AuthGuard redirects automatically
+  };
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -94,62 +144,127 @@ export default function AuthScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Logo */}
           <View style={styles.logoSection}>
-            <Text style={styles.logo}>Instagram</Text>
-            <Text style={styles.subtitle}>Connectez-vous pour continuer</Text>
+            <Text style={styles.logo}>Sharely</Text>
+            <Text style={styles.subtitle}>
+              {mode === "login"
+                ? "Connectez-vous pour continuer"
+                : "Créez votre compte gratuitement"}
+            </Text>
           </View>
 
-          <View style={styles.form}>
-            <InputField
-              placeholder="Email ou nom d'utilisateur"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-            />
-            <InputField
-              placeholder="Mot de passe"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-
-            <TouchableOpacity style={styles.forgotBtn}>
-              <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
-            </TouchableOpacity>
-
-            {error !== "" && (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{"⚠️  " + error}</Text>
-              </View>
-            )}
-
+          {/* Mode tabs */}
+          <View style={styles.modeTabs}>
             <TouchableOpacity
-              style={[styles.submitBtn, loading && styles.submitDisabled]}
-              onPress={handleLogin}
-              disabled={loading}
-              activeOpacity={0.85}
+              style={[styles.modeTab, mode === "login" && styles.modeTabActive]}
+              onPress={() => switchMode("login")}
             >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.submitText}>Se connecter</Text>
-              )}
+              <Text style={[styles.modeTabText, mode === "login" && styles.modeTabTextActive]}>
+                Connexion
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modeTab, mode === "register" && styles.modeTabActive]}
+              onPress={() => switchMode("register")}
+            >
+              <Text style={[styles.modeTabText, mode === "register" && styles.modeTabTextActive]}>
+                Inscription
+              </Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>OU</Text>
-            <View style={styles.dividerLine} />
-          </View>
+          {/* Error */}
+          {error !== "" && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{"⚠️  " + error}</Text>
+            </View>
+          )}
 
-          <TouchableOpacity style={styles.facebookBtn}>
-            <Text style={styles.facebookIcon}>f</Text>
-            <Text style={styles.facebookText}>Continuer avec Facebook</Text>
-          </TouchableOpacity>
+          {mode === "login" ? (
+            /* ── Login form ─────────────────────────────────────────────── */
+            <View style={styles.form}>
+              <InputField
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+              />
+              <InputField
+                placeholder="Mot de passe"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
 
+              <TouchableOpacity style={styles.forgotBtn}>
+                <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.submitBtn, loading && styles.submitDisabled]}
+                onPress={handleLogin}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.submitText}>Se connecter</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          ) : (
+            /* ── Register form ──────────────────────────────────────────── */
+            <View style={styles.form}>
+              <InputField
+                placeholder="Nom complet"
+                value={fullName}
+                onChangeText={setFullName}
+                autoCapitalize="words"
+              />
+              <InputField
+                placeholder="Nom d'utilisateur"
+                value={username}
+                onChangeText={setUsername}
+              />
+              <InputField
+                placeholder="Email"
+                value={regEmail}
+                onChangeText={setRegEmail}
+                keyboardType="email-address"
+              />
+              <InputField
+                placeholder="Mot de passe (min. 6 caractères)"
+                value={regPassword}
+                onChangeText={setRegPassword}
+                secureTextEntry
+              />
+              <InputField
+                placeholder="Confirmer le mot de passe"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+              />
+
+              <TouchableOpacity
+                style={[styles.submitBtn, loading && styles.submitDisabled]}
+                onPress={handleRegister}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.submitText}>Créer mon compte</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Dev hint box */}
           <View style={styles.hintBox}>
-            <Text style={styles.hintTitle}>Comptes disponibles :</Text>
+            <Text style={styles.hintTitle}>Comptes existants :</Text>
             <Text style={styles.hintItem}>mehdi@gmail.com / mehdi123</Text>
             <Text style={styles.hintItem}>alex@gmail.com / alex123</Text>
             <Text style={styles.hintItem}>maria@gmail.com / maria123</Text>
@@ -157,114 +272,93 @@ export default function AuthScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
+      {/* Bottom toggle */}
       <View style={styles.bottomBar}>
-        <Text style={styles.bottomText}>Vous n'avez pas de compte ? </Text>
-        <TouchableOpacity>
-          <Text style={styles.bottomLink}>S'inscrire.</Text>
-        </TouchableOpacity>
+        {mode === "login" ? (
+          <>
+            <Text style={styles.bottomText}>Pas encore de compte ? </Text>
+            <TouchableOpacity onPress={() => switchMode("register")}>
+              <Text style={styles.bottomLink}>S'inscrire</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <Text style={styles.bottomText}>Déjà un compte ? </Text>
+            <TouchableOpacity onPress={() => switchMode("login")}>
+              <Text style={styles.bottomLink}>Se connecter</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </SafeAreaView>
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#fff" },
-  scroll: { paddingHorizontal: 28, paddingTop: 48, paddingBottom: 24 },
+  scroll: { paddingHorizontal: 28, paddingTop: 40, paddingBottom: 24 },
 
-  logoSection: { alignItems: "center", marginBottom: 36 },
-  logo: {
-    fontFamily: "serif",
-    fontSize: 48,
-    fontWeight: "600",
-    color: "#000",
-    letterSpacing: -1,
-  },
-  subtitle: { fontSize: 13.5, color: "#8e8e8e", marginTop: 6 },
+  logoSection: { alignItems: "center", marginBottom: 28 },
+  logo: { fontSize: 42, fontWeight: "800", color: "#7C3AED", letterSpacing: 2 },
+  subtitle: { fontSize: 13.5, color: "#8A8A8A", marginTop: 8, textAlign: "center" },
 
-  form: { gap: 12, marginBottom: 20 },
-  inputWrap: {
+  // Mode tabs
+  modeTabs: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fafafa",
-    borderWidth: 1,
-    borderColor: "#dbdbdb",
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    height: 50,
+    backgroundColor: "#F0F0F0",
+    borderRadius: 50,
+    padding: 4,
+    marginBottom: 20,
   },
-  inputFocused: { borderColor: "#a0a0a0" },
-  input: { flex: 1, fontSize: 14, color: "#262626" },
+  modeTab: {
+    flex: 1, paddingVertical: 10, borderRadius: 50, alignItems: "center",
+  },
+  modeTabActive: { backgroundColor: "#fff", shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
+  modeTabText: { fontSize: 14, fontWeight: "600", color: "#8A8A8A" },
+  modeTabTextActive: { color: "#7C3AED" },
+
+  // Form
+  form: { gap: 14, marginBottom: 20 },
+  inputWrap: {
+    flexDirection: "row", alignItems: "center",
+    backgroundColor: "#F4F4F4", borderWidth: 1.5, borderColor: "#E8E8E8",
+    borderRadius: 14, paddingHorizontal: 16, height: 52,
+  },
+  inputFocused: { borderColor: "#7C3AED" },
+  input: { flex: 1, fontSize: 14.5, color: "#1A1A1A" },
   eyeBtn: { padding: 6 },
   eyeIcon: { fontSize: 18 },
 
   forgotBtn: { alignSelf: "flex-end" },
-  forgotText: { fontSize: 13, color: "#0095f6", fontWeight: "600" },
+  forgotText: { fontSize: 13, color: "#7C3AED", fontWeight: "600" },
 
   errorBox: {
-    backgroundColor: "#fff3f3",
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#ffcccc",
+    backgroundColor: "#fff3f3", borderRadius: 12, padding: 12,
+    borderWidth: 1, borderColor: "#ffcccc", marginBottom: 12,
   },
   errorText: { color: "#c0392b", fontSize: 13 },
 
   submitBtn: {
-    backgroundColor: "#0095f6",
-    borderRadius: 8,
-    height: 50,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "#7C3AED", borderRadius: 50,
+    height: 52, alignItems: "center", justifyContent: "center",
   },
   submitDisabled: { opacity: 0.65 },
-  submitText: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  submitText: { color: "#fff", fontWeight: "700", fontSize: 15.5, letterSpacing: 0.3 },
 
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 22,
-  },
-  dividerLine: { flex: 1, height: 1, backgroundColor: "#dbdbdb" },
-  dividerText: {
-    marginHorizontal: 14,
-    color: "#8e8e8e",
-    fontSize: 13,
-    fontWeight: "600",
-  },
-
-  facebookBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-  facebookIcon: { color: "#1877f2", fontSize: 22, fontWeight: "800" },
-  facebookText: { color: "#1877f2", fontWeight: "700", fontSize: 14 },
-
+  // Dev hint
   hintBox: {
-    marginTop: 32,
-    backgroundColor: "#f0f8ff",
-    borderRadius: 10,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "#cce5ff",
-    gap: 4,
+    marginTop: 28, backgroundColor: "#F5F0FF", borderRadius: 14,
+    padding: 14, borderWidth: 1, borderColor: "#D8C8FF", gap: 4,
   },
-  hintTitle: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#0a558c",
-    marginBottom: 4,
-  },
-  hintItem: { fontSize: 12, color: "#444" },
+  hintTitle: { fontSize: 13, fontWeight: "700", color: "#5B21B6", marginBottom: 4 },
+  hintItem: { fontSize: 12, color: "#555" },
 
   bottomBar: {
-    flexDirection: "row",
-    justifyContent: "center",
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#dbdbdb",
+    flexDirection: "row", justifyContent: "center",
+    paddingVertical: 16, borderTopWidth: 1, borderTopColor: "#E8E8E8",
   },
-  bottomText: { fontSize: 13.5, color: "#262626" },
-  bottomLink: { fontSize: 13.5, color: "#0095f6", fontWeight: "700" },
+  bottomText: { fontSize: 13.5, color: "#1A1A1A" },
+  bottomLink: { fontSize: 13.5, color: "#7C3AED", fontWeight: "700" },
 });

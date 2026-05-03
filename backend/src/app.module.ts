@@ -11,6 +11,7 @@ import { PostsModule } from './posts/posts.module';
 import { MediaModule } from './media/media.module';
 import { ChatModule } from './chat/chat.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { StoriesModule } from './stories/stories.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     MediaModule,
     ChatModule,
     NotificationsModule,
+    StoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

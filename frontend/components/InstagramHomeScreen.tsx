@@ -1,5 +1,6 @@
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -13,6 +14,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
 import { apiGet, apiPost } from "../utils/api";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -27,8 +30,15 @@ type Story = {
   id: string;
   username: string;
   avatar: string;
+  imageUrl?: string;
   isOwn?: boolean;
   hasStory?: boolean;
+};
+
+type ApiStory = {
+  id: string;
+  imageUrl: string;
+  user: { id: string; username: string; avatar: string };
 };
 
 type Post = {
@@ -45,13 +55,6 @@ type Post = {
   isSaved: boolean;
 };
 
-// ─── Static stories (kept as-is — stories feature not implemented yet) ────────
-const STORIES: Story[] = [
-  { id: "0", username: "Your Story", avatar: "https://i.pravatar.cc/150?img=1", isOwn: true },
-  { id: "1", username: "alex.photo", avatar: "https://i.pravatar.cc/150?img=2", hasStory: true },
-  { id: "2", username: "maria_art", avatar: "https://i.pravatar.cc/150?img=3", hasStory: true },
-  { id: "3", username: "john_travels", avatar: "https://i.pravatar.cc/150?img=4", hasStory: true },
-];
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -72,21 +75,33 @@ const Icons = {
 
 function StoryItem({ item }: { item: Story }) {
   const router = useRouter();
+  const { colors } = useTheme();
   return (
     <TouchableOpacity
       style={styles.storyContainer}
       activeOpacity={0.7}
-      onPress={() => item.isOwn && router.push("/Camera")}
+      onPress={() => {
+        if (item.isOwn) router.push("/Camera");
+        else router.push({
+          pathname: "/story/[userId]",
+          params: {
+            userId: item.id,
+            imageUrl: item.imageUrl ?? "",
+            username: item.username,
+            avatar: item.avatar,
+          },
+        });
+      }}
     >
-      <View style={[styles.storyRing, item.isOwn && styles.storyRingNone]}>
-        <Image source={{ uri: item.avatar }} style={styles.storyAvatar} />
+      <View style={[styles.storyRing, { borderColor: colors.storyRing }, item.isOwn && { borderColor: colors.border }]}>
+        <Image source={{ uri: item.avatar }} style={[styles.storyAvatar, { borderColor: colors.background }]} />
         {item.isOwn && (
-          <View style={styles.storyAddBadge}>
+          <View style={[styles.storyAddBadge, { backgroundColor: colors.primary, borderColor: colors.background }]}>
             <Text style={{ color: "#fff", fontSize: 14, fontWeight: "700" }}>+</Text>
           </View>
         )}
       </View>
-      <Text style={styles.storyUsername} numberOfLines={1}>
+      <Text style={[styles.storyUsername, { color: colors.text }]} numberOfLines={1}>
         {item.isOwn ? "Your Story" : item.username}
       </Text>
     </TouchableOpacity>
@@ -96,6 +111,8 @@ function StoryItem({ item }: { item: Story }) {
 // ─── Post Card ────────────────────────────────────────────────────────────────
 
 function PostCard({ post }: { post: Post }) {
+  const router = useRouter();
+  const { colors } = useTheme();
   const [liked, setLiked] = useState(post.isLiked);
   const [saved, setSaved] = useState(post.isSaved);
   const [likes, setLikes] = useState(post.likes);
@@ -113,24 +130,28 @@ function PostCard({ post }: { post: Post }) {
   };
 
   return (
-    <View style={styles.postCard}>
+    <View style={[styles.postCard, { backgroundColor: colors.card }]}>
       <View style={styles.postHeader}>
-        <TouchableOpacity style={styles.postHeaderLeft} activeOpacity={0.8}>
-          <View style={styles.postAvatarRing}>
+        <TouchableOpacity
+          style={styles.postHeaderLeft}
+          activeOpacity={0.8}
+          onPress={() => router.push({ pathname: "/user/[username]", params: { username: post.username } })}
+        >
+          <View style={[styles.postAvatarRing, { borderColor: colors.storyRing }]}>
             <Image source={{ uri: post.avatar }} style={styles.postAvatar} />
           </View>
           <View>
-            <Text style={styles.postUsername}>{post.username}</Text>
-            {post.location && <Text style={styles.postLocation}>{post.location}</Text>}
+            <Text style={[styles.postUsername, { color: colors.text }]}>{post.username}</Text>
+            {post.location && <Text style={[styles.postLocation, { color: colors.textSecondary }]}>{post.location}</Text>}
           </View>
         </TouchableOpacity>
         <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Text style={styles.moreIcon}>•••</Text>
+          <Text style={[styles.moreIcon, { color: colors.text }]}>•••</Text>
         </TouchableOpacity>
       </View>
 
       <TouchableOpacity activeOpacity={0.95} onPress={handleLike}>
-        <Image source={{ uri: post.image }} style={styles.postImage} resizeMode="cover" />
+        <Image source={{ uri: post.image }} style={[styles.postImage, { backgroundColor: colors.surface }]} resizeMode="cover" />
       </TouchableOpacity>
 
       <View style={styles.actionBar}>
@@ -147,15 +168,15 @@ function PostCard({ post }: { post: Post }) {
       </View>
 
       <View style={styles.postMeta}>
-        <Text style={styles.likesText}>{likes.toLocaleString()} likes</Text>
-        <Text style={styles.captionText}>
-          <Text style={styles.postUsername}>{post.username} </Text>
+        <Text style={[styles.likesText, { color: colors.text }]}>{likes.toLocaleString()} likes</Text>
+        <Text style={[styles.captionText, { color: colors.text }]}>
+          <Text style={[styles.postUsername, { color: colors.text }]}>{post.username} </Text>
           {post.caption}
         </Text>
         <TouchableOpacity>
-          <Text style={styles.commentsLink}>View all {post.comments} comments</Text>
+          <Text style={[styles.commentsLink, { color: colors.textSecondary }]}>View all {post.comments} comments</Text>
         </TouchableOpacity>
-        <Text style={styles.timeAgo}>{post.timeAgo}</Text>
+        <Text style={[styles.timeAgo, { color: colors.textSecondary }]}>{post.timeAgo}</Text>
       </View>
     </View>
   );
@@ -164,9 +185,10 @@ function PostCard({ post }: { post: Post }) {
 // ─── Header ───────────────────────────────────────────────────────────────────
 
 function Header() {
+  const { colors } = useTheme();
   return (
-    <View style={styles.header}>
-      <Text style={styles.logoText}>Instagram</Text>
+    <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+      <Text style={[styles.logoText, { color: colors.primary }]}>Sharely</Text>
       <View style={styles.headerRight}>
         <TouchableOpacity style={styles.headerIconBtn}><Icons.Notify /></TouchableOpacity>
         <TouchableOpacity style={styles.headerIconBtn}><Icons.Messenger /></TouchableOpacity>
@@ -178,7 +200,10 @@ function Header() {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function InstagramHomeScreen() {
+  const { colors, isDark } = useTheme();
+  const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -188,16 +213,41 @@ export default function InstagramHomeScreen() {
       .finally(() => setLoading(false));
   }, []);
 
+  const fetchStories = useCallback(() => {
+    const ownEntry: Story = {
+      id: "own",
+      username: "Your Story",
+      avatar: user?.avatar ?? "https://i.pravatar.cc/150?img=1",
+      isOwn: true,
+    };
+    apiGet<ApiStory[]>("/stories")
+      .then((data) => {
+        const mapped: Story[] = data.map((s) => ({
+          id: s.id,
+          username: s.user.username,
+          avatar: s.user.avatar,
+          imageUrl: s.imageUrl,
+          hasStory: true,
+        }));
+        setStories([ownEntry, ...mapped]);
+      })
+      .catch(() => setStories([ownEntry]));
+  }, [user]);
+
+  useFocusEffect(useCallback(() => {
+    fetchStories();
+  }, [fetchStories]));
+
   return (
-    <SafeAreaView style={styles.screen}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
       <Header />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
         {/* Stories */}
-        <View style={styles.storiesWrapper}>
+        <View style={[styles.storiesWrapper, { backgroundColor: colors.background }]}>
           <FlatList
-            data={STORIES}
+            data={stories}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => <StoryItem item={item} />}
             horizontal
@@ -206,13 +256,13 @@ export default function InstagramHomeScreen() {
           />
         </View>
 
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
         {/* Posts from API */}
         {loading ? (
-          <ActivityIndicator style={{ marginTop: 40 }} color="#0095f6" />
+          <ActivityIndicator style={{ marginTop: 40 }} color={colors.primary} />
         ) : posts.length === 0 ? (
-          <Text style={styles.emptyText}>No posts yet. Run the seed script!</Text>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No posts yet. Run the seed script!</Text>
         ) : (
           posts.map((post) => <PostCard key={post.id} post={post} />)
         )}
@@ -230,7 +280,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 0.5,
     borderBottomColor: "#dbdbdb", backgroundColor: "#fff",
   },
-  logoText: { fontFamily: "serif", fontSize: 28, fontWeight: "600", color: "#000", letterSpacing: -0.5 },
+  logoText: { fontSize: 26, fontWeight: "800", letterSpacing: 1.5 },
   headerRight: { flexDirection: "row", alignItems: "center", gap: 6 },
   headerIconBtn: { padding: 6 },
   headerIcon: { fontSize: 24, color: "#000" },

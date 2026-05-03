@@ -62,12 +62,16 @@ function TabsLayout() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          borderTopWidth: 0.5,
-          borderTopColor: colors.border,
+          borderTopWidth: 0,
           backgroundColor: colors.tabBar,
-          height: 58,
-          paddingBottom: 6,
-          paddingTop: 4,
+          height: 62,
+          paddingBottom: 8,
+          paddingTop: 6,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
+          elevation: 12,
         },
       }}
     >
@@ -129,6 +133,15 @@ function TabsLayout() {
       />
       <Tabs.Screen name="Camera" options={{ href: null }} />
       <Tabs.Screen name="Auth" options={{ href: null }} />
+      <Tabs.Screen name="user/[username]" options={{ href: null }} />
+      <Tabs.Screen
+        name="story/[userId]"
+        options={{ href: null, tabBarStyle: { display: "none" } }}
+      />
+      <Tabs.Screen
+        name="conversation/[id]"
+        options={{ href: null, tabBarStyle: { display: "none" } }}
+      />
     </Tabs>
   );
 }

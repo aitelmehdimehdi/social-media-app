@@ -131,8 +131,8 @@ function TabsLayout() {
           ),
         }}
       />
-      <Tabs.Screen name="Camera" options={{ href: null }} />
-      <Tabs.Screen name="Auth" options={{ href: null }} />
+      <Tabs.Screen name="Camera" options={{ href: null, tabBarStyle: { display: "none" } }} />
+      <Tabs.Screen name="Auth" options={{ href: null, tabBarStyle: { display: "none" } }} />
       <Tabs.Screen name="user/[username]" options={{ href: null }} />
       <Tabs.Screen
         name="story/[userId]"

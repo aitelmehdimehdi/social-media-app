@@ -26,6 +26,11 @@ export default function StoryViewer() {
   const progress = useRef(new Animated.Value(0)).current;
   const animRef = useRef<Animated.CompositeAnimation | null>(null);
 
+  const safeBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace("/");
+  };
+
   useEffect(() => {
     progress.setValue(0);
     const anim = Animated.timing(progress, {
@@ -35,13 +40,13 @@ export default function StoryViewer() {
     });
     animRef.current = anim;
     anim.start(({ finished }) => {
-      if (finished) router.back();
+      if (finished) safeBack();
     });
     return () => anim.stop();
   }, []);
 
   useEffect(() => {
-    if (!imageUrl) router.back();
+    if (!imageUrl) safeBack();
   }, [imageUrl]);
 
   if (!imageUrl) return null;
@@ -83,7 +88,7 @@ export default function StoryViewer() {
           )}
           <Text style={styles.username}>{username ?? "Unknown"}</Text>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={safeBack}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Text style={styles.closeIcon}>✕</Text>
@@ -93,10 +98,10 @@ export default function StoryViewer() {
 
       {/* Tap zones */}
       <View style={styles.tapZones} pointerEvents="box-none">
-        <TouchableWithoutFeedback onPress={() => router.back()}>
+        <TouchableWithoutFeedback onPress={safeBack}>
           <View style={styles.tapLeft} />
         </TouchableWithoutFeedback>
-        <TouchableWithoutFeedback onPress={() => router.back()}>
+        <TouchableWithoutFeedback onPress={safeBack}>
           <View style={styles.tapRight} />
         </TouchableWithoutFeedback>
       </View>

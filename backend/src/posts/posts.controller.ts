@@ -27,6 +27,11 @@ export class PostsController {
     return this.postsService.toggleLike(user.id, id);
   }
 
+  @Get('user/:userId')
+  getByUser(@Param('userId') userId: string) {
+    return this.postsService.findByUser(userId);
+  }
+
   @Get(':id/comments')
   getComments(@Param('id') id: string) {
     return this.postsService.getComments(id);

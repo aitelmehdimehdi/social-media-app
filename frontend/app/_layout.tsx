@@ -132,6 +132,8 @@ function TabsLayout() {
         }}
       />
       <Tabs.Screen name="Camera" options={{ href: null, tabBarStyle: { display: "none" } }} />
+      <Tabs.Screen name="CreatePost" options={{ href: null, tabBarStyle: { display: "none" } }} />
+      <Tabs.Screen name="FollowList" options={{ href: null, tabBarStyle: { display: "none" } }} />
       <Tabs.Screen name="Auth" options={{ href: null, tabBarStyle: { display: "none" } }} />
       <Tabs.Screen name="user/[username]" options={{ href: null }} />
       <Tabs.Screen

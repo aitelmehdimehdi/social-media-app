@@ -19,8 +19,8 @@ export class User {
   @Column()
   fullName: string;
 
-  @Column({ nullable: true })
-  avatar: string;
+  @Column({ type: 'varchar', nullable: true })
+  avatar: string | null;
 
   @Column({ type: 'text', nullable: true })
   bio: string;

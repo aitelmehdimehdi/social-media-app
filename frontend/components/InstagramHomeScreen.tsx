@@ -17,6 +17,7 @@ import {
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { apiGet, apiPost } from "../utils/api";
+import AvatarImage from "./AvatarImage";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -29,7 +30,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 type Story = {
   id: string;
   username: string;
-  avatar: string;
+  avatar: string | null;
   imageUrl?: string;
   isOwn?: boolean;
   hasStory?: boolean;
@@ -38,13 +39,13 @@ type Story = {
 type ApiStory = {
   id: string;
   imageUrl: string;
-  user: { id: string; username: string; avatar: string };
+  user: { id: string; username: string; avatar: string | null };
 };
 
 type Post = {
   id: string;
   username: string;
-  avatar: string;
+  avatar: string | null;
   location: string;
   image: string;
   likes: number;
@@ -94,7 +95,7 @@ function StoryItem({ item }: { item: Story }) {
       }}
     >
       <View style={[styles.storyRing, { borderColor: colors.storyRing }, item.isOwn && { borderColor: colors.border }]}>
-        <Image source={{ uri: item.avatar }} style={[styles.storyAvatar, { borderColor: colors.background }]} />
+        <AvatarImage uri={item.avatar} size={57} style={{ borderWidth: 2, borderColor: colors.background }} />
         {item.isOwn && (
           <View style={[styles.storyAddBadge, { backgroundColor: colors.primary, borderColor: colors.background }]}>
             <Text style={{ color: "#fff", fontSize: 14, fontWeight: "700" }}>+</Text>
@@ -138,7 +139,7 @@ function PostCard({ post }: { post: Post }) {
           onPress={() => router.push({ pathname: "/user/[username]", params: { username: post.username } })}
         >
           <View style={[styles.postAvatarRing, { borderColor: colors.storyRing }]}>
-            <Image source={{ uri: post.avatar }} style={styles.postAvatar} />
+            <AvatarImage uri={post.avatar} size={28} />
           </View>
           <View>
             <Text style={[styles.postUsername, { color: colors.text }]}>{post.username}</Text>
@@ -217,7 +218,7 @@ export default function InstagramHomeScreen() {
     const ownEntry: Story = {
       id: "own",
       username: "Your Story",
-      avatar: user?.avatar ?? "https://i.pravatar.cc/150?img=1",
+      avatar: user?.avatar ?? null,
       isOwn: true,
     };
     apiGet<ApiStory[]>("/stories")

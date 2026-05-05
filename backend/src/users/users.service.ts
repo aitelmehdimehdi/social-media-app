@@ -45,6 +45,20 @@ export class UsersService {
     return updated;
   }
 
+  async updateAvatar(id: string, url: string): Promise<User> {
+    await this.userRepo.update(id, { avatar: url });
+    const updated = await this.findById(id);
+    if (!updated) throw new NotFoundException('User not found');
+    return updated;
+  }
+
+  async removeAvatar(id: string): Promise<User> {
+    await this.userRepo.update(id, { avatar: null });
+    const updated = await this.findById(id);
+    if (!updated) throw new NotFoundException('User not found');
+    return updated;
+  }
+
   async getProfile(targetId: string, currentUserId: string) {
     const user = await this.findById(targetId);
     if (!user) throw new NotFoundException('User not found');

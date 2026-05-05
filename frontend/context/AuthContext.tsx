@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { apiPost, setToken, removeToken, setUnauthorizedHandler } from "../utils/api";
+import { apiGet, apiPost, setToken, removeToken, setUnauthorizedHandler } from "../utils/api";
 
 // ─── Static mock users (commented out — replaced by real API) ─────────────────
 // import users from "../data/users.json";
@@ -12,7 +12,7 @@ type User = {
   username: string;
   email: string;
   fullName: string;
-  avatar: string;
+  avatar: string | null;
 };
 
 type RegisterData = {
@@ -28,6 +28,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -103,6 +104,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // ── Refresh — re-fetches the logged-in user from the API ──────────────────
+  const refreshUser = async () => {
+    try {
+      const fresh = await apiGet<User>('/users/me');
+      await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(fresh));
+      setUser(fresh);
+    } catch (_) {}
+  };
+
   // ── Logout ─────────────────────────────────────────────────────────────────
   const logout = async () => {
     await removeToken();
@@ -111,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

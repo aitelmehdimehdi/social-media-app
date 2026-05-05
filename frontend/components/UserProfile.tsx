@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../context/ThemeContext";
+import AvatarImage from "./AvatarImage";
 
 const { width: W } = Dimensions.get("window");
 const GRID_SIZE = W / 3 - 1;
@@ -20,7 +21,7 @@ const GRID_SIZE = W / 3 - 1;
 
 const MOCK_USERS: Record<string, {
   fullName: string;
-  avatar: string;
+  avatar: null;
   bio: string;
   posts: number;
   followers: number;
@@ -28,7 +29,7 @@ const MOCK_USERS: Record<string, {
 }> = {
   "alex.photo": {
     fullName: "Alex Photography",
-    avatar: "https://i.pravatar.cc/150?img=2",
+    avatar: null,
     bio: "📷 Photographer | Paris lover",
     posts: 48,
     followers: 1240,
@@ -36,7 +37,7 @@ const MOCK_USERS: Record<string, {
   },
   "maria_art": {
     fullName: "Maria Art",
-    avatar: "https://i.pravatar.cc/150?img=3",
+    avatar: null,
     bio: "🎨 Digital artist | New York",
     posts: 67,
     followers: 3820,
@@ -44,7 +45,7 @@ const MOCK_USERS: Record<string, {
   },
   "john_travels": {
     fullName: "John Travels",
-    avatar: "https://i.pravatar.cc/150?img=4",
+    avatar: null,
     bio: "✈️ Wanderer | 42 countries",
     posts: 134,
     followers: 8900,
@@ -52,7 +53,7 @@ const MOCK_USERS: Record<string, {
   },
   "mehdi.dev": {
     fullName: "Mehdi",
-    avatar: "https://i.pravatar.cc/150?img=11",
+    avatar: null,
     bio: "📱 Mobile developer\n🚀 Building cool stuff\n📍 Fes, Morocco",
     posts: 23,
     followers: 560,
@@ -62,7 +63,7 @@ const MOCK_USERS: Record<string, {
 
 const FALLBACK_USER = {
   fullName: "Instagram User",
-  avatar: "https://i.pravatar.cc/150?img=5",
+  avatar: null,
   bio: "",
   posts: 12,
   followers: 128,
@@ -115,7 +116,7 @@ export default function UserProfileScreen() {
         {/* Profile row */}
         <View style={styles.profileRow}>
           <View style={[styles.avatarWrap, { borderColor: colors.storyRing }]}>
-            <Image source={{ uri: userData.avatar }} style={styles.avatar} />
+            <AvatarImage uri={userData.avatar} size={82} />
           </View>
           <View style={styles.statsRow}>
             <StatBox value={userData.posts} label="Posts" />

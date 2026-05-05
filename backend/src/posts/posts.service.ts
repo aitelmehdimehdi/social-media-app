@@ -56,6 +56,19 @@ export class PostsService {
     return saved;
   }
 
+  async findByUser(userId: string): Promise<object[]> {
+    const posts = await this.postRepo.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+    });
+    return posts.map((post) => ({
+      id: post.id,
+      image: post.imageUrl,
+      type: 'post',
+      date: post.createdAt.toISOString(),
+    }));
+  }
+
   async toggleLike(userId: string, postId: string): Promise<{ liked: boolean; count: number }> {
     const post = await this.postRepo.findOne({ where: { id: postId } });
     if (!post) throw new NotFoundException('Post not found');

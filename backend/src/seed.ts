@@ -21,7 +21,6 @@ async function seed() {
     fullName: 'Mehdi',
   });
   await usersService['userRepo'].update(mehdi.id, {
-    avatar: 'https://i.pravatar.cc/150?img=11',
     bio: '📱 Mobile developer\n🚀 Building cool stuff\n📍 Fes, Morocco',
   });
 
@@ -32,7 +31,6 @@ async function seed() {
     fullName: 'Alex Photography',
   });
   await usersService['userRepo'].update(alex.id, {
-    avatar: 'https://i.pravatar.cc/150?img=2',
     bio: '📷 Photographer | Paris lover',
   });
 
@@ -43,7 +41,6 @@ async function seed() {
     fullName: 'Maria Art',
   });
   await usersService['userRepo'].update(maria.id, {
-    avatar: 'https://i.pravatar.cc/150?img=3',
     bio: '🎨 Digital artist | New York',
   });
 

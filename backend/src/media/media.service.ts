@@ -26,4 +26,45 @@ export class MediaService {
       stream.pipe(upload);
     });
   }
+
+  async uploadPostImage(buffer: Buffer): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const upload = cloudinary.uploader.upload_stream(
+        {
+          folder: 'sharely/posts',
+          resource_type: 'image',
+          transformation: [
+            { width: 1080, height: 1080, crop: 'limit' },
+            { fetch_format: 'auto', quality: 'auto' },
+          ],
+        },
+        (error, result) => {
+          if (error || !result) return reject(error);
+          resolve(result.secure_url);
+        },
+      );
+      Readable.from(buffer).pipe(upload);
+    });
+  }
+
+  async uploadProfilePicture(buffer: Buffer): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const upload = cloudinary.uploader.upload_stream(
+        {
+          folder: 'sharely/profile-pictures',
+          resource_type: 'image',
+          transformation: [
+            { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+            { fetch_format: 'auto', quality: 'auto' },
+          ],
+        },
+        (error, result) => {
+          if (error || !result) return reject(error);
+          resolve(result.secure_url);
+        },
+      );
+      const stream = Readable.from(buffer);
+      stream.pipe(upload);
+    });
+  }
 }

@@ -3,7 +3,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   FlatList,
-  Image,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -14,6 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../context/ThemeContext";
+import AvatarImage from "./AvatarImage";
 
 // ─── Bubble colors ────────────────────────────────────────────────────────────
 // Dark theme:  my bubbles = green,  their bubbles = white  (text dark on white)
@@ -42,12 +42,6 @@ const MOCK_MESSAGES: Message[] = [
   { id: "1",  text: "Hey! How are you doing?", isMine: false, time: "10:30 AM" },
 ];
 
-const MOCK_AVATARS: Record<string, string> = {
-  "alex.photo":    "https://i.pravatar.cc/150?img=2",
-  "maria_art":     "https://i.pravatar.cc/150?img=3",
-  "john_travels":  "https://i.pravatar.cc/150?img=4",
-};
-const FALLBACK_AVATAR = "https://i.pravatar.cc/150?img=5";
 
 // ─── Message bubble ───────────────────────────────────────────────────────────
 
@@ -57,7 +51,7 @@ function Bubble({
   isDark,
 }: {
   msg: Message;
-  otherAvatar: string;
+  otherAvatar: string | null;
   isDark: boolean;
 }) {
   const bubbleBg  = msg.isMine
@@ -70,7 +64,7 @@ function Bubble({
   return (
     <View style={[styles.row, msg.isMine ? styles.rowMine : styles.rowTheirs]}>
       {!msg.isMine && (
-        <Image source={{ uri: otherAvatar }} style={styles.bubbleAvatar} />
+        <AvatarImage uri={otherAvatar} size={28} style={styles.bubbleAvatar} />
       )}
       <View
         style={[
@@ -92,13 +86,13 @@ function Bubble({
 
 export default function ConversationScreen() {
   const router = useRouter();
-  const { username } = useLocalSearchParams<{ username: string }>();
+  const { username, avatar } = useLocalSearchParams<{ username: string; avatar: string }>();
   const { colors, isDark } = useTheme();
 
   const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
   const [draft, setDraft] = useState("");
 
-  const otherAvatar = MOCK_AVATARS[username ?? ""] ?? FALLBACK_AVATAR;
+  const otherAvatar = avatar || null;
 
   const handleSend = () => {
     const trimmed = draft.trim();
@@ -130,7 +124,7 @@ export default function ConversationScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.headerCenter} activeOpacity={0.8}>
-          <Image source={{ uri: otherAvatar }} style={styles.headerAvatar} />
+          <AvatarImage uri={otherAvatar} size={38} />
           <View>
             <Text style={[styles.headerName, { color: colors.text }]}>{username}</Text>
             <Text style={[styles.headerStatus, { color: colors.textSecondary }]}>Active now</Text>

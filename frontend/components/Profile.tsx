@@ -18,9 +18,12 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as ImagePicker from "expo-image-picker";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { apiGet } from "../utils/api";
+import { API_URL } from "../config/env";
+import { apiDelete, apiGet, getToken } from "../utils/api";
+import AvatarImage from "./AvatarImage";
 
 const { width: W } = Dimensions.get("window");
 const GRID_SIZE = W / 3 - 1;
@@ -34,7 +37,7 @@ type UserProfile = {
   id: string;
   username: string;
   fullName: string;
-  avatar: string;
+  avatar: string | null;
   bio: string;
   postsCount: number;
   followersCount: number;
@@ -42,10 +45,11 @@ type UserProfile = {
   isFollowing: boolean;
 };
 
-type GridPost = {
+type MediaItem = {
   id: string;
   image: string;
-  isVideo: boolean;
+  type: "post" | "reel";
+  date: string;
 };
 
 // ─── Bottom Sheet ─────────────────────────────────────────────────────────────
@@ -117,28 +121,38 @@ function BottomMenu({ visible, onClose }: { visible: boolean; onClose: () => voi
   );
 }
 
-function StatBox({ value, label }: { value: number; label: string }) {
+function StatBox({ value, label, onPress }: { value: number; label: string; onPress?: () => void }) {
   const { colors } = useTheme();
-  return (
-    <View style={styles.statBox}>
+  const inner = (
+    <>
       <Text style={[styles.statValue, { color: colors.text }]}>{value.toLocaleString()}</Text>
       <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
-    </View>
+    </>
   );
+  if (onPress) {
+    return (
+      <TouchableOpacity style={styles.statBox} onPress={onPress} activeOpacity={0.7}>
+        {inner}
+      </TouchableOpacity>
+    );
+  }
+  return <View style={styles.statBox}>{inner}</View>;
 }
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const { colors } = useTheme();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [gridPosts, setGridPosts] = useState<GridPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [gridPosts, setGridPosts] = useState<MediaItem[]>([]);
   const [activeTab, setActiveTab] = useState<"grid" | "tagged">("grid");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const [hasStories, setHasStories] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -149,15 +163,74 @@ export default function ProfileScreen() {
       .catch(console.error)
       .finally(() => setLoading(false));
 
-    // Load user's posts for the grid
-    apiGet<{ id: string; imageUrl: string }[]>(`/posts/feed`)
-      .then((posts) =>
-        setGridPosts(
-          posts.map((p, i) => ({ id: p.id, image: p.imageUrl, isVideo: i % 4 === 0 })),
-        ),
-      )
-      .catch(console.error);
+    apiGet<MediaItem[]>(`/posts/user/${user.id}`)
+      .then(setGridPosts)
+      .catch(() => setGridPosts([]));
+
+    apiGet<{ id: string; user: { id: string } }[]>("/stories")
+      .then((stories) => setHasStories(stories.some((s) => s.user.id === user.id)))
+      .catch(() => setHasStories(false));
   }, [user]);
+
+  const handleChangePicture = async () => {
+    setAvatarMenuOpen(false);
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission required", "Allow access to your photo library to change your profile picture.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.85,
+    });
+    if (result.canceled) return;
+
+    const uri = result.assets[0].uri;
+    const fileRes = await fetch(uri);
+    const blob = await fileRes.blob();
+    const formData = new FormData();
+    formData.append("file", blob, "avatar.jpg");
+
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_URL}/users/me/avatar`, {
+        method: "PATCH",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setProfile((prev) => prev ? { ...prev, avatar: updated.avatar } : prev);
+        await refreshUser();
+      } else {
+        Alert.alert("Error", "Failed to update profile picture.");
+      }
+    } catch {
+      Alert.alert("Error", "Failed to update profile picture.");
+    }
+  };
+
+  const handleRemovePicture = async () => {
+    setAvatarMenuOpen(false);
+    try {
+      await apiDelete("/users/me/avatar");
+      setProfile((prev) => prev ? { ...prev, avatar: null } : prev);
+      await refreshUser();
+    } catch {
+      Alert.alert("Error", "Failed to remove profile picture.");
+    }
+  };
+
+  const handleSeeStories = () => {
+    setAvatarMenuOpen(false);
+    if (!user) return;
+    router.push({
+      pathname: "/story/[userId]",
+      params: { userId: user.id, username: displayName, avatar: displayAvatar ?? "" },
+    });
+  };
 
   const handleDirectLogout = async () => {
     const confirmed =
@@ -181,7 +254,7 @@ export default function ProfileScreen() {
   }
 
   const displayName = profile?.username ?? user?.username ?? "profile";
-  const displayAvatar = profile?.avatar ?? user?.avatar ?? "https://i.pravatar.cc/150";
+  const displayAvatar = profile?.avatar ?? user?.avatar ?? null;
   const displayFullName = profile?.fullName ?? user?.fullName ?? "";
 
   return (
@@ -212,13 +285,29 @@ export default function ProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Profile row */}
         <View style={styles.profileRow}>
-          <View style={[styles.avatarWrap, { borderColor: colors.storyRing }]}>
-            <Image source={{ uri: displayAvatar }} style={styles.avatar} />
-          </View>
+          <TouchableOpacity onPress={() => setAvatarMenuOpen(true)} activeOpacity={0.85}>
+            <View style={[styles.avatarWrap, { borderColor: colors.storyRing }]}>
+              <AvatarImage uri={displayAvatar} size={82} />
+            </View>
+          </TouchableOpacity>
           <View style={styles.statsRow}>
-            <StatBox value={profile?.postsCount ?? 0} label="Posts" />
-            <StatBox value={profile?.followersCount ?? 0} label="Followers" />
-            <StatBox value={profile?.followingCount ?? 0} label="Following" />
+            <StatBox value={gridPosts.length} label="Posts" />
+            <StatBox
+              value={profile?.followersCount ?? 0}
+              label="Followers"
+              onPress={() => router.push({
+                pathname: "/FollowList",
+                params: { userId: profile?.id ?? user?.id ?? "", type: "followers" },
+              })}
+            />
+            <StatBox
+              value={profile?.followingCount ?? 0}
+              label="Following"
+              onPress={() => router.push({
+                pathname: "/FollowList",
+                params: { userId: profile?.id ?? user?.id ?? "", type: "following" },
+              })}
+            />
           </View>
         </View>
 
@@ -244,12 +333,6 @@ export default function ProfileScreen() {
           >
             <Text style={[styles.actionBtnText, { color: colors.text }]}>Share Profile</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionBtnIcon, { backgroundColor: colors.surface, borderColor: colors.border }]}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="person-add-outline" size={18} color={colors.text} />
-          </TouchableOpacity>
         </View>
 
         {/* Tabs */}
@@ -269,28 +352,70 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        {/* Grid — dynamic posts */}
+        {/* Grid — mixed posts & reels sorted by date */}
         <View style={styles.grid}>
-          {gridPosts.length === 0 ? (
-            <Text style={{ color: colors.textSecondary, padding: 20, textAlign: "center" }}>
-              No posts yet
-            </Text>
-          ) : (
-            gridPosts.map((post) => (
-              <TouchableOpacity key={post.id} style={styles.gridItem} activeOpacity={0.85}>
-                <Image source={{ uri: post.image }} style={styles.gridImage} />
-                {post.isVideo && (
-                  <View style={styles.videoOverlay}>
-                    <Ionicons name="play" size={12} color="#fff" />
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))
-          )}
+          {/* New post button — always first */}
+          <TouchableOpacity
+            style={[styles.gridItem, styles.newPostBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            activeOpacity={0.75}
+            onPress={() => router.push("/CreatePost")}
+          >
+            <Ionicons name="add" size={32} color={colors.textSecondary} />
+          </TouchableOpacity>
+
+          {gridPosts.map((item) => (
+            <TouchableOpacity key={item.id} style={styles.gridItem} activeOpacity={0.85}>
+              <Image source={{ uri: item.image }} style={styles.gridImage} />
+              {item.type === "reel" && (
+                <View style={styles.mediaTypeBadge}>
+                  <Ionicons name="play-circle" size={16} color="#fff" />
+                </View>
+              )}
+            </TouchableOpacity>
+          ))}
         </View>
       </ScrollView>
 
       <BottomMenu visible={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      {/* Avatar action modal */}
+      <Modal visible={avatarMenuOpen} transparent animationType="fade" onRequestClose={() => setAvatarMenuOpen(false)}>
+        <Pressable style={styles.avatarMenuBackdrop} onPress={() => setAvatarMenuOpen(false)}>
+          <Pressable style={[styles.avatarMenuCard, { backgroundColor: colors.card }]}>
+            <Text style={[styles.avatarMenuTitle, { color: colors.text }]}>Profile photo</Text>
+            <View style={[styles.avatarMenuDivider, { backgroundColor: colors.border }]} />
+
+            <TouchableOpacity style={styles.avatarMenuItem} activeOpacity={0.7} onPress={handleChangePicture}>
+              <Ionicons name="camera-outline" size={21} color={colors.primary} />
+              <Text style={[styles.avatarMenuItemText, { color: colors.primary }]}>Change profile picture</Text>
+            </TouchableOpacity>
+
+            <View style={[styles.avatarMenuDivider, { backgroundColor: colors.border }]} />
+
+            <TouchableOpacity
+              style={styles.avatarMenuItem}
+              activeOpacity={hasStories ? 0.7 : 1}
+              onPress={hasStories ? handleSeeStories : undefined}
+              disabled={!hasStories}
+            >
+              <Ionicons name="play-circle-outline" size={21} color={hasStories ? colors.text : colors.textSecondary} style={{ opacity: hasStories ? 1 : 0.4 }} />
+              <Text style={[styles.avatarMenuItemText, { color: hasStories ? colors.text : colors.textSecondary, opacity: hasStories ? 1 : 0.35 }]}>
+                See my stories
+              </Text>
+            </TouchableOpacity>
+
+            {displayAvatar && (
+              <>
+                <View style={[styles.avatarMenuDivider, { backgroundColor: colors.border }]} />
+                <TouchableOpacity style={styles.avatarMenuItem} activeOpacity={0.7} onPress={handleRemovePicture}>
+                  <Ionicons name="trash-outline" size={21} color="#e74c3c" />
+                  <Text style={[styles.avatarMenuItemText, { color: "#e74c3c" }]}>Remove profile picture</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -328,6 +453,8 @@ const styles = StyleSheet.create({
   gridItem: { width: GRID_SIZE, height: GRID_SIZE },
   gridImage: { width: "100%", height: "100%" },
   videoOverlay: { position: "absolute", top: 6, right: 6, backgroundColor: "rgba(0,0,0,0.45)", borderRadius: 4, padding: 4 },
+  mediaTypeBadge: { position: "absolute", top: 6, right: 6 },
+  newPostBtn: { alignItems: "center", justifyContent: "center", borderWidth: 1 },
   backdrop: { flex: 1 },
   sheet: {
     position: "absolute", bottom: 0, left: 0, right: 0, borderTopLeftRadius: 20,
@@ -341,4 +468,24 @@ const styles = StyleSheet.create({
   menuDivider: { height: 0.5, marginHorizontal: 24 },
   cancelBtn: { marginTop: 8, marginHorizontal: 16, paddingVertical: 14, borderRadius: 12, alignItems: "center" },
   cancelText: { fontSize: 15, fontWeight: "600" },
+  avatarMenuBackdrop: {
+    flex: 1, backgroundColor: "rgba(0,0,0,0.45)",
+    alignItems: "center", justifyContent: "center",
+  },
+  avatarMenuCard: {
+    width: 260, borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18, shadowRadius: 12, elevation: 12,
+  },
+  avatarMenuTitle: {
+    fontSize: 15, fontWeight: "700",
+    textAlign: "center", paddingVertical: 16,
+  },
+  avatarMenuDivider: { height: 0.5 },
+  avatarMenuItem: {
+    flexDirection: "row", alignItems: "center",
+    gap: 12, paddingHorizontal: 20, paddingVertical: 16,
+  },
+  avatarMenuItemText: { fontSize: 15, fontWeight: "500" },
 });

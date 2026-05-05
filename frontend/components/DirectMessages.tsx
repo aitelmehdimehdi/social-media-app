@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../context/ThemeContext";
 import { apiGet } from "../utils/api";
+import AvatarImage from "./AvatarImage";
 
 // ─── Static mock data (commented out — replaced by API) ───────────────────────
 // const CONVERSATIONS = [ { id: "1", username: "alex.photo", ... }, ... ];
@@ -41,12 +42,12 @@ function ConversationRow({ item }: { item: Conversation }) {
       onPress={() =>
         router.push({
           pathname: "/conversation/[id]",
-          params: { id: item.id, username: item.username },
+          params: { id: item.id, username: item.username, avatar: item.avatar ?? "" },
         })
       }
     >
       <View style={styles.avatarWrap}>
-        <Image source={{ uri: item.avatar ?? "https://i.pravatar.cc/150" }} style={styles.avatar} />
+        <AvatarImage uri={item.avatar} size={56} />
         {item.online && <View style={[styles.onlineDot, { borderColor: colors.background }]} />}
       </View>
       <View style={styles.convInfo}>
@@ -120,7 +121,7 @@ export default function DMScreen() {
             renderItem={({ item }) => (
               <TouchableOpacity style={styles.activeItem}>
                 <View style={styles.avatarWrap}>
-                  <Image source={{ uri: item.avatar }} style={styles.activeAvatar} />
+                  <AvatarImage uri={item.avatar} size={56} />
                   <View style={[styles.onlineDot, { borderColor: colors.background }]} />
                 </View>
                 <Text style={[styles.activeUsername, { color: colors.text }]} numberOfLines={1}>

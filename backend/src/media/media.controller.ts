@@ -20,4 +20,16 @@ export class MediaController {
     const url = await this.mediaService.uploadFile(file.buffer, file.mimetype);
     return { url };
   }
+
+  @Post('post')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 20 * 1024 * 1024 },
+    }),
+  )
+  async uploadPost(@UploadedFile() file: Express.Multer.File) {
+    const url = await this.mediaService.uploadPostImage(file.buffer);
+    return { url };
+  }
 }

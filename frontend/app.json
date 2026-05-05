@@ -7,15 +7,20 @@
     "icon": "./assets/images/icon.png",
     "scheme": "sharely",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false, 
+    "hermes": false,
     "ios": {
       "supportsTablet": true,
+<<<<<<< HEAD
       "infoPlist": {
         "NSCameraUsageDescription": "Sharely needs camera access to take photos for stories and posts.",
         "NSPhotoLibraryUsageDescription": "Sharely needs photo library access to select images for posts and your profile.",
         "NSPhotoLibraryAddUsageDescription": "Sharely saves captured photos to your photo library.",
         "NSMicrophoneUsageDescription": "Sharely needs microphone access when recording video."
       }
+=======
+      "jsEngine": "jsc"
+>>>>>>> 32b1bb9 (Initial commit: Sharely FullStack (NestJS & React Native))
     },
     "android": {
       "adaptiveIcon": {
@@ -51,7 +56,7 @@
     ],
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": true
+      "reactCompiler": false
     }
   }
 }

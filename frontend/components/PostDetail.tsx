@@ -42,18 +42,15 @@ type PostData = {
 
 type CommentData = {
   id: string;
+  username: string;
+  avatar: string | null;
   content: string;
-  createdAt: string;
-  user: { username: string; avatar: string | null };
+  likes: number;
+  isLiked: boolean;
+  timeAgo: string;
+  parentId: string | null;
+  replies: CommentData[];
 };
-
-function timeAgo(dateStr: string): string {
-  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (diff < 60) return `${diff}s`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
-  return `${Math.floor(diff / 86400)}d`;
-}
 
 // ─── Post layout ──────────────────────────────────────────────────────────────
 
@@ -159,14 +156,14 @@ function PostLayout({ post, comments, liked, likes, onLike, onComment, commentTe
         ListHeaderComponent={header}
         renderItem={({ item }) => (
           <View style={[styles.commentRow, { borderBottomColor: colors.border }]}>
-            <AvatarImage uri={item.user.avatar} size={32} />
+            <AvatarImage uri={item.avatar} size={32} />
             <View style={styles.commentBody}>
               <Text style={[styles.commentText, { color: colors.text }]}>
-                <Text style={styles.captionUser}>{item.user.username} </Text>
+                <Text style={styles.captionUser}>{item.username} </Text>
                 {item.content}
               </Text>
               <Text style={[styles.commentTime, { color: colors.textSecondary }]}>
-                {timeAgo(item.createdAt)}
+                {item.timeAgo}
               </Text>
             </View>
           </View>
@@ -293,14 +290,14 @@ function ReelLayout({ post, liked, likes, onLike, onComment, commentText, setCom
               style={{ maxHeight: H * 0.4 }}
               renderItem={({ item }) => (
                 <View style={[styles.commentRow, { borderBottomColor: colors.border }]}>
-                  <AvatarImage uri={item.user.avatar} size={30} />
+                  <AvatarImage uri={item.avatar} size={30} />
                   <View style={styles.commentBody}>
                     <Text style={[styles.commentText, { color: colors.text }]}>
-                      <Text style={styles.captionUser}>{item.user.username} </Text>
+                      <Text style={styles.captionUser}>{item.username} </Text>
                       {item.content}
                     </Text>
                     <Text style={[styles.commentTime, { color: colors.textSecondary }]}>
-                      {timeAgo(item.createdAt)}
+                      {item.timeAgo}
                     </Text>
                   </View>
                 </View>
@@ -397,9 +394,19 @@ export default function PostDetailScreen() {
     if (!commentText.trim() || !id || isReel) return;
     setSubmitting(true);
     try {
-      const saved = await apiPost<CommentData>(`/posts/${id}/comments`, { content: commentText.trim() });
-      const withUser = { ...saved, user: { username: user?.username ?? "", avatar: user?.avatar ?? null } };
-      setComments((prev) => [...prev, withUser]);
+      const saved = await apiPost<{ id: string }>(`/posts/${id}/comments`, { content: commentText.trim() });
+      const newComment: CommentData = {
+        id: saved.id,
+        username: user?.username ?? "",
+        avatar: user?.avatar ?? null,
+        content: commentText.trim(),
+        likes: 0,
+        isLiked: false,
+        timeAgo: 'just now',
+        parentId: null,
+        replies: [],
+      };
+      setComments((prev) => [...prev, newComment]);
       setPost((p) => p ? { ...p, comments: p.comments + 1 } : p);
       setCommentText("");
     } catch {

@@ -8,17 +8,20 @@ import {
   Dimensions,
   FlatList,
   Image,
-  SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { apiGet, apiPost } from "../utils/api";
+import AvatarImage from "./AvatarImage";
+import CommentsSheet from "./CommentsSheet";
+import ShareSheet from "./ShareSheet";
+import AdCard, { AdItem } from "./AdCard";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const AD_INTERVAL = 8;

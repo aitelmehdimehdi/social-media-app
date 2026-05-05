@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 import { Follow } from './follow.entity';
+import { Message } from '../chat/message.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { RegisterDto } from '../auth/dto/register.dto';
 
@@ -13,6 +14,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(Follow) private followRepo: Repository<Follow>,
+    @InjectRepository(Message) private messageRepo: Repository<Message>,
   ) {}
 
   async findById(id: string): Promise<User | null> {
@@ -145,5 +147,25 @@ export class UsersService {
       const { password: _pw, ...safe } = f.following as User & { password: string };
       return safe;
     });
+  }
+
+  async shareProfile(
+    senderId: string,
+    profileUsername: string,
+    receiverId: string,
+  ): Promise<{ sent: boolean }> {
+    const profile = await this.userRepo.findOne({ where: { username: profileUsername } });
+    if (!profile) throw new NotFoundException('User not found');
+
+    const content = `__SHARED_PROFILE__${JSON.stringify({
+      username: profile.username,
+      fullName: profile.fullName,
+      avatar: profile.avatar,
+    })}`;
+
+    await this.messageRepo.save(
+      this.messageRepo.create({ senderId, receiverId, content }),
+    );
+    return { sent: true };
   }
 }

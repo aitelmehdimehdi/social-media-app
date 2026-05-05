@@ -143,6 +143,8 @@ function TabsLayout() {
       <Tabs.Screen name="post/[id]" options={{ href: null, tabBarStyle: { display: "none" } }} />
       <Tabs.Screen name="EditProfile" options={{ href: null, tabBarStyle: { display: "none" } }} />
       <Tabs.Screen name="ChangePassword" options={{ href: null, tabBarStyle: { display: "none" } }} />
+      <Tabs.Screen name="SavedPosts" options={{ href: null, tabBarStyle: { display: "none" } }} />
+      <Tabs.Screen name="LikedPosts" options={{ href: null, tabBarStyle: { display: "none" } }} />
       <Tabs.Screen
         name="conversation/[id]"
         options={{ href: null, tabBarStyle: { display: "none" } }}

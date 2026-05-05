@@ -55,10 +55,20 @@ function ReelItem({ item }: { item: Reel }) {
     setLiked(next);
     setLikes((prev) => (next ? prev + 1 : prev - 1));
     try {
-      await apiPost(`/posts/${item.id}/like`);
+      await apiPost(`/posts/reels/${item.id}/like`);
     } catch (_) {
       setLiked(!next);
       setLikes((prev) => (next ? prev - 1 : prev + 1));
+    }
+  };
+
+  const handleSave = async () => {
+    const next = !saved;
+    setSaved(next);
+    try {
+      await apiPost(`/posts/reels/${item.id}/save`);
+    } catch (_) {
+      setSaved(!next);
     }
   };
 
@@ -96,7 +106,7 @@ function ReelItem({ item }: { item: Reel }) {
           <Text style={styles.sideIcon}>📤</Text>
           <Text style={styles.sideCount}>{fmt(item.shares)}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.sideAction} onPress={() => setSaved(!saved)}>
+        <TouchableOpacity style={styles.sideAction} onPress={handleSave}>
           <Text style={styles.sideIcon}>{saved ? "🔖" : "🏷️"}</Text>
         </TouchableOpacity>
         <View style={styles.discWrap}>

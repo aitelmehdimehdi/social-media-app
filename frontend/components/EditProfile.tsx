@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -38,6 +38,16 @@ export default function EditProfileScreen() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Sync form fields whenever the navigation params change (i.e. a different
+  // user navigates here after a logout/login without a full component remount).
+  useEffect(() => {
+    setFullName(params.fullName ?? "");
+    setUsername(params.username ?? "");
+    setEmail(params.email ?? "");
+    setBio(params.bio ?? "");
+    setCurrentPassword("");
+  }, [params.fullName, params.username, params.email, params.bio]);
 
   const goBack = () => router.replace("/Profile");
 

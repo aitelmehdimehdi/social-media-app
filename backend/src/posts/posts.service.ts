@@ -3,9 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThan, Not, Repository } from 'typeorm';
 import { Post } from './post.entity';
 import { Like } from './like.entity';
+import { LikeReel } from './like-reel.entity';
 import { Comment } from './comment.entity';
 import { CommentLike } from './comment-like.entity';
 import { SavedPost } from './saved-post.entity';
+import { SavedReel } from './saved-reel.entity';
 import { Reel } from './reel.entity';
 import { Follow } from '../users/follow.entity';
 import { Message } from '../chat/message.entity';
@@ -41,7 +43,7 @@ function cacheInvalidateUser(userId: string): void {
 export interface FeedPost {
   id: string;
   username: string;
-  avatar: string;
+  avatar: string | null;
   location: string;
   image: string;
   likes: number;
@@ -61,7 +63,7 @@ export interface FeedResponse {
 export interface CommentDto {
   id: string;
   username: string;
-  avatar: string;
+  avatar: string | null;
   content: string;
   likes: number;
   isLiked: boolean;
@@ -77,9 +79,11 @@ export class PostsService {
   constructor(
     @InjectRepository(Post) private postRepo: Repository<Post>,
     @InjectRepository(Like) private likeRepo: Repository<Like>,
+    @InjectRepository(LikeReel) private likeReelRepo: Repository<LikeReel>,
     @InjectRepository(Comment) private commentRepo: Repository<Comment>,
     @InjectRepository(CommentLike) private commentLikeRepo: Repository<CommentLike>,
     @InjectRepository(SavedPost) private savedPostRepo: Repository<SavedPost>,
+    @InjectRepository(SavedReel) private savedReelRepo: Repository<SavedReel>,
     @InjectRepository(Reel) private reelRepo: Repository<Reel>,
     @InjectRepository(Follow) private followRepo: Repository<Follow>,
     @InjectRepository(Message) private messageRepo: Repository<Message>,
@@ -178,7 +182,6 @@ export class PostsService {
     return saved;
   }
 
-<<<<<<< HEAD
   async findByUser(userId: string): Promise<object[]> {
     const posts = await this.postRepo.find({
       where: { userId },
@@ -191,9 +194,42 @@ export class PostsService {
       date: post.createdAt.toISOString(),
     }));
   }
-=======
+
+  async getSavedPosts(userId: string): Promise<object[]> {
+    const [savedPosts, savedReels] = await Promise.all([
+      this.savedPostRepo.find({ where: { userId }, relations: ['post'], order: { createdAt: 'DESC' } }),
+      this.savedReelRepo.find({ where: { userId }, relations: ['reel'], order: { createdAt: 'DESC' } }),
+    ]);
+
+    const posts = savedPosts
+      .filter((s) => !!s.post)
+      .map((s) => ({ id: s.post.id, image: s.post.imageUrl, type: 'post' as const, date: s.post.createdAt.toISOString() }));
+
+    const reels = savedReels
+      .filter((s) => !!s.reel)
+      .map((s) => ({ id: s.reel.id, image: s.reel.thumbnailUrl, type: 'reel' as const, date: s.reel.createdAt.toISOString() }));
+
+    return [...posts, ...reels].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+
+  async getLikedPosts(userId: string): Promise<object[]> {
+    const [likes, reelLikes] = await Promise.all([
+      this.likeRepo.find({ where: { userId }, relations: ['post'] }),
+      this.likeReelRepo.find({ where: { userId }, relations: ['reel'] }),
+    ]);
+
+    const posts = likes
+      .filter((l) => !!l.post)
+      .map((l) => ({ id: l.post.id, image: l.post.imageUrl, type: 'post' as const, date: l.post.createdAt.toISOString() }));
+
+    const reels = reelLikes
+      .filter((l) => !!l.reel)
+      .map((l) => ({ id: l.reel.id, image: l.reel.thumbnailUrl, type: 'reel' as const, date: l.reel.createdAt.toISOString() }));
+
+    return [...posts, ...reels].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+
   // ── Like / unlike post ─────────────────────────────────────────────────────
->>>>>>> 32b1bb9 (Initial commit: Sharely FullStack (NestJS & React Native))
 
   async toggleLike(userId: string, postId: string): Promise<{ liked: boolean; count: number }> {
     const post = await this.postRepo.findOne({ where: { id: postId } });
@@ -290,50 +326,6 @@ export class PostsService {
     return roots.map((root) => toDto(root, replies));
   }
 
-<<<<<<< HEAD
-  async findPostById(postId: string, currentUserId: string) {
-    const post = await this.postRepo.findOne({ where: { id: postId } });
-    if (!post) throw new NotFoundException('Post not found');
-    const isLiked = !!(await this.likeRepo.findOne({
-      where: { userId: currentUserId, postId },
-    }));
-    return {
-      id: post.id,
-      username: post.user.username,
-      avatar: post.user.avatar,
-      userId: post.userId,
-      location: post.location,
-      image: post.imageUrl,
-      likes: post.likesCount,
-      caption: post.caption,
-      comments: post.commentsCount,
-      timeAgo: this.timeAgo(post.createdAt),
-      createdAt: post.createdAt,
-      isLiked,
-      isSaved: false,
-    };
-  }
-
-  async findReelById(reelId: string) {
-    const reel = await this.reelRepo.findOne({ where: { id: reelId } });
-    if (!reel) throw new NotFoundException('Reel not found');
-    return {
-      id: reel.id,
-      username: reel.user.username,
-      avatar: reel.user.avatar,
-      userId: reel.userId,
-      caption: reel.caption,
-      audio: reel.audioTitle ?? '🎵 Original Audio',
-      image: reel.thumbnailUrl,
-      likes: reel.likesCount,
-      comments: reel.commentsCount,
-      shares: reel.sharesCount,
-      timeAgo: this.timeAgo(reel.createdAt),
-      isLiked: false,
-      isSaved: false,
-    };
-  }
-=======
   // ── Like / unlike comment ──────────────────────────────────────────────────
 
   async toggleCommentLike(userId: string, commentId: string): Promise<{ liked: boolean; count: number }> {
@@ -352,8 +344,55 @@ export class PostsService {
     return { liked: true, count: comment.likesCount + 1 };
   }
 
+  async findPostById(postId: string, currentUserId: string) {
+    const post = await this.postRepo.findOne({ where: { id: postId } });
+    if (!post) throw new NotFoundException('Post not found');
+    const [isLiked, isSaved] = await Promise.all([
+      this.likeRepo.findOne({ where: { userId: currentUserId, postId } }),
+      this.savedPostRepo.findOne({ where: { userId: currentUserId, postId } }),
+    ]);
+    return {
+      id: post.id,
+      username: post.user.username,
+      avatar: post.user.avatar,
+      userId: post.userId,
+      location: post.location,
+      image: post.imageUrl,
+      likes: post.likesCount,
+      caption: post.caption,
+      comments: post.commentsCount,
+      timeAgo: this.timeAgo(post.createdAt),
+      createdAt: post.createdAt,
+      isLiked: !!isLiked,
+      isSaved: !!isSaved,
+    };
+  }
+
   // ── Reels ──────────────────────────────────────────────────────────────────
->>>>>>> 32b1bb9 (Initial commit: Sharely FullStack (NestJS & React Native))
+
+  async findReelById(reelId: string, userId: string) {
+    const reel = await this.reelRepo.findOne({ where: { id: reelId } });
+    if (!reel) throw new NotFoundException('Reel not found');
+    const [isLiked, isSaved] = await Promise.all([
+      this.likeReelRepo.findOne({ where: { userId, reelId } }),
+      this.savedReelRepo.findOne({ where: { userId, reelId } }),
+    ]);
+    return {
+      id: reel.id,
+      username: reel.user.username,
+      avatar: reel.user.avatar,
+      userId: reel.userId,
+      caption: reel.caption,
+      audio: reel.audioTitle ?? '🎵 Original Audio',
+      image: reel.thumbnailUrl,
+      likes: reel.likesCount,
+      comments: reel.commentsCount,
+      shares: reel.sharesCount,
+      timeAgo: this.timeAgo(reel.createdAt),
+      isLiked: !!isLiked,
+      isSaved: !!isSaved,
+    };
+  }
 
   async getReels(userId: string, page = 1): Promise<object[]> {
     const reels = await this.reelRepo.find({
@@ -361,6 +400,16 @@ export class PostsService {
       take: 10,
       skip: (page - 1) * 10,
     });
+
+    if (reels.length === 0) return [];
+
+    const reelIds = reels.map((r) => r.id);
+    const [likedRows, savedRows] = await Promise.all([
+      this.likeReelRepo.find({ where: { userId, reelId: In(reelIds) }, select: ['reelId'] }),
+      this.savedReelRepo.find({ where: { userId, reelId: In(reelIds) }, select: ['reelId'] }),
+    ]);
+    const likedSet = new Set(likedRows.map((l) => l.reelId));
+    const savedSet = new Set(savedRows.map((s) => s.reelId));
 
     return reels.map((reel) => ({
       id: reel.id,
@@ -372,14 +421,48 @@ export class PostsService {
       likes: reel.likesCount,
       comments: reel.commentsCount,
       shares: reel.sharesCount,
-      isLiked: false,
-      isSaved: false,
+      isLiked: likedSet.has(reel.id),
+      isSaved: savedSet.has(reel.id),
     }));
   }
 
   async createReel(userId: string, dto: CreateReelDto): Promise<Reel> {
     const reel = this.reelRepo.create({ ...dto, userId });
     return this.reelRepo.save(reel);
+  }
+
+  // ── Like / unlike reel ─────────────────────────────────────────────────────
+
+  async toggleLikeReel(userId: string, reelId: string): Promise<{ liked: boolean; count: number }> {
+    const reel = await this.reelRepo.findOne({ where: { id: reelId } });
+    if (!reel) throw new NotFoundException('Reel not found');
+
+    const existing = await this.likeReelRepo.findOne({ where: { userId, reelId } });
+    if (existing) {
+      await this.likeReelRepo.remove(existing);
+      await this.reelRepo.decrement({ id: reelId }, 'likesCount', 1);
+      return { liked: false, count: reel.likesCount - 1 };
+    }
+
+    await this.likeReelRepo.save(this.likeReelRepo.create({ userId, reelId }));
+    await this.reelRepo.increment({ id: reelId }, 'likesCount', 1);
+    return { liked: true, count: reel.likesCount + 1 };
+  }
+
+  // ── Save / unsave reel ─────────────────────────────────────────────────────
+
+  async toggleSaveReel(userId: string, reelId: string): Promise<{ saved: boolean }> {
+    const reel = await this.reelRepo.findOne({ where: { id: reelId } });
+    if (!reel) throw new NotFoundException('Reel not found');
+
+    const existing = await this.savedReelRepo.findOne({ where: { userId, reelId } });
+    if (existing) {
+      await this.savedReelRepo.remove(existing);
+      return { saved: false };
+    }
+
+    await this.savedReelRepo.save(this.savedReelRepo.create({ userId, reelId }));
+    return { saved: true };
   }
 
   // ── Share post ─────────────────────────────────────────────────────────────

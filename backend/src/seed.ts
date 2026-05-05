@@ -369,10 +369,6 @@ async function seed() {
   const c1 = await postsService.addComment(users[0].id, posts[0].id, {
     content: 'Absolutely stunning shot! The light is perfect 🔥',
   });
-<<<<<<< HEAD
-  await usersService['userRepo'].update(mehdi.id, {
-    bio: '📱 Mobile developer\n🚀 Building cool stuff\n📍 Fes, Morocco',
-=======
   const c2 = await postsService.addComment(users[2].id, posts[0].id, {
     content: 'This makes me want to book a flight to Paris right now 😍',
   });
@@ -380,37 +376,26 @@ async function seed() {
   await postsService.addComment(users[1].id, posts[0].id, {
     content: 'Do it!! Paris in spring is a dream ✈️',
     parentId: c2.id,
->>>>>>> 32b1bb9 (Initial commit: Sharely FullStack (NestJS & React Native))
   });
 
   // Post 2 — mehdi's code
   const c3 = await postsService.addComment(users[1].id, posts[2].id, {
     content: 'What stack are you using? Looks clean 👀',
   });
-<<<<<<< HEAD
-  await usersService['userRepo'].update(alex.id, {
-    bio: '📷 Photographer | Paris lover',
-=======
   await postsService.addComment(users[0].id, posts[2].id, {
     content: 'NestJS + Expo + PostgreSQL 🚀 loving it so far',
     parentId: c3.id,
   });
   await postsService.addComment(users[3].id, posts[2].id, {
     content: 'Ship it!! 🚢',
->>>>>>> 32b1bb9 (Initial commit: Sharely FullStack (NestJS & React Native))
   });
 
   // Post 3 — lucas's bali
   await postsService.addComment(users[0].id, posts[3].id, {
     content: 'Adding Bali to my bucket list right now 🌾',
   });
-<<<<<<< HEAD
-  await usersService['userRepo'].update(maria.id, {
-    bio: '🎨 Digital artist | New York',
-=======
   await postsService.addComment(users[4].id, posts[3].id, {
     content: 'I was there last year — the sunrise is even better in person!',
->>>>>>> 32b1bb9 (Initial commit: Sharely FullStack (NestJS & React Native))
   });
 
   // Post 4 — sara's food

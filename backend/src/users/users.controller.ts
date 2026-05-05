@@ -6,6 +6,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ShareProfileDto } from './dto/share-profile.dto';
 import { User } from './user.entity';
 import { UsersService } from './users.service';
 
@@ -51,6 +52,16 @@ export class UsersController {
   @Patch('me/password')
   changePassword(@CurrentUser() user: User, @Body() dto: ChangePasswordDto) {
     return this.usersService.changePassword(user.id, dto);
+  }
+
+  // Must be before :id/profile to avoid route collision
+  @Post('share-profile/:username')
+  shareProfile(
+    @Param('username') username: string,
+    @CurrentUser() user: User,
+    @Body() dto: ShareProfileDto,
+  ): Promise<{ sent: boolean }> {
+    return this.usersService.shareProfile(user.id, username, dto.receiverId);
   }
 
   @Get(':id/profile')

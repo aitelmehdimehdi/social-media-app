@@ -2,9 +2,11 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Post } from './post.entity';
 import { Like } from './like.entity';
+import { LikeReel } from './like-reel.entity';
 import { Comment } from './comment.entity';
 import { CommentLike } from './comment-like.entity';
 import { SavedPost } from './saved-post.entity';
+import { SavedReel } from './saved-reel.entity';
 import { Reel } from './reel.entity';
 import { Follow } from '../users/follow.entity';
 import { Message } from '../chat/message.entity';
@@ -14,7 +16,7 @@ import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Post, Like, Comment, CommentLike, SavedPost, Reel, Follow, Message]),
+    TypeOrmModule.forFeature([Post, Like, LikeReel, Comment, CommentLike, SavedPost, SavedReel, Reel, Follow, Message]),
     UsersModule,
   ],
   providers: [PostsService],

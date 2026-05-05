@@ -32,6 +32,16 @@ export class PostsController {
     return this.postsService.getShareSuggestions(user.id);
   }
 
+  @Get('saved')
+  getSavedPosts(@CurrentUser() user: User): Promise<object[]> {
+    return this.postsService.getSavedPosts(user.id);
+  }
+
+  @Get('liked')
+  getLikedPosts(@CurrentUser() user: User): Promise<object[]> {
+    return this.postsService.getLikedPosts(user.id);
+  }
+
   @Post()
   createPost(@CurrentUser() user: User, @Body() dto: CreatePostDto): Promise<PostEntity> {
     return this.postsService.createPost(user.id, dto);
@@ -45,11 +55,11 @@ export class PostsController {
     return this.postsService.toggleLike(user.id, id);
   }
 
-<<<<<<< HEAD
   @Get('user/:userId')
   getByUser(@Param('userId') userId: string) {
     return this.postsService.findByUser(userId);
-=======
+  }
+
   @Post(':id/save')
   toggleSave(
     @Param('id') id: string,
@@ -65,7 +75,6 @@ export class PostsController {
     @Body() dto: SharePostDto,
   ): Promise<{ sent: boolean }> {
     return this.postsService.sharePost(user.id, id, dto.receiverId);
->>>>>>> 32b1bb9 (Initial commit: Sharely FullStack (NestJS & React Native))
   }
 
   @Get(':id/comments')
@@ -113,9 +122,25 @@ export class PostsController {
     return this.postsService.createReel(user.id, dto);
   }
 
+  @Post('reels/:id/like')
+  toggleLikeReel(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+  ): Promise<{ liked: boolean; count: number }> {
+    return this.postsService.toggleLikeReel(user.id, id);
+  }
+
+  @Post('reels/:id/save')
+  toggleSaveReel(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+  ): Promise<{ saved: boolean }> {
+    return this.postsService.toggleSaveReel(user.id, id);
+  }
+
   @Get('reels/:id')
-  getReelById(@Param('id') id: string) {
-    return this.postsService.findReelById(id);
+  getReelById(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.postsService.findReelById(id, user.id);
   }
 
   @Get(':id')

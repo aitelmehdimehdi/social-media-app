@@ -24,6 +24,7 @@ import { useTheme } from "../context/ThemeContext";
 import { API_URL } from "../config/env";
 import { apiDelete, apiGet, getToken } from "../utils/api";
 import AvatarImage from "./AvatarImage";
+import ProfileShareSheet from "./ProfileShareSheet";
 
 const { width: W } = Dimensions.get("window");
 const GRID_SIZE = W / 3 - 1;
@@ -88,9 +89,23 @@ function BottomMenu({ visible, onClose }: { visible: boolean; onClose: () => voi
         </TouchableOpacity>
         <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
 
-        <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={onClose}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          activeOpacity={0.7}
+          onPress={() => { onClose(); router.push('/SavedPosts'); }}
+        >
           <Ionicons name="bookmark-outline" size={22} color={colors.text} style={styles.menuIcon} />
           <Text style={[styles.menuLabel, { color: colors.text }]}>Éléments sauvegardés</Text>
+        </TouchableOpacity>
+        <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+
+        <TouchableOpacity
+          style={styles.menuItem}
+          activeOpacity={0.7}
+          onPress={() => { onClose(); router.push('/LikedPosts'); }}
+        >
+          <Ionicons name="heart-outline" size={22} color={colors.text} style={styles.menuIcon} />
+          <Text style={[styles.menuLabel, { color: colors.text }]}>Contenus aimés</Text>
         </TouchableOpacity>
         <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
 
@@ -151,9 +166,9 @@ export default function ProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [gridPosts, setGridPosts] = useState<MediaItem[]>([]);
-  const [activeTab, setActiveTab] = useState<"grid" | "tagged">("grid");
   const [menuOpen, setMenuOpen] = useState(false);
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const [shareProfileVisible, setShareProfileVisible] = useState(false);
   const [hasStories, setHasStories] = useState(false);
   const [myStoryImageUrl, setMyStoryImageUrl] = useState<string | null>(null);
 
@@ -349,26 +364,10 @@ export default function ProfileScreen() {
           <TouchableOpacity
             style={[styles.actionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
             activeOpacity={0.8}
+            onPress={() => setShareProfileVisible(true)}
           >
             <Text style={[styles.actionBtnText, { color: colors.text }]}>Share Profile</Text>
           </TouchableOpacity>
-        </View>
-
-        {/* Tabs */}
-        <View style={[styles.tabBar, { borderTopColor: colors.border }]}>
-          {(["grid", "tagged"] as const).map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.tab, activeTab === tab && { borderBottomColor: colors.text }]}
-              onPress={() => setActiveTab(tab)}
-            >
-              <Ionicons
-                name={tab === "grid" ? "grid-outline" : "pricetag-outline"}
-                size={22}
-                color={activeTab === tab ? colors.text : colors.textSecondary}
-              />
-            </TouchableOpacity>
-          ))}
         </View>
 
         {/* Grid — mixed posts & reels sorted by date */}
@@ -401,6 +400,14 @@ export default function ProfileScreen() {
       </ScrollView>
 
       <BottomMenu visible={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      <ProfileShareSheet
+        username={displayName}
+        avatar={displayAvatar}
+        fullName={displayFullName}
+        visible={shareProfileVisible}
+        onClose={() => setShareProfileVisible(false)}
+      />
 
       {/* Avatar action modal */}
       <Modal visible={avatarMenuOpen} transparent animationType="fade" onRequestClose={() => setAvatarMenuOpen(false)}>

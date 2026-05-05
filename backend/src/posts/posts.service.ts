@@ -103,6 +103,49 @@ export class PostsService {
     });
   }
 
+  async findPostById(postId: string, currentUserId: string) {
+    const post = await this.postRepo.findOne({ where: { id: postId } });
+    if (!post) throw new NotFoundException('Post not found');
+    const isLiked = !!(await this.likeRepo.findOne({
+      where: { userId: currentUserId, postId },
+    }));
+    return {
+      id: post.id,
+      username: post.user.username,
+      avatar: post.user.avatar,
+      userId: post.userId,
+      location: post.location,
+      image: post.imageUrl,
+      likes: post.likesCount,
+      caption: post.caption,
+      comments: post.commentsCount,
+      timeAgo: this.timeAgo(post.createdAt),
+      createdAt: post.createdAt,
+      isLiked,
+      isSaved: false,
+    };
+  }
+
+  async findReelById(reelId: string) {
+    const reel = await this.reelRepo.findOne({ where: { id: reelId } });
+    if (!reel) throw new NotFoundException('Reel not found');
+    return {
+      id: reel.id,
+      username: reel.user.username,
+      avatar: reel.user.avatar,
+      userId: reel.userId,
+      caption: reel.caption,
+      audio: reel.audioTitle ?? '🎵 Original Audio',
+      image: reel.thumbnailUrl,
+      likes: reel.likesCount,
+      comments: reel.commentsCount,
+      shares: reel.sharesCount,
+      timeAgo: this.timeAgo(reel.createdAt),
+      isLiked: false,
+      isSaved: false,
+    };
+  }
+
   async getReels(userId: string, page = 1): Promise<object[]> {
     const reels = await this.reelRepo.find({
       order: { createdAt: 'DESC' },

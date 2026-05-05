@@ -55,4 +55,14 @@ export class PostsController {
   createReel(@CurrentUser() user: User, @Body() dto: CreateReelDto) {
     return this.postsService.createReel(user.id, dto);
   }
+
+  @Get('reels/:id')
+  getReelById(@Param('id') id: string) {
+    return this.postsService.findReelById(id);
+  }
+
+  @Get(':id')
+  getPostById(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.postsService.findPostById(id, user.id);
+  }
 }

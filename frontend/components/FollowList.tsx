@@ -105,7 +105,7 @@ export default function FollowListScreen() {
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => router.replace("/Profile")}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Ionicons name="chevron-back" size={26} color={colors.text} />

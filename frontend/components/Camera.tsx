@@ -47,7 +47,7 @@ export default function CameraScreen() {
       if (!cameraPermission?.granted) await requestCameraPermission();
       if (!mediaPermission?.granted) await requestMediaPermission();
     })();
-  }, []);
+  }, [cameraPermission?.granted, mediaPermission?.granted]);
 
   // ✅ Active la caméra quand l'écran est focus, la libère quand il perd le focus
   useFocusEffect(
@@ -95,12 +95,17 @@ export default function CameraScreen() {
   const toggleFacing = () =>
     setFacing((f) => (f === "back" ? "front" : "back"));
 
-  const cycleFlash = () =>
+  const cycleFlash = () => {
+    if (facing === "front") {
+      setFlash("off");
+      return;
+    }
     setFlash((f) => {
       if (f === "off") return "on";
       if (f === "on") return "auto";
       return "off";
     });
+  };
 
   const flashIcon = flash === "on" ? "⚡" : flash === "auto" ? "⚡A" : "🚫";
 

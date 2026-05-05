@@ -145,7 +145,7 @@ export default function ConversationScreen() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
         <FlatList
           data={messages}

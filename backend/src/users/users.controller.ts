@@ -5,6 +5,7 @@ import { MediaService } from '../media/media.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { User } from './user.entity';
 import { UsersService } from './users.service';
 
@@ -45,6 +46,11 @@ export class UsersController {
   @Patch('me')
   updateMe(@CurrentUser() user: User, @Body() dto: UpdateProfileDto) {
     return this.usersService.updateProfile(user.id, dto);
+  }
+
+  @Patch('me/password')
+  changePassword(@CurrentUser() user: User, @Body() dto: ChangePasswordDto) {
+    return this.usersService.changePassword(user.id, dto);
   }
 
   @Get(':id/profile')

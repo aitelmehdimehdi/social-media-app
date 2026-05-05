@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -39,10 +40,41 @@ export class UsersService {
   }
 
   async updateProfile(id: string, dto: UpdateProfileDto): Promise<User> {
-    await this.userRepo.update(id, dto);
+    const user = await this.findById(id);
+    if (!user) throw new NotFoundException('User not found');
+
+    const sensitiveChange = dto.username !== undefined || dto.email !== undefined;
+    if (sensitiveChange) {
+      if (!dto.currentPassword)
+        throw new UnauthorizedException('Current password is required to change username or email');
+      const valid = await bcrypt.compare(dto.currentPassword, user.password);
+      if (!valid) throw new UnauthorizedException('Incorrect password');
+    }
+
+    if (dto.username && dto.username !== user.username) {
+      const taken = await this.findByUsername(dto.username);
+      if (taken) throw new ConflictException('Username already taken');
+    }
+    if (dto.email && dto.email !== user.email) {
+      const taken = await this.findByEmail(dto.email);
+      if (taken) throw new ConflictException('Email already in use');
+    }
+
+    const { currentPassword: _cp, ...updateData } = dto;
+    await this.userRepo.update(id, updateData);
     const updated = await this.findById(id);
     if (!updated) throw new NotFoundException('User not found');
     return updated;
+  }
+
+  async changePassword(id: string, dto: ChangePasswordDto): Promise<{ message: string }> {
+    const user = await this.findById(id);
+    if (!user) throw new NotFoundException('User not found');
+    const valid = await bcrypt.compare(dto.currentPassword, user.password);
+    if (!valid) throw new UnauthorizedException('Incorrect current password');
+    const hashed = await bcrypt.hash(dto.newPassword, 10);
+    await this.userRepo.update(id, { password: hashed });
+    return { message: 'Password updated successfully' };
   }
 
   async updateAvatar(id: string, url: string): Promise<User> {

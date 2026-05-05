@@ -9,7 +9,13 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Sharely needs camera access to take photos for stories and posts.",
+        "NSPhotoLibraryUsageDescription": "Sharely needs photo library access to select images for posts and your profile.",
+        "NSPhotoLibraryAddUsageDescription": "Sharely saves captured photos to your photo library.",
+        "NSMicrophoneUsageDescription": "Sharely needs microphone access when recording video."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -38,7 +44,10 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-camera",
+      "expo-image-picker",
+      "expo-media-library"
     ],
     "experiments": {
       "typedRoutes": true,

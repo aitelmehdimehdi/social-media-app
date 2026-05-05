@@ -39,7 +39,7 @@ export default function CreatePostScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: 'images' as ImagePicker.MediaType,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.85,
@@ -56,9 +56,8 @@ export default function CreatePostScreen() {
     }
     setSubmitting(true);
     try {
-      const blob = await (await fetch(imageUri)).blob();
       const formData = new FormData();
-      formData.append("file", blob, "post.jpg");
+      formData.append("file", { uri: imageUri, type: "image/jpeg", name: "post.jpg" } as any);
 
       const token = await getToken();
       const uploadRes = await fetch(`${API_URL}/media/post`, {

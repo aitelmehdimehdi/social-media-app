@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useRouter, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -50,6 +50,8 @@ type MediaItem = {
   image: string;
   type: "post" | "reel";
   date: string;
+  likes: number;
+  commentsCount: number;
 };
 
 // ─── Bottom Sheet ─────────────────────────────────────────────────────────────
@@ -153,6 +155,7 @@ export default function ProfileScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const [hasStories, setHasStories] = useState(false);
+  const [myStoryImageUrl, setMyStoryImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -167,31 +170,39 @@ export default function ProfileScreen() {
       .then(setGridPosts)
       .catch(() => setGridPosts([]));
 
-    apiGet<{ id: string; user: { id: string } }[]>("/stories")
-      .then((stories) => setHasStories(stories.some((s) => s.user.id === user.id)))
-      .catch(() => setHasStories(false));
   }, [user]);
 
+  useFocusEffect(
+    useCallback(() => {
+      if (!user) return;
+      apiGet<{ id: string; imageUrl: string; user: { id: string } }[]>("/stories")
+        .then((stories) => {
+          const mine = stories.find((s) => s.user.id === user.id);
+          setHasStories(!!mine);
+          setMyStoryImageUrl(mine?.imageUrl ?? null);
+        })
+        .catch(() => { setHasStories(false); setMyStoryImageUrl(null); });
+    }, [user])
+  );
+
   const handleChangePicture = async () => {
-    setAvatarMenuOpen(false);
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission required", "Allow access to your photo library to change your profile picture.");
+    if (status === "denied") {
+      Alert.alert("Permission required", "Go to Settings → Sharely → Photos and allow access.");
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: 'images' as ImagePicker.MediaType,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.85,
     });
+    setAvatarMenuOpen(false);
     if (result.canceled) return;
 
     const uri = result.assets[0].uri;
-    const fileRes = await fetch(uri);
-    const blob = await fileRes.blob();
     const formData = new FormData();
-    formData.append("file", blob, "avatar.jpg");
+    formData.append("file", { uri, type: "image/jpeg", name: "avatar.jpg" } as any);
 
     try {
       const token = await getToken();
@@ -225,10 +236,10 @@ export default function ProfileScreen() {
 
   const handleSeeStories = () => {
     setAvatarMenuOpen(false);
-    if (!user) return;
+    if (!user || !myStoryImageUrl) return;
     router.push({
       pathname: "/story/[userId]",
-      params: { userId: user.id, username: displayName, avatar: displayAvatar ?? "" },
+      params: { userId: user.id, imageUrl: myStoryImageUrl, username: displayName, avatar: displayAvatar ?? "" },
     });
   };
 
@@ -256,6 +267,8 @@ export default function ProfileScreen() {
   const displayName = profile?.username ?? user?.username ?? "profile";
   const displayAvatar = profile?.avatar ?? user?.avatar ?? null;
   const displayFullName = profile?.fullName ?? user?.fullName ?? "";
+  const displayEmail = user?.email ?? "";
+  const displayBio = profile?.bio ?? "";
 
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -324,6 +337,12 @@ export default function ProfileScreen() {
           <TouchableOpacity
             style={[styles.actionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
             activeOpacity={0.8}
+            onPress={() =>
+              router.push({
+                pathname: "/EditProfile",
+                params: { fullName: displayFullName, username: displayName, email: displayEmail, bio: displayBio },
+              })
+            }
           >
             <Text style={[styles.actionBtnText, { color: colors.text }]}>Edit Profile</Text>
           </TouchableOpacity>
@@ -364,7 +383,12 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           {gridPosts.map((item) => (
-            <TouchableOpacity key={item.id} style={styles.gridItem} activeOpacity={0.85}>
+            <TouchableOpacity
+              key={item.id}
+              style={styles.gridItem}
+              activeOpacity={0.85}
+              onPress={() => router.push({ pathname: "/post/[id]", params: { id: item.id, type: item.type } })}
+            >
               <Image source={{ uri: item.image }} style={styles.gridImage} />
               {item.type === "reel" && (
                 <View style={styles.mediaTypeBadge}>

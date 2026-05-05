@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   modeTab: {
     flex: 1, paddingVertical: 10, borderRadius: 50, alignItems: "center",
   },
-  modeTabActive: { backgroundColor: "#fff", shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
+  modeTabActive: { backgroundColor: "#fff", elevation: 2, shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 4 },
   modeTabText: { fontSize: 14, fontWeight: "600", color: "#8A8A8A" },
   modeTabTextActive: { color: "#7C3AED" },
 

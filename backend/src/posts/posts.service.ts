@@ -97,7 +97,6 @@ export class PostsService {
     const cached = cacheGet<FeedResponse>(cacheKey);
     if (cached) return cached;
 
-    // Determine feed mode based on whether the user follows anyone
     const followRows = await this.followRepo.find({
       where: { followerId: userId },
       select: ['followingId'],
@@ -110,14 +109,12 @@ export class PostsService {
     let posts: Post[];
 
     if (isDiscoverMode) {
-      // No follows → show all posts sorted by popularity (most liked first)
       posts = await this.postRepo.find({
         where: cursorWhere,
         order: { likesCount: 'DESC', createdAt: 'DESC' },
         take: limit + 1,
       });
     } else {
-      // Has follows → show followed users' posts (chronological)
       const includedIds = [...followingIds, userId];
       posts = await this.postRepo.find({
         where: { ...cursorWhere, userId: In(includedIds) },
@@ -125,7 +122,6 @@ export class PostsService {
         take: limit + 1,
       });
 
-      // Backfill remaining slots with popular posts from non-followed users
       if (posts.length < limit + 1) {
         const seenIds = posts.map((p) => p.id);
         const needed = limit + 1 - posts.length;
@@ -134,8 +130,7 @@ export class PostsService {
           order: { likesCount: 'DESC', createdAt: 'DESC' },
           take: needed,
         });
-        const newFill = fill.filter((p) => !seenIds.includes(p.id));
-        posts = [...posts, ...newFill];
+        posts = [...posts, ...fill.filter((p) => !seenIds.includes(p.id))];
       }
     }
 
@@ -152,7 +147,7 @@ export class PostsService {
           return {
             id: post.id,
             username: post.user.username,
-            avatar: post.user.avatar,
+            avatar: post.user.avatar ?? '',
             location: post.location ?? '',
             image: post.imageUrl,
             likes: post.likesCount,
@@ -194,6 +189,8 @@ export class PostsService {
       date: post.createdAt.toISOString(),
     }));
   }
+
+  // ── Saved & liked collections ──────────────────────────────────────────────
 
   async getSavedPosts(userId: string): Promise<object[]> {
     const [savedPosts, savedReels] = await Promise.all([
@@ -281,14 +278,10 @@ export class PostsService {
       userId,
       postId,
       content: dto.content,
-      // Only set parentId when it has a real value — never pass null explicitly
-      // to avoid TypeORM FK constraint issues on the nullable uuid column.
       ...(dto.parentId ? { parentId: dto.parentId } : { parentId: null }),
     });
     const inserted = await this.commentRepo.save(comment);
 
-    // Reload with eager user relation (save() doesn't trigger eager loading).
-    // Without this, user is undefined and ClassSerializerInterceptor throws 500.
     const saved = await this.commentRepo.findOne({ where: { id: inserted.id } });
     if (!saved) throw new NotFoundException('Comment not found after save');
 
@@ -312,7 +305,7 @@ export class PostsService {
     const toDto = (c: Comment, replies: Comment[]): CommentDto => ({
       id: c.id,
       username: c.user.username,
-      avatar: c.user.avatar,
+      avatar: c.user.avatar ?? '',
       content: c.content,
       likes: c.likesCount,
       isLiked: likedSet.has(c.id),
@@ -344,7 +337,9 @@ export class PostsService {
     return { liked: true, count: comment.likesCount + 1 };
   }
 
-  async findPostById(postId: string, currentUserId: string) {
+  // ── Single resource getters ────────────────────────────────────────────────
+
+  async findPostById(postId: string, currentUserId: string): Promise<object> {
     const post = await this.postRepo.findOne({ where: { id: postId } });
     if (!post) throw new NotFoundException('Post not found');
     const [isLiked, isSaved] = await Promise.all([
@@ -368,9 +363,7 @@ export class PostsService {
     };
   }
 
-  // ── Reels ──────────────────────────────────────────────────────────────────
-
-  async findReelById(reelId: string, userId: string) {
+  async findReelById(reelId: string, userId: string): Promise<object> {
     const reel = await this.reelRepo.findOne({ where: { id: reelId } });
     if (!reel) throw new NotFoundException('Reel not found');
     const [isLiked, isSaved] = await Promise.all([
@@ -393,6 +386,8 @@ export class PostsService {
       isSaved: !!isSaved,
     };
   }
+
+  // ── Reels ──────────────────────────────────────────────────────────────────
 
   async getReels(userId: string, page = 1): Promise<object[]> {
     const reels = await this.reelRepo.find({
@@ -471,8 +466,9 @@ export class PostsService {
     const post = await this.postRepo.findOne({ where: { id: postId } });
     if (!post) throw new NotFoundException('Post not found');
 
-    // Build a rich-text message that renders as an interactive card in the chat
-    const caption = post.caption ? `"${post.caption.slice(0, 80)}${post.caption.length > 80 ? '…' : ''}"` : '';
+    const caption = post.caption
+      ? `"${post.caption.slice(0, 80)}${post.caption.length > 80 ? '…' : ''}"`
+      : '';
     const content = `__SHARED_POST__${JSON.stringify({
       postId,
       imageUrl: post.imageUrl,
@@ -497,7 +493,6 @@ export class PostsService {
 
     const scored = await Promise.all(
       follows.map(async (f) => {
-        // Count messages exchanged — primary interaction signal
         const msgCount = await this.messageRepo
           .createQueryBuilder('m')
           .where(
@@ -506,7 +501,6 @@ export class PostsService {
           )
           .getCount();
 
-        // Mutual follow bonus
         const mutualFollow = await this.followRepo.findOne({
           where: { followerId: f.followingId, followingId: userId },
         });

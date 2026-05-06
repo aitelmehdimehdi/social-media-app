@@ -16,7 +16,8 @@ import { Reel } from './reel.entity';
 export class PostsController {
   constructor(private postsService: PostsService) {}
 
-  // GET /posts/feed?cursor=<ISO>&limit=10
+  // ── Static GET routes (must come before :id param routes) ─────────────────
+
   @Get('feed')
   getFeed(
     @CurrentUser() user: User,
@@ -26,7 +27,6 @@ export class PostsController {
     return this.postsService.getFeed(user.id, cursor, parseInt(limit));
   }
 
-  // Must be declared before :id routes to avoid route collision
   @Get('share-suggestions')
   getShareSuggestions(@CurrentUser() user: User): Promise<object[]> {
     return this.postsService.getShareSuggestions(user.id);
@@ -42,10 +42,64 @@ export class PostsController {
     return this.postsService.getLikedPosts(user.id);
   }
 
+  @Get('reels')
+  getReels(
+    @CurrentUser() user: User,
+    @Query('page') page = '1',
+  ): Promise<object[]> {
+    return this.postsService.getReels(user.id, parseInt(page));
+  }
+
+  @Get('user/:userId')
+  getByUser(@Param('userId') userId: string): Promise<object[]> {
+    return this.postsService.findByUser(userId);
+  }
+
+  @Get('reels/:id')
+  getReelById(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+  ): Promise<object> {
+    return this.postsService.findReelById(id, user.id);
+  }
+
+  // ── Static POST routes ─────────────────────────────────────────────────────
+
   @Post()
   createPost(@CurrentUser() user: User, @Body() dto: CreatePostDto): Promise<PostEntity> {
     return this.postsService.createPost(user.id, dto);
   }
+
+  @Post('reels')
+  createReel(@CurrentUser() user: User, @Body() dto: CreateReelDto): Promise<Reel> {
+    return this.postsService.createReel(user.id, dto);
+  }
+
+  @Post('comments/:commentId/like')
+  toggleCommentLike(
+    @Param('commentId') commentId: string,
+    @CurrentUser() user: User,
+  ): Promise<{ liked: boolean; count: number }> {
+    return this.postsService.toggleCommentLike(user.id, commentId);
+  }
+
+  @Post('reels/:id/like')
+  toggleLikeReel(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+  ): Promise<{ liked: boolean; count: number }> {
+    return this.postsService.toggleLikeReel(user.id, id);
+  }
+
+  @Post('reels/:id/save')
+  toggleSaveReel(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+  ): Promise<{ saved: boolean }> {
+    return this.postsService.toggleSaveReel(user.id, id);
+  }
+
+  // ── :id param routes ───────────────────────────────────────────────────────
 
   @Post(':id/like')
   toggleLike(
@@ -53,11 +107,6 @@ export class PostsController {
     @CurrentUser() user: User,
   ): Promise<{ liked: boolean; count: number }> {
     return this.postsService.toggleLike(user.id, id);
-  }
-
-  @Get('user/:userId')
-  getByUser(@Param('userId') userId: string) {
-    return this.postsService.findByUser(userId);
   }
 
   @Post(':id/save')
@@ -101,50 +150,11 @@ export class PostsController {
     }
   }
 
-  @Post('comments/:commentId/like')
-  toggleCommentLike(
-    @Param('commentId') commentId: string,
-    @CurrentUser() user: User,
-  ): Promise<{ liked: boolean; count: number }> {
-    return this.postsService.toggleCommentLike(user.id, commentId);
-  }
-
-  @Get('reels')
-  getReels(
-    @CurrentUser() user: User,
-    @Query('page') page = '1',
-  ): Promise<object[]> {
-    return this.postsService.getReels(user.id, parseInt(page));
-  }
-
-  @Post('reels')
-  createReel(@CurrentUser() user: User, @Body() dto: CreateReelDto): Promise<Reel> {
-    return this.postsService.createReel(user.id, dto);
-  }
-
-  @Post('reels/:id/like')
-  toggleLikeReel(
-    @Param('id') id: string,
-    @CurrentUser() user: User,
-  ): Promise<{ liked: boolean; count: number }> {
-    return this.postsService.toggleLikeReel(user.id, id);
-  }
-
-  @Post('reels/:id/save')
-  toggleSaveReel(
-    @Param('id') id: string,
-    @CurrentUser() user: User,
-  ): Promise<{ saved: boolean }> {
-    return this.postsService.toggleSaveReel(user.id, id);
-  }
-
-  @Get('reels/:id')
-  getReelById(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.postsService.findReelById(id, user.id);
-  }
-
   @Get(':id')
-  getPostById(@Param('id') id: string, @CurrentUser() user: User) {
+  getPostById(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+  ): Promise<object> {
     return this.postsService.findPostById(id, user.id);
   }
 }

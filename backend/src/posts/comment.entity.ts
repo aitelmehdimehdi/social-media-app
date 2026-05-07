@@ -3,7 +3,6 @@ import {
   ManyToOne, JoinColumn, CreateDateColumn,
 } from 'typeorm';
 import { User } from '../users/user.entity';
-import { Post } from './post.entity';
 
 @Entity('comments')
 export class Comment {
@@ -17,12 +16,11 @@ export class Comment {
   @Column()
   userId!: string;
 
-  @ManyToOne(() => Post, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'postId' })
-  post!: Post;
+  @Column({ nullable: true, type: 'uuid' })
+  postId!: string | null;
 
-  @Column()
-  postId!: string;
+  @Column({ nullable: true, type: 'uuid' })
+  reelId!: string | null;
 
   // FK stored as plain column — no self-referential @ManyToOne to avoid
   // TypeORM double-mapping the same column as both @Column and @JoinColumn FK.

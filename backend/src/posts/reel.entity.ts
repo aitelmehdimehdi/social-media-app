@@ -4,33 +4,36 @@ import { User } from '../users/user.entity';
 @Entity('reels')
 export class Reel {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE', eager: true })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column()
-  userId: string;
+  userId!: string;
 
-  @Column()
-  thumbnailUrl: string;
+  @Column({ type: 'varchar', nullable: true })
+  thumbnailUrl!: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  videoUrl!: string | null;
 
   @Column({ type: 'text', nullable: true })
-  caption: string;
+  caption!: string;
 
   @Column({ nullable: true })
-  audioTitle: string;
+  audioTitle!: string;
 
   @Column({ default: 0 })
-  likesCount: number;
+  likesCount!: number;
 
   @Column({ default: 0 })
-  commentsCount: number;
+  commentsCount!: number;
 
   @Column({ default: 0 })
-  sharesCount: number;
+  sharesCount!: number;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

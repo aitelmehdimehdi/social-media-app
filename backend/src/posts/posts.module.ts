@@ -13,11 +13,13 @@ import { Message } from '../chat/message.entity';
 import { PostsService } from './posts.service';
 import { PostsController } from './posts.controller';
 import { UsersModule } from '../users/users.module';
+import { MediaModule } from '../media/media.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Post, Like, LikeReel, Comment, CommentLike, SavedPost, SavedReel, Reel, Follow, Message]),
     UsersModule,
+    MediaModule,
   ],
   providers: [PostsService],
   controllers: [PostsController],

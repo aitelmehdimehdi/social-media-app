@@ -79,5 +79,8 @@ export async function apiDelete(path: string): Promise<void> {
   const headers = await authHeaders();
   const res = await fetch(`${API_URL}${path}`, { method: 'DELETE', headers });
   if (res.status === 401) { await handleUnauthorized(); return; }
-  if (!res.ok) throw new Error(`DELETE ${path} failed: ${res.status}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: `${res.status}` }));
+    throw new Error((err as { message?: string }).message ?? `${res.status}`);
+  }
 }

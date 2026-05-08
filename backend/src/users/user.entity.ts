@@ -34,6 +34,9 @@ export class User {
   @Column({ default: 0 })
   postsCount: number;
 
+  @Column({ type: 'varchar', nullable: true })
+  pushToken: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

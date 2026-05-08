@@ -17,11 +17,13 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import { useUnread } from "../context/UnreadContext";
 import { apiGet, apiPost } from "../utils/api";
 import AvatarImage from "./AvatarImage";
 import CommentsSheet from "./CommentsSheet";
 import ShareSheet from "./ShareSheet";
 import AdCard, { AdItem } from "./AdCard";
+import NotificationsPanel from "./NotificationsPanel";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const AD_INTERVAL = 8;
@@ -264,17 +266,34 @@ function PostCard({
 
 // ─── Header ───────────────────────────────────────────────────────────────────
 
-function Header() {
+function Header({
+  onRefresh,
+  refreshing,
+  onNotificationsPress,
+  unreadNotifs,
+}: {
+  onRefresh: () => void;
+  refreshing: boolean;
+  onNotificationsPress: () => void;
+  unreadNotifs: number;
+}) {
   const { colors } = useTheme();
   return (
     <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
       <Text style={[styles.logoText, { color: colors.primary }]}>Sharely</Text>
       <View style={styles.headerRight}>
-        <TouchableOpacity style={styles.headerIconBtn}>
-          <Ionicons name="notifications-outline" size={24} color={colors.text} />
+        <TouchableOpacity style={styles.headerIconBtn} onPress={onRefresh} disabled={refreshing}>
+          {refreshing ? (
+            <ActivityIndicator size={20} color={colors.primary} />
+          ) : (
+            <Ionicons name="refresh-outline" size={24} color={colors.text} />
+          )}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.headerIconBtn}>
-          <Ionicons name="paper-plane-outline" size={24} color={colors.text} />
+        <TouchableOpacity style={styles.headerIconBtn} onPress={onNotificationsPress}>
+          <View style={styles.bellWrap}>
+            <Ionicons name="notifications-outline" size={24} color={colors.text} />
+            {unreadNotifs > 0 && <View style={[styles.bellBadge, { backgroundColor: "#e74c3c" }]} />}
+          </View>
         </TouchableOpacity>
       </View>
     </View>
@@ -305,11 +324,13 @@ function StoriesHeader({ stories }: { stories: Story[] }) {
 export default function InstagramHomeScreen() {
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
+  const { unreadNotifs } = useUnread();
 
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   const [activePostId, setActivePostId] = useState<string | null>(null);
   const [sharePost, setSharePost] = useState<Post | null>(null);
+  const [showNotifs, setShowNotifs] = useState(false);
   const [feedType, setFeedType] = useState<'following' | 'discover' | null>(null);
   const [loadError, setLoadError] = useState(false);
 
@@ -317,6 +338,7 @@ export default function InstagramHomeScreen() {
   const loadingMoreRef = useRef(false);
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const adPoolRef = useRef<AdItem[]>([]);
   const adIndexRef = useRef(0);
@@ -425,6 +447,12 @@ export default function InstagramHomeScreen() {
     }, [fetchStories, loadFeed]),
   );
 
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([fetchStories(), loadFeed(true)]);
+    setRefreshing(false);
+  }, [fetchStories, loadFeed]);
+
   const handleEndReached = useCallback(() => {
     if (!loadingMoreRef.current && cursorRef.current !== null) {
       loadFeed(false);
@@ -450,7 +478,12 @@ export default function InstagramHomeScreen() {
         barStyle={isDark ? 'light-content' : 'dark-content'}
         backgroundColor={colors.background}
       />
-      <Header />
+      <Header
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+        onNotificationsPress={() => setShowNotifs(true)}
+        unreadNotifs={unreadNotifs}
+      />
 
       {loadingInitial ? (
         <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} size="large" />
@@ -514,6 +547,11 @@ export default function InstagramHomeScreen() {
         visible={!!sharePost}
         onClose={() => setSharePost(null)}
       />
+
+      <NotificationsPanel
+        visible={showNotifs}
+        onClose={() => setShowNotifs(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -533,6 +571,11 @@ const styles = StyleSheet.create({
   logoText: { fontSize: 26, fontWeight: '800', letterSpacing: 1.5 },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   headerIconBtn: { padding: 6 },
+  bellWrap: { position: "relative" },
+  bellBadge: {
+    position: "absolute", top: -1, right: -3,
+    width: 8, height: 8, borderRadius: 4,
+  },
   storiesWrapper: {},
   storiesList: { paddingHorizontal: 12, paddingVertical: 10 },
   storyContainer: { alignItems: 'center', marginHorizontal: 6, width: 66 },

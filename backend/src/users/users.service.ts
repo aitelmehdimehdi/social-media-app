@@ -93,6 +93,16 @@ export class UsersService {
     return updated;
   }
 
+  async savePushToken(userId: string, token: string): Promise<void> {
+    await this.userRepo.update(userId, { pushToken: token });
+  }
+
+  async getProfileByUsername(username: string, currentUserId: string) {
+    const user = await this.findByUsername(username);
+    if (!user) throw new NotFoundException('User not found');
+    return this.getProfile(user.id, currentUserId);
+  }
+
   async getProfile(targetId: string, currentUserId: string) {
     const user = await this.findById(targetId);
     if (!user) throw new NotFoundException('User not found');

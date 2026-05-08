@@ -14,12 +14,14 @@ import { PostsService } from './posts.service';
 import { PostsController } from './posts.controller';
 import { UsersModule } from '../users/users.module';
 import { MediaModule } from '../media/media.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Post, Like, LikeReel, Comment, CommentLike, SavedPost, SavedReel, Reel, Follow, Message]),
     UsersModule,
     MediaModule,
+    NotificationsModule,
   ],
   providers: [PostsService],
   controllers: [PostsController],

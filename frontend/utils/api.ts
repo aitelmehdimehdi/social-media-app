@@ -60,7 +60,8 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
     const err = await res.json().catch(() => ({ message: res.statusText }));
     throw new Error((err as { message: string }).message ?? res.statusText);
   }
-  return res.json() as Promise<T>;
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
@@ -72,7 +73,8 @@ export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
   });
   if (res.status === 401) return handleUnauthorized();
   if (!res.ok) throw new Error(`PATCH ${path} failed: ${res.status}`);
-  return res.json() as Promise<T>;
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 export async function apiDelete(path: string): Promise<void> {

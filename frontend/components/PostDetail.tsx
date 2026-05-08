@@ -10,6 +10,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -213,7 +214,7 @@ function PostLayout({ post, comments, liked, likes, onLike, onComment, commentTe
 
 // ─── Reel layout ──────────────────────────────────────────────────────────────
 
-function ReelLayout({ post, liked, likes, onLike, onComment, commentText, setCommentText, submitting, showComments, setShowComments, comments, inputRef, colors, videoRef }: {
+function ReelLayout({ post, liked, likes, onLike, onComment, commentText, setCommentText, submitting, showComments, setShowComments, comments, inputRef, colors, videoRef, onShare }: {
   post: PostData;
   liked: boolean;
   likes: number;
@@ -228,6 +229,7 @@ function ReelLayout({ post, liked, likes, onLike, onComment, commentText, setCom
   inputRef: React.RefObject<TextInput>;
   colors: ReturnType<typeof import("../context/ThemeContext").useTheme>["colors"];
   videoRef: React.RefObject<Video>;
+  onShare: () => void;
 }) {
   const router = useRouter();
 
@@ -258,7 +260,7 @@ function ReelLayout({ post, liked, likes, onLike, onComment, commentText, setCom
           <Ionicons name="chatbubble-outline" size={26} color="#fff" />
           <Text style={styles.reelSideCount}>{post.comments}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.reelSideBtn} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.reelSideBtn} onPress={onShare} activeOpacity={0.7}>
           <Ionicons name="paper-plane-outline" size={26} color="#fff" />
           <Text style={styles.reelSideCount}>{post.shares ?? 0}</Text>
         </TouchableOpacity>
@@ -361,6 +363,7 @@ export default function PostDetailScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const { id, type } = useLocalSearchParams<{ id: string; type?: string }>();
   const isReel = type === "reel";
@@ -389,7 +392,7 @@ export default function PostDetailScreen() {
     const endpoint = isReel ? `/posts/reels/${id}` : `/posts/${id}`;
     Promise.all([
       apiGet<PostData>(endpoint),
-      isReel ? Promise.resolve([]) : apiGet<CommentData[]>(`/posts/${id}/comments`),
+      isReel ? apiGet<CommentData[]>(`/posts/reels/${id}/comments`) : apiGet<CommentData[]>(`/posts/${id}/comments`),
     ])
       .then(([postData, commentsData]) => {
         setPost(postData);
@@ -402,12 +405,13 @@ export default function PostDetailScreen() {
   }, [id]);
 
   const handleLike = async () => {
-    if (!id || isReel) return;
+    if (!id) return;
     const next = !liked;
     setLiked(next);
     setLikes((c) => c + (next ? 1 : -1));
     try {
-      await apiPost(`/posts/${id}/like`, {});
+      const endpoint = isReel ? `/posts/reels/${id}/like` : `/posts/${id}/like`;
+      await apiPost(endpoint, {});
     } catch {
       setLiked(!next);
       setLikes((c) => c + (next ? -1 : 1));
@@ -415,10 +419,11 @@ export default function PostDetailScreen() {
   };
 
   const handleComment = async () => {
-    if (!commentText.trim() || !id || isReel) return;
+    if (!commentText.trim() || !id) return;
     setSubmitting(true);
     try {
-      const saved = await apiPost<{ id: string }>(`/posts/${id}/comments`, { content: commentText.trim() });
+      const endpoint = isReel ? `/posts/reels/${id}/comments` : `/posts/${id}/comments`;
+      const saved = await apiPost<{ id: string }>(endpoint, { content: commentText.trim() });
       const newComment: CommentData = {
         id: saved.id,
         username: user?.username ?? "",
@@ -438,6 +443,12 @@ export default function PostDetailScreen() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleShare = async () => {
+    try {
+      await Share.share({ message: `Check out this reel by @${post?.username ?? ""}!` });
+    } catch {}
   };
 
   const goBack = () => router.replace("/Profile");
@@ -516,13 +527,14 @@ export default function PostDetailScreen() {
           inputRef={inputRef}
           colors={colors}
           videoRef={videoRef}
+          onShare={handleShare}
         />
         {/* Back and delete buttons rendered last so iOS hit-testing puts them on top */}
-        <TouchableOpacity style={styles.reelBack} onPress={goBack} hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}>
+        <TouchableOpacity style={[styles.reelBack, { top: insets.top + 12 }]} onPress={goBack} hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}>
           <Ionicons name="chevron-back" size={28} color="#fff" />
         </TouchableOpacity>
         {post.userId === user?.id && (
-          <TouchableOpacity style={styles.reelDelete} onPress={handleDelete} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <TouchableOpacity style={[styles.reelDelete, { top: insets.top + 12 }]} onPress={handleDelete} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="trash-outline" size={22} color="#fff" />
           </TouchableOpacity>
         )}

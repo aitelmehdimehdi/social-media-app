@@ -16,6 +16,8 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreateReelDto } from './dto/create-reel.dto';
 import { UsersService } from '../users/users.service';
 import { MediaService } from '../media/media.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 // ─── Simple in-memory cache (drop-in replacement for Redis) ──────────────────
 // Key format: feed:{userId}:{cursor}  TTL: 2 min
@@ -94,6 +96,8 @@ export class PostsService {
     @InjectRepository(Message) private messageRepo: Repository<Message>,
     private usersService: UsersService,
     private mediaService: MediaService,
+    private notificationsService: NotificationsService,
+    private notificationsGateway: NotificationsGateway,
   ) {}
 
   // ── Feed (cursor-based) ────────────────────────────────────────────────────
@@ -283,6 +287,24 @@ export class PostsService {
     await this.likeRepo.save(this.likeRepo.create({ userId, postId }));
     await this.postRepo.increment({ id: postId }, 'likesCount', 1);
     cacheInvalidateUser(userId);
+
+    if (userId !== post.userId) {
+      const [sender, notif] = await Promise.all([
+        this.usersService.findById(userId),
+        this.notificationsService.create(post.userId, userId, 'like', postId),
+      ]);
+      this.notificationsGateway.sendNotification(post.userId, {
+        id: notif.id,
+        type: 'like',
+        senderId: userId,
+        senderUsername: sender?.username ?? '',
+        senderAvatar: sender?.avatar ?? null,
+        postId,
+        isRead: false,
+        createdAt: notif.createdAt,
+      });
+    }
+
     return { liked: true, count: post.likesCount + 1 };
   }
 
@@ -329,6 +351,24 @@ export class PostsService {
       await this.postRepo.increment({ id: postId }, 'commentsCount', 1);
     }
     cacheInvalidateUser(userId);
+
+    if (userId !== post.userId) {
+      const [sender, notif] = await Promise.all([
+        this.usersService.findById(userId),
+        this.notificationsService.create(post.userId, userId, 'comment', postId),
+      ]);
+      this.notificationsGateway.sendNotification(post.userId, {
+        id: notif.id,
+        type: 'comment',
+        senderId: userId,
+        senderUsername: sender?.username ?? '',
+        senderAvatar: sender?.avatar ?? null,
+        postId,
+        isRead: false,
+        createdAt: notif.createdAt,
+      });
+    }
+
     return saved;
   }
 

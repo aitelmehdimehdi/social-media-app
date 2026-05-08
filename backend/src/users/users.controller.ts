@@ -44,6 +44,11 @@ export class UsersController {
     return this.usersService.removeAvatar(user.id);
   }
 
+  @Patch('me/push-token')
+  savePushToken(@CurrentUser() user: User, @Body('token') token: string) {
+    return this.usersService.savePushToken(user.id, token);
+  }
+
   @Patch('me')
   updateMe(@CurrentUser() user: User, @Body() dto: UpdateProfileDto) {
     return this.usersService.updateProfile(user.id, dto);
@@ -62,6 +67,11 @@ export class UsersController {
     @Body() dto: ShareProfileDto,
   ): Promise<{ sent: boolean }> {
     return this.usersService.shareProfile(user.id, username, dto.receiverId);
+  }
+
+  @Get('by-username/:username')
+  getProfileByUsername(@Param('username') username: string, @CurrentUser() user: User) {
+    return this.usersService.getProfileByUsername(username, user.id);
   }
 
   @Get(':id/profile')

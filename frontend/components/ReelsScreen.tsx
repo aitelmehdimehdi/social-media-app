@@ -8,6 +8,7 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -92,6 +93,12 @@ function ReelItem({
     }
   };
 
+  const handleShare = async () => {
+    try {
+      await Share.share({ message: `Check out this reel by @${item.username}!` });
+    } catch {}
+  };
+
   const handleSave = async () => {
     if (!item.id) return;
     const next = !saved;
@@ -138,22 +145,22 @@ function ReelItem({
 
       <View style={styles.sideBar}>
         <TouchableOpacity style={styles.sideAction} onPress={handleLike}>
-          <Text style={styles.sideIcon}>{liked ? "❤️" : "🤍"}</Text>
+          <Ionicons name={liked ? "heart" : "heart-outline"} size={28} color={liked ? "#e74c3c" : "#fff"} />
           <Text style={styles.sideCount}>{fmt(likes)}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.sideAction}
           onPress={() => item.id ? onCommentPress(item.id, () => setCommentsCount((c) => c + 1)) : undefined}
         >
-          <Text style={styles.sideIcon}>💬</Text>
+          <Ionicons name="chatbubble-outline" size={26} color="#fff" />
           <Text style={styles.sideCount}>{fmt(commentsCount)}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.sideAction}>
-          <Text style={styles.sideIcon}>📤</Text>
+        <TouchableOpacity style={styles.sideAction} onPress={handleShare}>
+          <Ionicons name="paper-plane-outline" size={26} color="#fff" />
           <Text style={styles.sideCount}>{fmt(item.shares)}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.sideAction} onPress={handleSave}>
-          <Text style={styles.sideIcon}>{saved ? "🔖" : "🏷️"}</Text>
+          <Ionicons name={saved ? "bookmark" : "bookmark-outline"} size={26} color="#fff" />
         </TouchableOpacity>
         <View style={styles.discWrap}>
           {item.avatar ? (
@@ -277,7 +284,6 @@ const styles = StyleSheet.create({
   cameraIcon: { fontSize: 24, color: "#fff" },
   sideBar: { position: "absolute", right: 12, bottom: 120, alignItems: "center", gap: 18 },
   sideAction: { alignItems: "center", gap: 4 },
-  sideIcon: { fontSize: 28 },
   sideCount: { color: "#fff", fontSize: 12, fontWeight: "600" },
   discWrap: {
     width: 44, height: 44, borderRadius: 22, borderWidth: 2, borderColor: "#fff",

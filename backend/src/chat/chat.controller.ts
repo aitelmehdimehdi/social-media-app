@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -23,5 +23,10 @@ export class ChatController {
   @Post('send')
   send(@CurrentUser() user: User, @Body() dto: SendMessageDto) {
     return this.chatService.sendMessage(user.id, dto.receiverId, dto.content);
+  }
+
+  @Patch(':userId/read')
+  markAsRead(@Param('userId') senderId: string, @CurrentUser() user: User) {
+    return this.chatService.markAsRead(senderId, user.id);
   }
 }

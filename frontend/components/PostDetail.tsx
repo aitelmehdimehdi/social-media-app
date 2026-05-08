@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { ResizeMode, Video } from "expo-av";
 import {
   ActivityIndicator,
   Alert,
@@ -9,6 +10,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -19,7 +21,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { API_URL } from "../config/env";
-import { apiGet, apiPost, getToken } from "../utils/api";
+import { apiDelete, apiGet, apiPost, getToken } from "../utils/api";
 import AvatarImage from "./AvatarImage";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -31,6 +33,7 @@ type PostData = {
   userId: string;
   location?: string;
   image: string;
+  videoUrl?: string | null;
   likes: number;
   caption: string;
   comments: number;
@@ -211,7 +214,7 @@ function PostLayout({ post, comments, liked, likes, onLike, onComment, commentTe
 
 // ─── Reel layout ──────────────────────────────────────────────────────────────
 
-function ReelLayout({ post, liked, likes, onLike, onComment, commentText, setCommentText, submitting, showComments, setShowComments, comments, inputRef, colors }: {
+function ReelLayout({ post, liked, likes, onLike, onComment, commentText, setCommentText, submitting, showComments, setShowComments, comments, inputRef, colors, videoRef, onShare }: {
   post: PostData;
   liked: boolean;
   likes: number;
@@ -225,12 +228,26 @@ function ReelLayout({ post, liked, likes, onLike, onComment, commentText, setCom
   comments: CommentData[];
   inputRef: React.RefObject<TextInput | null>;
   colors: ReturnType<typeof import("../context/ThemeContext").useTheme>["colors"];
+  videoRef: React.RefObject<Video>;
+  onShare: () => void;
 }) {
   const router = useRouter();
 
   return (
     <View style={styles.reelContainer}>
-      <Image source={{ uri: post.image }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      {post.videoUrl ? (
+        <Video
+          ref={videoRef}
+          source={{ uri: post.videoUrl }}
+          style={StyleSheet.absoluteFill}
+          resizeMode={ResizeMode.COVER}
+          shouldPlay
+          isLooping
+          isMuted={false}
+        />
+      ) : (
+        <Image source={{ uri: post.image }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      )}
       <View style={[StyleSheet.absoluteFill, styles.reelOverlay]} />
 
       {/* Side bar */}
@@ -243,7 +260,7 @@ function ReelLayout({ post, liked, likes, onLike, onComment, commentText, setCom
           <Ionicons name="chatbubble-outline" size={26} color="#fff" />
           <Text style={styles.reelSideCount}>{post.comments}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.reelSideBtn} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.reelSideBtn} onPress={onShare} activeOpacity={0.7}>
           <Ionicons name="paper-plane-outline" size={26} color="#fff" />
           <Text style={styles.reelSideCount}>{post.shares ?? 0}</Text>
         </TouchableOpacity>
@@ -346,6 +363,7 @@ export default function PostDetailScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const { id, type } = useLocalSearchParams<{ id: string; type?: string }>();
   const isReel = type === "reel";
@@ -359,13 +377,22 @@ export default function PostDetailScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const inputRef = useRef<TextInput>(null);
+  const videoRef = useRef<Video>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        videoRef.current?.pauseAsync().catch(() => {});
+      };
+    }, []),
+  );
 
   useEffect(() => {
     if (!id) return;
     const endpoint = isReel ? `/posts/reels/${id}` : `/posts/${id}`;
     Promise.all([
       apiGet<PostData>(endpoint),
-      isReel ? Promise.resolve([]) : apiGet<CommentData[]>(`/posts/${id}/comments`),
+      isReel ? apiGet<CommentData[]>(`/posts/reels/${id}/comments`) : apiGet<CommentData[]>(`/posts/${id}/comments`),
     ])
       .then(([postData, commentsData]) => {
         setPost(postData);
@@ -378,12 +405,13 @@ export default function PostDetailScreen() {
   }, [id]);
 
   const handleLike = async () => {
-    if (!id || isReel) return;
+    if (!id) return;
     const next = !liked;
     setLiked(next);
     setLikes((c) => c + (next ? 1 : -1));
     try {
-      await apiPost(`/posts/${id}/like`, {});
+      const endpoint = isReel ? `/posts/reels/${id}/like` : `/posts/${id}/like`;
+      await apiPost(endpoint, {});
     } catch {
       setLiked(!next);
       setLikes((c) => c + (next ? -1 : 1));
@@ -391,10 +419,11 @@ export default function PostDetailScreen() {
   };
 
   const handleComment = async () => {
-    if (!commentText.trim() || !id || isReel) return;
+    if (!commentText.trim() || !id) return;
     setSubmitting(true);
     try {
-      const saved = await apiPost<{ id: string }>(`/posts/${id}/comments`, { content: commentText.trim() });
+      const endpoint = isReel ? `/posts/reels/${id}/comments` : `/posts/${id}/comments`;
+      const saved = await apiPost<{ id: string }>(endpoint, { content: commentText.trim() });
       const newComment: CommentData = {
         id: saved.id,
         username: user?.username ?? "",
@@ -416,7 +445,39 @@ export default function PostDetailScreen() {
     }
   };
 
+  const handleShare = async () => {
+    try {
+      await Share.share({ message: `Check out this reel by @${post?.username ?? ""}!` });
+    } catch {}
+  };
+
   const goBack = () => router.replace("/Profile");
+
+  const handleDelete = () => {
+    const label = isReel ? "reel" : "post";
+    Alert.alert(
+      `Delete ${label}`,
+      `Are you sure you want to delete this ${label}? This cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const endpoint = isReel ? `/posts/reels/${id}` : `/posts/${id}`;
+              await apiDelete(endpoint);
+              router.replace("/Profile");
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : "Unknown error";
+              console.error("[PostDetail] delete failed:", msg);
+              Alert.alert("Error", `Failed to delete: ${msg}`);
+            }
+          },
+        },
+      ],
+    );
+  };
 
   if (loading) {
     return (
@@ -451,10 +512,6 @@ export default function PostDetailScreen() {
   if (isReel) {
     return (
       <SafeAreaView style={[styles.screen, { backgroundColor: "#000" }]} edges={["top"]}>
-        {/* Back button */}
-        <TouchableOpacity style={styles.reelBack} onPress={goBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Ionicons name="chevron-back" size={28} color="#fff" />
-        </TouchableOpacity>
         <ReelLayout
           post={post}
           liked={liked}
@@ -469,7 +526,18 @@ export default function PostDetailScreen() {
           comments={comments}
           inputRef={inputRef}
           colors={colors}
+          videoRef={videoRef}
+          onShare={handleShare}
         />
+        {/* Back and delete buttons rendered last so iOS hit-testing puts them on top */}
+        <TouchableOpacity style={[styles.reelBack, { top: insets.top + 12 }]} onPress={goBack} hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}>
+          <Ionicons name="chevron-back" size={28} color="#fff" />
+        </TouchableOpacity>
+        {post.userId === user?.id && (
+          <TouchableOpacity style={[styles.reelDelete, { top: insets.top + 12 }]} onPress={handleDelete} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <Ionicons name="trash-outline" size={22} color="#fff" />
+          </TouchableOpacity>
+        )}
       </SafeAreaView>
     );
   }
@@ -482,7 +550,13 @@ export default function PostDetailScreen() {
           <Ionicons name="chevron-back" size={26} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.navTitle, { color: colors.text }]}>Post</Text>
-        <View style={{ width: 26 }} />
+        {post.userId === user?.id ? (
+          <TouchableOpacity onPress={handleDelete} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Ionicons name="trash-outline" size={22} color="#e74c3c" />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 26 }} />
+        )}
       </View>
       <PostLayout
         post={post}
@@ -582,6 +656,7 @@ const styles = StyleSheet.create({
   reelContainer: { flex: 1 },
   reelOverlay: { backgroundColor: "rgba(0,0,0,0.25)" },
   reelBack: { position: "absolute", top: 12, left: 16, zIndex: 20 },
+  reelDelete: { position: "absolute", top: 12, right: 16, zIndex: 20 },
   reelSidebar: {
     position: "absolute",
     right: 14,

@@ -60,7 +60,8 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
     const err = await res.json().catch(() => ({ message: res.statusText }));
     throw new Error((err as { message: string }).message ?? res.statusText);
   }
-  return res.json() as Promise<T>;
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
@@ -72,12 +73,16 @@ export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
   });
   if (res.status === 401) return handleUnauthorized();
   if (!res.ok) throw new Error(`PATCH ${path} failed: ${res.status}`);
-  return res.json() as Promise<T>;
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 export async function apiDelete(path: string): Promise<void> {
   const headers = await authHeaders();
   const res = await fetch(`${API_URL}${path}`, { method: 'DELETE', headers });
   if (res.status === 401) { await handleUnauthorized(); return; }
-  if (!res.ok) throw new Error(`DELETE ${path} failed: ${res.status}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: `${res.status}` }));
+    throw new Error((err as { message?: string }).message ?? `${res.status}`);
+  }
 }

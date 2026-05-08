@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -12,8 +13,12 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { apiGet, apiPatch } from "../utils/api";
+import { getSocket } from "../utils/socket";
 import AvatarImage from "./AvatarImage";
+import type { Socket } from "socket.io-client";
 
 // ─── Bubble colors ────────────────────────────────────────────────────────────
 // Dark theme:  my bubbles = green,  their bubbles = white  (text dark on white)
@@ -24,24 +29,27 @@ const BUBBLE = {
   light: { mine: "#1565C0", theirs: "#212121" },
 };
 
-// ─── Static mock data ─────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type Message = { id: string; text: string; isMine: boolean; time: string };
 
-const MOCK_MESSAGES: Message[] = [
-  { id: "11", text: "Sounds like a plan! 👋", isMine: true,  time: "11:05 AM" },
-  { id: "10", text: "Let's grab coffee and talk about the project 🎉", isMine: false, time: "11:03 AM" },
-  { id: "9",  text: "Yes I am! What do you have in mind?", isMine: true,  time: "11:02 AM" },
-  { id: "8",  text: "By the way, are you free this weekend?", isMine: false, time: "11:00 AM" },
-  { id: "7",  text: "Perfect! Looking forward to it 👍", isMine: false, time: "10:37 AM" },
-  { id: "6",  text: "I'll send you the link later, it's almost ready for testing", isMine: true,  time: "10:36 AM" },
-  { id: "5",  text: "Wow that sounds really cool! I'd love to see it 😍", isMine: false, time: "10:35 AM" },
-  { id: "4",  text: "Sure! Built it with React Native — dark mode and everything 😄", isMine: true,  time: "10:33 AM" },
-  { id: "3",  text: "That's awesome! Can you share the details?", isMine: false, time: "10:32 AM" },
-  { id: "2",  text: "I'm great, thanks! Just finished that project 🚀", isMine: true,  time: "10:31 AM" },
-  { id: "1",  text: "Hey! How are you doing?", isMine: false, time: "10:30 AM" },
-];
+type ApiMessage = {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
+};
 
+function toMsg(m: ApiMessage, myId: string): Message {
+  return {
+    id: m.id,
+    text: m.content,
+    isMine: m.senderId === myId,
+    time: new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+  };
+}
 
 // ─── Message bubble ───────────────────────────────────────────────────────────
 
@@ -86,26 +94,55 @@ function Bubble({
 
 export default function ConversationScreen() {
   const router = useRouter();
-  const { username, avatar } = useLocalSearchParams<{ username: string; avatar: string }>();
+  const { id: otherId, username, avatar } = useLocalSearchParams<{
+    id: string;
+    username: string;
+    avatar: string;
+  }>();
   const { colors, isDark } = useTheme();
+  const { user } = useAuth();
 
-  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState("");
+  const socketRef = useRef<Socket | null>(null);
 
   const otherAvatar = avatar || null;
+  const myId = user?.id ?? "";
+
+  useEffect(() => {
+    if (!otherId || !myId) return;
+
+    // Load message history and mark messages from the other user as read
+    apiGet<ApiMessage[]>(`/chat/${otherId}/messages`)
+      .then((data) => setMessages([...data].reverse().map((m) => toMsg(m, myId))))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+    apiPatch(`/chat/${otherId}/read`).catch(console.error);
+
+    // Connect socket and listen for incoming messages
+    const sock = getSocket(myId);
+    socketRef.current = sock;
+
+    const handleNewMessage = (msg: ApiMessage) => {
+      setMessages((prev) => [toMsg(msg, myId), ...prev]);
+    };
+
+    sock.on("newMessage", handleNewMessage);
+
+    return () => {
+      sock.off("newMessage", handleNewMessage);
+    };
+  }, [otherId, myId]);
 
   const handleSend = () => {
     const trimmed = draft.trim();
-    if (!trimmed) return;
-    setMessages((prev) => [
-      {
-        id: String(Date.now()),
-        text: trimmed,
-        isMine: true,
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      },
-      ...prev,
-    ]);
+    if (!trimmed || !socketRef.current || !myId || !otherId) return;
+    socketRef.current.emit("sendMessage", {
+      senderId: myId,
+      receiverId: otherId,
+      content: trimmed,
+    });
     setDraft("");
   };
 
@@ -147,16 +184,27 @@ export default function ConversationScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
-        <FlatList
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <Bubble msg={item} otherAvatar={otherAvatar} isDark={isDark} />
-          )}
-          inverted
-          contentContainerStyle={styles.messageList}
-          showsVerticalScrollIndicator={false}
-        />
+        {loading ? (
+          <View style={styles.centered}>
+            <ActivityIndicator color={colors.primary} />
+          </View>
+        ) : (
+          <FlatList
+            data={messages}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <Bubble msg={item} otherAvatar={otherAvatar} isDark={isDark} />
+            )}
+            inverted
+            contentContainerStyle={styles.messageList}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No messages yet. Say hi!
+              </Text>
+            }
+          />
+        )}
 
         {/* Input bar */}
         <View style={[styles.inputBar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
@@ -209,6 +257,7 @@ export default function ConversationScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  centered: { flex: 1, alignItems: "center", justifyContent: "center" },
 
   // Header
   header: {
@@ -220,13 +269,15 @@ const styles = StyleSheet.create({
     flex: 1, flexDirection: "row", alignItems: "center",
     marginLeft: 8, gap: 10,
   },
-  headerAvatar: { width: 38, height: 38, borderRadius: 19 },
   headerName: { fontSize: 15, fontWeight: "700" },
   headerStatus: { fontSize: 12, marginTop: 1 },
   headerActions: { flexDirection: "row", gap: 14, marginLeft: 8 },
 
   // Messages list
   messageList: { paddingHorizontal: 12, paddingVertical: 16, gap: 8 },
+
+  // Empty
+  emptyText: { textAlign: "center", fontSize: 14, paddingVertical: 40 },
 
   // Bubble row
   row: { flexDirection: "row", alignItems: "flex-end", marginVertical: 2 },

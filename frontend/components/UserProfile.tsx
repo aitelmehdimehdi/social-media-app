@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   Image,
   ScrollView,
@@ -12,62 +13,30 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../context/ThemeContext";
+import { apiDelete, apiGet, apiPost } from "../utils/api";
 import AvatarImage from "./AvatarImage";
 
 const { width: W } = Dimensions.get("window");
 const GRID_SIZE = W / 3 - 1;
 
-// ─── Static mock data (no backend yet) ───────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-const MOCK_USERS: Record<string, {
+type UserProfile = {
+  id: string;
+  username: string;
   fullName: string;
-  avatar: null;
-  bio: string;
-  posts: number;
-  followers: number;
-  following: number;
-}> = {
-  "alex.photo": {
-    fullName: "Alex Photography",
-    avatar: null,
-    bio: "📷 Photographer | Paris lover",
-    posts: 48,
-    followers: 1240,
-    following: 312,
-  },
-  "maria_art": {
-    fullName: "Maria Art",
-    avatar: null,
-    bio: "🎨 Digital artist | New York",
-    posts: 67,
-    followers: 3820,
-    following: 180,
-  },
-  "john_travels": {
-    fullName: "John Travels",
-    avatar: null,
-    bio: "✈️ Wanderer | 42 countries",
-    posts: 134,
-    followers: 8900,
-    following: 450,
-  },
-  "mehdi.dev": {
-    fullName: "Mehdi",
-    avatar: null,
-    bio: "📱 Mobile developer\n🚀 Building cool stuff\n📍 Fes, Morocco",
-    posts: 23,
-    followers: 560,
-    following: 214,
-  },
+  avatar: string | null;
+  bio: string | null;
+  postsCount: number;
+  followersCount: number;
+  followingCount: number;
+  isFollowing: boolean;
 };
 
-const FALLBACK_USER = {
-  fullName: "Instagram User",
-  avatar: null,
-  bio: "",
-  posts: 12,
-  followers: 128,
-  following: 64,
+type PostItem = {
+  id: string;
+  image: string | null;
+  type: "post" | "reel";
 };
 
 // ─── Stat Box ─────────────────────────────────────────────────────────────────
@@ -88,15 +57,93 @@ export default function UserProfileScreen() {
   const router = useRouter();
   const { username } = useLocalSearchParams<{ username: string }>();
   const { colors } = useTheme();
+
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [posts, setPosts] = useState<PostItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [following, setFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followLoading, setFollowLoading] = useState(false);
 
-  const userData = MOCK_USERS[username ?? ""] ?? FALLBACK_USER;
+  useEffect(() => {
+    if (!username) return;
+    apiGet<UserProfile>(`/users/by-username/${username}`)
+      .then(async (profileData) => {
+        setProfile(profileData);
+        setFollowing(profileData.isFollowing);
+        setFollowersCount(profileData.followersCount);
+        const postsData = await apiGet<PostItem[]>(`/posts/user/${profileData.id}`).catch(() => [] as PostItem[]);
+        setPosts(postsData);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [username]);
 
-  const gridImages = Array.from({ length: 12 }, (_, i) => ({
-    id: String(i),
-    uri: `https://picsum.photos/seed/${username}${i}/300/300`,
-    isVideo: i % 5 === 0,
-  }));
+  const handleFollow = async () => {
+    if (!profile || followLoading) return;
+    setFollowLoading(true);
+    const next = !following;
+    setFollowing(next);
+    setFollowersCount((c) => c + (next ? 1 : -1));
+    try {
+      if (next) {
+        await apiPost(`/users/${profile.id}/follow`);
+      } else {
+        await apiDelete(`/users/${profile.id}/follow`);
+      }
+    } catch {
+      setFollowing(!next);
+      setFollowersCount((c) => c + (next ? -1 : 1));
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const handleMessage = () => {
+    if (!profile) return;
+    router.push({
+      pathname: "/conversation/[id]",
+      params: {
+        id: profile.id,
+        username: profile.username,
+        avatar: profile.avatar ?? "",
+      },
+    });
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Ionicons name="chevron-back" size={26} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.headerUsername, { color: colors.text }]}>{username}</Text>
+          <View style={{ width: 26 }} />
+        </View>
+        <View style={styles.centered}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Ionicons name="chevron-back" size={26} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.headerUsername, { color: colors.text }]}>{username}</Text>
+          <View style={{ width: 26 }} />
+        </View>
+        <View style={styles.centered}>
+          <Text style={{ color: colors.textSecondary }}>User not found.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -108,7 +155,7 @@ export default function UserProfileScreen() {
         >
           <Ionicons name="chevron-back" size={26} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerUsername, { color: colors.text }]}>{username}</Text>
+        <Text style={[styles.headerUsername, { color: colors.text }]}>{profile.username}</Text>
         <View style={{ width: 26 }} />
       </View>
 
@@ -116,20 +163,20 @@ export default function UserProfileScreen() {
         {/* Profile row */}
         <View style={styles.profileRow}>
           <View style={[styles.avatarWrap, { borderColor: colors.storyRing }]}>
-            <AvatarImage uri={userData.avatar} size={82} />
+            <AvatarImage uri={profile.avatar} size={82} />
           </View>
           <View style={styles.statsRow}>
-            <StatBox value={userData.posts} label="Posts" />
-            <StatBox value={userData.followers + (following ? 1 : 0)} label="Followers" />
-            <StatBox value={userData.following} label="Following" />
+            <StatBox value={profile.postsCount} label="Posts" />
+            <StatBox value={followersCount} label="Followers" />
+            <StatBox value={profile.followingCount} label="Following" />
           </View>
         </View>
 
         {/* Bio */}
         <View style={styles.bioSection}>
-          <Text style={[styles.bioName, { color: colors.text }]}>{userData.fullName}</Text>
-          {!!userData.bio && (
-            <Text style={[styles.bioText, { color: colors.text }]}>{userData.bio}</Text>
+          <Text style={[styles.bioName, { color: colors.text }]}>{profile.fullName}</Text>
+          {!!profile.bio && (
+            <Text style={[styles.bioText, { color: colors.text }]}>{profile.bio}</Text>
           )}
         </View>
 
@@ -140,8 +187,9 @@ export default function UserProfileScreen() {
               styles.actionBtn,
               { backgroundColor: following ? colors.surface : colors.primary },
             ]}
-            onPress={() => setFollowing((prev) => !prev)}
+            onPress={handleFollow}
             activeOpacity={0.8}
+            disabled={followLoading}
           >
             <Text style={[styles.actionBtnText, { color: following ? colors.text : "#fff" }]}>
               {following ? "Following" : "Follow"}
@@ -150,6 +198,7 @@ export default function UserProfileScreen() {
 
           <TouchableOpacity
             style={[styles.actionBtn, { backgroundColor: colors.surface }]}
+            onPress={handleMessage}
             activeOpacity={0.8}
           >
             <Text style={[styles.actionBtnText, { color: colors.text }]}>Message</Text>
@@ -163,7 +212,7 @@ export default function UserProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Tab strip (grid only for now) */}
+        {/* Tab strip */}
         <View style={[styles.tabBar, { borderTopColor: colors.border }]}>
           <View style={[styles.tab, { borderBottomColor: colors.text }]}>
             <Ionicons name="grid-outline" size={22} color={colors.text} />
@@ -174,18 +223,29 @@ export default function UserProfileScreen() {
         </View>
 
         {/* Posts grid */}
-        <View style={styles.grid}>
-          {gridImages.map((item) => (
-            <TouchableOpacity key={item.id} style={styles.gridItem} activeOpacity={0.85}>
-              <Image source={{ uri: item.uri }} style={styles.gridImage} />
-              {item.isVideo && (
-                <View style={styles.videoOverlay}>
-                  <Ionicons name="play" size={12} color="#fff" />
-                </View>
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
+        {posts.length === 0 ? (
+          <View style={styles.emptyPosts}>
+            <Ionicons name="camera-outline" size={48} color={colors.textSecondary} />
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No posts yet</Text>
+          </View>
+        ) : (
+          <View style={styles.grid}>
+            {posts.map((item) => (
+              <TouchableOpacity key={item.id} style={styles.gridItem} activeOpacity={0.85}>
+                {item.image ? (
+                  <Image source={{ uri: item.image }} style={styles.gridImage} />
+                ) : (
+                  <View style={[styles.gridImage, { backgroundColor: "#222" }]} />
+                )}
+                {item.type === "reel" && (
+                  <View style={styles.videoOverlay}>
+                    <Ionicons name="play" size={12} color="#fff" />
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -195,6 +255,7 @@ export default function UserProfileScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  centered: { flex: 1, alignItems: "center", justifyContent: "center" },
   header: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 0.5,
@@ -205,7 +266,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingTop: 16, paddingBottom: 10,
   },
   avatarWrap: { width: 90, height: 90, borderRadius: 45, borderWidth: 2.5, padding: 2, marginRight: 24 },
-  avatar: { width: 82, height: 82, borderRadius: 41 },
   statsRow: { flex: 1, flexDirection: "row", justifyContent: "space-around" },
   statBox: { alignItems: "center" },
   statValue: { fontSize: 17, fontWeight: "700" },
@@ -220,10 +280,9 @@ const styles = StyleSheet.create({
     width: 40, paddingVertical: 9, borderRadius: 50, borderWidth: 1, alignItems: "center",
   },
   tabBar: { flexDirection: "row", borderTopWidth: 0.5 },
-  tab: {
-    flex: 1, paddingVertical: 10, alignItems: "center",
-    borderBottomWidth: 1.5,
-  },
+  tab: { flex: 1, paddingVertical: 10, alignItems: "center", borderBottomWidth: 1.5 },
+  emptyPosts: { alignItems: "center", paddingVertical: 48, gap: 10 },
+  emptyText: { fontSize: 14 },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 1.5 },
   gridItem: { width: GRID_SIZE, height: GRID_SIZE },
   gridImage: { width: "100%", height: "100%" },

@@ -1,9 +1,14 @@
+import { Ionicons } from "@expo/vector-icons";
+import { ResizeMode, Video } from "expo-av";
+import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import CommentsSheet from "./CommentsSheet";
 import {
   ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -27,6 +32,7 @@ type Reel = {
   caption: string;
   audio: string;
   thumbnail: string;
+  videoUrl?: string;
   likes: number;
   comments: number;
   shares: number;
@@ -42,15 +48,40 @@ function fmt(n: number): string {
   return String(n);
 }
 
+const PLACEHOLDER_REEL: Reel = {
+  id: "", username: "", avatar: "", caption: "", audio: "",
+  thumbnail: "", likes: 0, comments: 0, shares: 0, isLiked: false, isSaved: false,
+};
+
 // ─── Single Reel Item ─────────────────────────────────────────────────────────
 
-function ReelItem({ item }: { item: Reel }) {
+function ReelItem({
+  item,
+  isActive,
+  onCommentPress,
+}: {
+  item: Reel;
+  isActive: boolean;
+  onCommentPress: (reelId: string, onAdded: () => void) => void;
+}) {
+  const router = useRouter();
+  const videoRef = useRef<Video>(null);
   const [liked, setLiked] = useState(item.isLiked);
   const [saved, setSaved] = useState(item.isSaved);
   const [likes, setLikes] = useState(item.likes);
+  const [commentsCount, setCommentsCount] = useState(item.comments);
   const [paused, setPaused] = useState(false);
 
+  useEffect(() => {
+    if (!isActive) {
+      videoRef.current?.pauseAsync().catch(() => {});
+    } else if (!paused) {
+      videoRef.current?.playAsync().catch(() => {});
+    }
+  }, [isActive, paused]);
+
   const handleLike = async () => {
+    if (!item.id) return;
     const next = !liked;
     setLiked(next);
     setLikes((prev) => (next ? prev + 1 : prev - 1));
@@ -62,7 +93,14 @@ function ReelItem({ item }: { item: Reel }) {
     }
   };
 
+  const handleShare = async () => {
+    try {
+      await Share.share({ message: `Check out this reel by @${item.username}!` });
+    } catch {}
+  };
+
   const handleSave = async () => {
+    if (!item.id) return;
     const next = !saved;
     setSaved(next);
     try {
@@ -79,7 +117,17 @@ function ReelItem({ item }: { item: Reel }) {
         activeOpacity={1}
         onPress={() => setPaused(!paused)}
       >
-        <Image source={{ uri: item.thumbnail }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        {item.videoUrl ? (
+          <Video
+            ref={videoRef}
+            source={{ uri: item.videoUrl }}
+            style={StyleSheet.absoluteFill}
+            resizeMode={ResizeMode.COVER}
+            shouldPlay={isActive && !paused}
+            isLooping
+            isMuted={false}
+          />
+        ) : null}
         <View style={styles.gradient} />
         {paused && (
           <View style={styles.pauseOverlay}>
@@ -90,43 +138,58 @@ function ReelItem({ item }: { item: Reel }) {
 
       <SafeAreaView style={styles.topBar}>
         <Text style={styles.topTitle}>Reels</Text>
-        <TouchableOpacity><Text style={styles.cameraIcon}>📷</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push("/CreateReel")} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Ionicons name="camera-outline" size={26} color="#fff" />
+        </TouchableOpacity>
       </SafeAreaView>
 
       <View style={styles.sideBar}>
         <TouchableOpacity style={styles.sideAction} onPress={handleLike}>
-          <Text style={styles.sideIcon}>{liked ? "❤️" : "🤍"}</Text>
+          <Ionicons name={liked ? "heart" : "heart-outline"} size={28} color={liked ? "#e74c3c" : "#fff"} />
           <Text style={styles.sideCount}>{fmt(likes)}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.sideAction}>
-          <Text style={styles.sideIcon}>💬</Text>
-          <Text style={styles.sideCount}>{fmt(item.comments)}</Text>
+        <TouchableOpacity
+          style={styles.sideAction}
+          onPress={() => item.id ? onCommentPress(item.id, () => setCommentsCount((c) => c + 1)) : undefined}
+        >
+          <Ionicons name="chatbubble-outline" size={26} color="#fff" />
+          <Text style={styles.sideCount}>{fmt(commentsCount)}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.sideAction}>
-          <Text style={styles.sideIcon}>📤</Text>
+        <TouchableOpacity style={styles.sideAction} onPress={handleShare}>
+          <Ionicons name="paper-plane-outline" size={26} color="#fff" />
           <Text style={styles.sideCount}>{fmt(item.shares)}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.sideAction} onPress={handleSave}>
-          <Text style={styles.sideIcon}>{saved ? "🔖" : "🏷️"}</Text>
+          <Ionicons name={saved ? "bookmark" : "bookmark-outline"} size={26} color="#fff" />
         </TouchableOpacity>
         <View style={styles.discWrap}>
-          <Image source={{ uri: item.avatar }} style={styles.disc} />
+          {item.avatar ? (
+            <Image source={{ uri: item.avatar }} style={styles.disc} />
+          ) : null}
           <View style={styles.discCenter} />
         </View>
       </View>
 
       <View style={styles.bottomInfo}>
-        <View style={styles.userRow}>
-          <Image source={{ uri: item.avatar }} style={styles.avatar} />
-          <Text style={styles.username}>{item.username}</Text>
-          <TouchableOpacity style={styles.followBtn}>
-            <Text style={styles.followText}>Follow</Text>
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.caption} numberOfLines={2}>{item.caption}</Text>
-        <View style={styles.audioRow}>
-          <Text style={styles.audioText}>{item.audio}</Text>
-        </View>
+        {item.username ? (
+          <View style={styles.userRow}>
+            {item.avatar ? (
+              <Image source={{ uri: item.avatar }} style={styles.avatar} />
+            ) : null}
+            <Text style={styles.username}>{item.username}</Text>
+            <TouchableOpacity style={styles.followBtn}>
+              <Text style={styles.followText}>Follow</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+        {item.caption ? (
+          <Text style={styles.caption} numberOfLines={2}>{item.caption}</Text>
+        ) : null}
+        {item.audio ? (
+          <View style={styles.audioRow}>
+            <Text style={styles.audioText}>{item.audio}</Text>
+          </View>
+        ) : null}
       </View>
     </View>
   );
@@ -138,6 +201,15 @@ export default function ReelsScreen() {
   const [reels, setReels] = useState<Reel[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [activeReel, setActiveReel] = useState<{ id: string; onAdded: () => void } | null>(null);
+  const [screenFocused, setScreenFocused] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      setScreenFocused(true);
+      return () => setScreenFocused(false);
+    }, []),
+  );
 
   useEffect(() => {
     apiGet<Reel[]>("/posts/reels")
@@ -163,21 +235,20 @@ export default function ReelsScreen() {
     );
   }
 
-  if (reels.length === 0) {
-    return (
-      <View style={[styles.screen, { justifyContent: "center", alignItems: "center" }]}>
-        <Text style={{ color: "#fff", fontSize: 14 }}>No reels yet. Run the seed script!</Text>
-      </View>
-    );
-  }
+  const displayReels = reels.length > 0 ? reels : [PLACEHOLDER_REEL];
 
   return (
     <View style={styles.screen}>
       <FlatList
-        data={reels}
-        keyExtractor={(item) => item.id}
+        data={displayReels}
+        keyExtractor={(item, index) => item.id || String(index)}
         renderItem={({ item, index }) => (
-          <ReelItem item={item} key={index === activeIndex ? "active" : item.id} />
+          <ReelItem
+            item={item}
+            key={index === activeIndex ? "active" : item.id}
+            isActive={index === activeIndex && screenFocused}
+            onCommentPress={(reelId, onAdded) => setActiveReel({ id: reelId, onAdded })}
+          />
         )}
         pagingEnabled
         showsVerticalScrollIndicator={false}
@@ -186,6 +257,12 @@ export default function ReelsScreen() {
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         getItemLayout={(_, index) => ({ length: H, offset: H * index, index })}
+      />
+      <CommentsSheet
+        reelId={activeReel?.id}
+        visible={!!activeReel}
+        onClose={() => setActiveReel(null)}
+        onCommentAdded={activeReel?.onAdded}
       />
     </View>
   );
@@ -207,7 +284,6 @@ const styles = StyleSheet.create({
   cameraIcon: { fontSize: 24, color: "#fff" },
   sideBar: { position: "absolute", right: 12, bottom: 120, alignItems: "center", gap: 18 },
   sideAction: { alignItems: "center", gap: 4 },
-  sideIcon: { fontSize: 28 },
   sideCount: { color: "#fff", fontSize: 12, fontWeight: "600" },
   discWrap: {
     width: 44, height: 44, borderRadius: 22, borderWidth: 2, borderColor: "#fff",

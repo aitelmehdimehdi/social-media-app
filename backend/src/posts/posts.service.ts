@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Not, Repository } from 'typeorm';
 import { Post } from './post.entity';
@@ -15,6 +15,9 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreateReelDto } from './dto/create-reel.dto';
 import { UsersService } from '../users/users.service';
+import { MediaService } from '../media/media.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 // ─── In-memory cache ──────────────────────────────────────────────────────────
 // Keys used:
@@ -39,6 +42,10 @@ function cacheInvalidateUser(userId: string): void {
   for (const key of feedCache.keys()) {
     if (key.includes(userId)) feedCache.delete(key);
   }
+}
+
+function videoToThumbnail(videoUrl: string): string {
+  return videoUrl.replace(/\.[^/.]+$/, '.jpg');
 }
 
 // ─── Response types ───────────────────────────────────────────────────────────
@@ -109,6 +116,9 @@ export class PostsService {
     @InjectRepository(Follow)     private followRepo: Repository<Follow>,
     @InjectRepository(Message)    private messageRepo: Repository<Message>,
     private usersService: UsersService,
+    private mediaService: MediaService,
+    private notificationsService: NotificationsService,
+    private notificationsGateway: NotificationsGateway,
   ) {}
 
   // ── Feed (scoring algorithm + offset cursor) ───────────────────────────────
@@ -245,16 +255,50 @@ export class PostsService {
   }
 
   async findByUser(userId: string): Promise<object[]> {
-    const posts = await this.postRepo.find({
-      where: { userId },
-      order: { createdAt: 'DESC' },
-    });
-    return posts.map((post) => ({
-      id:   post.id,
+    const [posts, reels] = await Promise.all([
+      this.postRepo.find({ where: { userId }, order: { createdAt: 'DESC' } }),
+      this.reelRepo.find({ where: { userId }, order: { createdAt: 'DESC' } }),
+    ]);
+
+    const postItems = posts.map((post) => ({
+      id:    post.id,
       image: post.imageUrl,
-      type: 'post',
-      date: post.createdAt.toISOString(),
+      type:  'post' as const,
+      date:  post.createdAt.toISOString(),
     }));
+
+    const reelItems = reels.map((reel) => ({
+      id:    reel.id,
+      image: reel.thumbnailUrl ?? (reel.videoUrl ? videoToThumbnail(reel.videoUrl) : null),
+      type:  'reel' as const,
+      date:  reel.createdAt.toISOString(),
+    }));
+
+    return [...postItems, ...reelItems].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
+  }
+
+  // ── Delete post / reel ────────────────────────────────────────────────────
+
+  async deletePost(userId: string, postId: string): Promise<void> {
+    const post = await this.postRepo.findOne({ where: { id: postId } });
+    if (!post) throw new NotFoundException('Post not found');
+    if (post.userId !== userId) throw new ForbiddenException('Not your post');
+
+    await this.commentRepo.delete({ postId });
+    await this.postRepo.remove(post);
+    this.mediaService.deleteAsset(post.imageUrl, 'image').catch(() => {});
+  }
+
+  async deleteReel(userId: string, reelId: string): Promise<void> {
+    const reel = await this.reelRepo.findOne({ where: { id: reelId } });
+    if (!reel) throw new NotFoundException('Reel not found');
+    if (reel.userId !== userId) throw new ForbiddenException('Not your reel');
+
+    await this.commentRepo.delete({ reelId });
+    await this.reelRepo.remove(reel);
+    if (reel.videoUrl) this.mediaService.deleteAsset(reel.videoUrl, 'video').catch(() => {});
   }
 
   // ── Saved & liked collections ──────────────────────────────────────────────
@@ -310,6 +354,24 @@ export class PostsService {
     await this.likeRepo.save(this.likeRepo.create({ userId, postId }));
     await this.postRepo.increment({ id: postId }, 'likesCount', 1);
     cacheInvalidateUser(userId);
+
+    if (userId !== post.userId) {
+      const [sender, notif] = await Promise.all([
+        this.usersService.findById(userId),
+        this.notificationsService.create(post.userId, userId, 'like', postId),
+      ]);
+      this.notificationsGateway.sendNotification(post.userId, {
+        id: notif.id,
+        type: 'like',
+        senderId: userId,
+        senderUsername: sender?.username ?? '',
+        senderAvatar: sender?.avatar ?? null,
+        postId,
+        isRead: false,
+        createdAt: notif.createdAt,
+      });
+    }
+
     return { liked: true, count: post.likesCount + 1 };
   }
 
@@ -355,6 +417,24 @@ export class PostsService {
       await this.postRepo.increment({ id: postId }, 'commentsCount', 1);
     }
     cacheInvalidateUser(userId);
+
+    if (userId !== post.userId) {
+      const [sender, notif] = await Promise.all([
+        this.usersService.findById(userId),
+        this.notificationsService.create(post.userId, userId, 'comment', postId),
+      ]);
+      this.notificationsGateway.sendNotification(post.userId, {
+        id: notif.id,
+        type: 'comment',
+        senderId: userId,
+        senderUsername: sender?.username ?? '',
+        senderAvatar: sender?.avatar ?? null,
+        postId,
+        isRead: false,
+        createdAt: notif.createdAt,
+      });
+    }
+
     return saved;
   }
 
@@ -448,6 +528,7 @@ export class PostsService {
       caption:  reel.caption,
       audio:    reel.audioTitle ?? '🎵 Original Audio',
       image:    reel.thumbnailUrl,
+      videoUrl: reel.videoUrl,
       likes:    reel.likesCount,
       comments: reel.commentsCount,
       shares:   reel.sharesCount,
@@ -460,11 +541,41 @@ export class PostsService {
   // ── Reels ──────────────────────────────────────────────────────────────────
 
   async getReels(userId: string, page = 1): Promise<object[]> {
-    const reels = await this.reelRepo.find({
-      order: { createdAt: 'DESC' },
-      take: 10,
-      skip: (page - 1) * 10,
+    const followRows = await this.followRepo.find({
+      where: { followerId: userId },
+      select: ['followingId'],
     });
+    const followingIds = followRows.map((f) => f.followingId);
+
+    let reels: Reel[];
+    const take = 10;
+    const skip = (page - 1) * take;
+
+    if (followingIds.length > 0) {
+      const includedIds = [...followingIds, userId];
+      reels = await this.reelRepo.find({
+        where: { userId: In(includedIds) },
+        order: { createdAt: 'DESC' },
+        take,
+        skip,
+      });
+      if (reels.length < take) {
+        const seenIds = reels.map((r) => r.id);
+        const fill = await this.reelRepo.find({
+          where: { userId: Not(In(includedIds)) },
+          order: { createdAt: 'DESC' },
+          take: take - reels.length,
+        });
+        reels = [...reels, ...fill.filter((r) => !seenIds.includes(r.id))];
+      }
+    } else {
+      reels = await this.reelRepo.find({
+        order: { createdAt: 'DESC' },
+        take,
+        skip,
+      });
+    }
+
     if (reels.length === 0) return [];
 
     const reelIds = reels.map((r) => r.id);
@@ -482,8 +593,9 @@ export class PostsService {
       caption:  reel.caption,
       audio:    reel.audioTitle ?? '🎵 Original Audio',
       thumbnail: reel.thumbnailUrl,
-      likes:    reel.likesCount,
-      comments: reel.commentsCount,
+      videoUrl:  reel.videoUrl,
+      likes:     reel.likesCount,
+      comments:  reel.commentsCount,
       shares:   reel.sharesCount,
       isLiked:  likedSet.has(reel.id),
       isSaved:  savedSet.has(reel.id),
@@ -491,8 +603,63 @@ export class PostsService {
   }
 
   async createReel(userId: string, dto: CreateReelDto): Promise<Reel> {
-    const reel = this.reelRepo.create({ ...dto, userId });
+    const thumbnailUrl = dto.thumbnailUrl ?? (dto.videoUrl ? videoToThumbnail(dto.videoUrl) : null);
+    const reel = this.reelRepo.create({ ...dto, thumbnailUrl, userId });
     return this.reelRepo.save(reel);
+  }
+
+  // ── Reel comments ──────────────────────────────────────────────────────────
+
+  async addReelComment(
+    userId: string,
+    reelId: string,
+    dto: CreateCommentDto & { parentId?: string },
+  ): Promise<Comment> {
+    const reel = await this.reelRepo.findOne({ where: { id: reelId } });
+    if (!reel) throw new NotFoundException('Reel not found');
+
+    const comment = this.commentRepo.create({
+      userId,
+      reelId,
+      postId: null,
+      content: dto.content,
+      parentId: dto.parentId ?? null,
+    });
+    const inserted = await this.commentRepo.save(comment);
+    const saved = await this.commentRepo.findOne({ where: { id: inserted.id } });
+    if (!saved) throw new NotFoundException('Comment not found after save');
+
+    if (!dto.parentId) {
+      await this.reelRepo.increment({ id: reelId }, 'commentsCount', 1);
+    }
+    return saved;
+  }
+
+  async getReelComments(reelId: string, userId: string): Promise<CommentDto[]> {
+    const all = await this.commentRepo.find({
+      where: { reelId },
+      order: { createdAt: 'ASC' },
+    });
+
+    const likedSet = new Set(
+      (await this.commentLikeRepo.find({ where: { userId } })).map((l) => l.commentId),
+    );
+
+    const toDto = (c: Comment, replies: Comment[]): CommentDto => ({
+      id: c.id,
+      username: c.user.username,
+      avatar: c.user.avatar ?? '',
+      content: c.content,
+      likes: c.likesCount,
+      isLiked: likedSet.has(c.id),
+      timeAgo: this.timeAgo(c.createdAt),
+      parentId: c.parentId,
+      replies: replies.filter((r) => r.parentId === c.id).map((r) => toDto(r, [])),
+    });
+
+    const roots = all.filter((c) => !c.parentId);
+    const replies = all.filter((c) => !!c.parentId);
+    return roots.map((root) => toDto(root, replies));
   }
 
   // ── Like / unlike reel ─────────────────────────────────────────────────────

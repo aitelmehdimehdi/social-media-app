@@ -47,6 +47,28 @@ export class MediaService {
     });
   }
 
+  async uploadReelVideo(buffer: Buffer): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const upload = cloudinary.uploader.upload_stream(
+        {
+          folder: 'sharely/reels',
+          resource_type: 'video',
+        },
+        (error, result) => {
+          if (error || !result) return reject(error);
+          resolve(result.secure_url);
+        },
+      );
+      Readable.from(buffer).pipe(upload);
+    });
+  }
+
+  async deleteAsset(url: string, resourceType: 'image' | 'video' = 'image'): Promise<void> {
+    const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[^.]+$/);
+    if (!match) return;
+    await cloudinary.uploader.destroy(match[1], { resource_type: resourceType });
+  }
+
   async uploadProfilePicture(buffer: Buffer): Promise<string> {
     return new Promise((resolve, reject) => {
       const upload = cloudinary.uploader.upload_stream(

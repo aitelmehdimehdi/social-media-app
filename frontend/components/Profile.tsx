@@ -190,6 +190,9 @@ export default function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!user) return;
+      apiGet<MediaItem[]>(`/posts/user/${user.id}`)
+        .then(setGridPosts)
+        .catch(() => {});
       apiGet<{ id: string; imageUrl: string; user: { id: string } }[]>("/stories")
         .then((stories) => {
           const mine = stories.find((s) => s.user.id === user.id);

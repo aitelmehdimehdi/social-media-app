@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, Query, UseGuards, InternalServerErrorException } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, Post, Param, Body, Query, UseGuards, InternalServerErrorException } from '@nestjs/common';
 import { PostsService, FeedResponse, CommentDto } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -55,6 +55,30 @@ export class PostsController {
     return this.postsService.findByUser(userId);
   }
 
+  @Get('reels/:id/comments')
+  getReelComments(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+  ): Promise<CommentDto[]> {
+    return this.postsService.getReelComments(id, user.id);
+  }
+
+  @Post('reels/:id/comments')
+  async addReelComment(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+    @Body() dto: CreateCommentDto & { parentId?: string },
+  ): Promise<Comment> {
+    try {
+      return await this.postsService.addReelComment(user.id, id, dto);
+    } catch (err: unknown) {
+      console.error('[PostsController] addReelComment error:', err);
+      throw new InternalServerErrorException(
+        err instanceof Error ? err.message : 'Failed to add comment',
+      );
+    }
+  }
+
   @Get('reels/:id')
   getReelById(
     @Param('id') id: string,
@@ -97,6 +121,26 @@ export class PostsController {
     @CurrentUser() user: User,
   ): Promise<{ saved: boolean }> {
     return this.postsService.toggleSaveReel(user.id, id);
+  }
+
+  // ── Delete routes ─────────────────────────────────────────────────────────
+
+  @Delete('reels/:id')
+  @HttpCode(204)
+  deleteReel(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+  ): Promise<void> {
+    return this.postsService.deleteReel(user.id, id);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  deletePost(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+  ): Promise<void> {
+    return this.postsService.deletePost(user.id, id);
   }
 
   // ── :id param routes ───────────────────────────────────────────────────────

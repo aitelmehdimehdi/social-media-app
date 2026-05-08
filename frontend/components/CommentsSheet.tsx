@@ -22,9 +22,11 @@ export interface CommentItem {
 }
 
 interface Props {
-  postId: string | null;
+  postId?: string | null;
+  reelId?: string | null;
   visible: boolean;
   onClose: () => void;
+  onCommentAdded?: () => void;
 }
 
 // ─── Single comment row ───────────────────────────────────────────────────────
@@ -71,7 +73,7 @@ function CommentRow({
 
 // ─── CommentsSheet ────────────────────────────────────────────────────────────
 
-export default function CommentsSheet({ postId, visible, onClose }: Props) {
+export default function CommentsSheet({ postId, reelId, visible, onClose, onCommentAdded }: Props) {
   const { colors } = useTheme();
   const slideAnim = useRef(new Animated.Value(500)).current;
   const [comments, setComments] = useState<CommentItem[]>([]);
@@ -80,14 +82,17 @@ export default function CommentsSheet({ postId, visible, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const activeId = reelId || postId;
+  const baseUrl = reelId ? `/posts/reels/${reelId}` : `/posts/${postId}`;
+
   const loadComments = useCallback(() => {
-    if (!postId) return;
-    apiGet<CommentItem[]>(`/posts/${postId}/comments`)
+    if (!activeId) return;
+    apiGet<CommentItem[]>(`${baseUrl}/comments`)
       .then(setComments)
       .catch((err: unknown) => {
         console.warn('[CommentsSheet] loadComments failed:', err);
       });
-  }, [postId]);
+  }, [activeId, baseUrl]);
 
   useEffect(() => {
     if (visible) {
@@ -140,7 +145,7 @@ export default function CommentsSheet({ postId, visible, onClose }: Props) {
 
   const handleSubmit = async () => {
     const trimmed = text.trim();
-    if (!trimmed || !postId || loading) return;
+    if (!trimmed || !activeId || loading) return;
 
     setLoading(true);
     setError(null);
@@ -151,9 +156,10 @@ export default function CommentsSheet({ postId, visible, onClose }: Props) {
     if (replyTo?.parentId) body.parentId = replyTo.parentId;
 
     try {
-      await apiPost(`/posts/${postId}/comments`, body);
+      await apiPost(`${baseUrl}/comments`, body);
       setText('');
       setReplyTo(null);
+      if (!replyTo) onCommentAdded?.();
       loadComments();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to post comment';

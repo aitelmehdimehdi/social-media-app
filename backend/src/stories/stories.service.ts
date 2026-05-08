@@ -4,6 +4,14 @@ import { MoreThan, Repository } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Story } from './story.entity';
 
+interface CreateStoryDto {
+  imageUrl: string;
+  overlays?: object[] | null;
+  filter?: string | null;
+  audioUrl?: string | null;
+  location?: string | null;
+}
+
 @Injectable()
 export class StoriesService {
   constructor(
@@ -11,9 +19,17 @@ export class StoriesService {
     private repo: Repository<Story>,
   ) {}
 
-  async create(user: User, imageUrl: string): Promise<Story> {
+  async create(user: User, dto: CreateStoryDto): Promise<Story> {
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const story = this.repo.create({ user, imageUrl, expiresAt });
+    const story = this.repo.create({
+      user,
+      imageUrl: dto.imageUrl,
+      overlays: dto.overlays ?? null,
+      filter: dto.filter ?? null,
+      audioUrl: dto.audioUrl ?? null,
+      location: dto.location ?? null,
+      expiresAt,
+    });
     return this.repo.save(story);
   }
 

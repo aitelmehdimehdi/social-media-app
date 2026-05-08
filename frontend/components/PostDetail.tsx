@@ -64,7 +64,7 @@ function PostLayout({ post, comments, liked, likes, onLike, onComment, commentTe
   commentText: string;
   setCommentText: (v: string) => void;
   submitting: boolean;
-  inputRef: React.RefObject<TextInput>;
+  inputRef: React.RefObject<TextInput | null>;
   colors: ReturnType<typeof import("../context/ThemeContext").useTheme>["colors"];
 }) {
   const router = useRouter();
@@ -223,7 +223,7 @@ function ReelLayout({ post, liked, likes, onLike, onComment, commentText, setCom
   showComments: boolean;
   setShowComments: (v: boolean) => void;
   comments: CommentData[];
-  inputRef: React.RefObject<TextInput>;
+  inputRef: React.RefObject<TextInput | null>;
   colors: ReturnType<typeof import("../context/ThemeContext").useTheme>["colors"];
 }) {
   const router = useRouter();

@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
-    "ignoreDeprecations": "5.0",
     "module": "commonjs",
-    "moduleResolution": "node10",
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "declaration": true,
     "removeComments": true,
@@ -12,13 +11,13 @@
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
     "noImplicitAny": true,
     "strictBindCallApply": true,
     "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "types": ["node", "jest"]
   }
 }

@@ -118,7 +118,7 @@ function StoryItem({ item }: { item: Story }) {
       }}
     >
       <View style={[styles.storyRing, { borderColor: colors.storyRing }, item.isOwn && { borderColor: colors.border }]}>
-        <Image source={{ uri: item.avatar }} style={[styles.storyAvatar, { borderColor: colors.background }]} />
+        <Image source={{ uri: item.avatar ?? undefined }} style={[styles.storyAvatar, { borderColor: colors.background }]} />
         {item.isOwn && (
           <View style={[styles.storyAddBadge, { backgroundColor: colors.primary, borderColor: colors.background }]}>
             <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>+</Text>

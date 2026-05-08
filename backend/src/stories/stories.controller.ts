@@ -10,8 +10,14 @@ export class StoriesController {
   constructor(private storiesService: StoriesService) {}
 
   @Post()
-  create(@CurrentUser() user: User, @Body('imageUrl') imageUrl: string) {
-    return this.storiesService.create(user, imageUrl);
+  create(@CurrentUser() user: User, @Body() body: {
+    imageUrl: string;
+    overlays?: object[] | null;
+    filter?: string | null;
+    audioUrl?: string | null;
+    location?: string | null;
+  }) {
+    return this.storiesService.create(user, body);
   }
 
   @Get()

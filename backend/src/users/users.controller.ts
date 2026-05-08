@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { MediaService } from '../media/media.service';
@@ -52,6 +52,11 @@ export class UsersController {
   @Patch('me/password')
   changePassword(@CurrentUser() user: User, @Body() dto: ChangePasswordDto) {
     return this.usersService.changePassword(user.id, dto);
+  }
+
+  @Get('search')
+  searchUsers(@Query('q') q: string, @CurrentUser() user: User) {
+    return this.usersService.searchUsers(q ?? '', user.id);
   }
 
   // Must be before :id/profile to avoid route collision

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, LessThan, Not, Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { Post } from './post.entity';
 import { Like } from './like.entity';
 import { LikeReel } from './like-reel.entity';
@@ -16,8 +16,11 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreateReelDto } from './dto/create-reel.dto';
 import { UsersService } from '../users/users.service';
 
-// ─── Simple in-memory cache (drop-in replacement for Redis) ──────────────────
-// Key format: feed:{userId}:{cursor}  TTL: 2 min
+// ─── In-memory cache ──────────────────────────────────────────────────────────
+// Keys used:
+//   feed:score:{userId}      — scored + sorted Post[] with feedType, TTL 2 min
+//   feed:interests:{userId}  — Map<hashtag, count> interest profile, TTL 10 min
+
 interface CacheEntry { data: unknown; expiresAt: number }
 const feedCache = new Map<string, CacheEntry>();
 
@@ -34,7 +37,7 @@ function cacheSet(key: string, data: unknown, ttlMs = 120_000): void {
 
 function cacheInvalidateUser(userId: string): void {
   for (const key of feedCache.keys()) {
-    if (key.startsWith(`feed:${userId}:`)) feedCache.delete(key);
+    if (key.includes(userId)) feedCache.delete(key);
   }
 }
 
@@ -72,99 +75,163 @@ export interface CommentDto {
   replies: CommentDto[];
 }
 
+// ─── Scoring types ────────────────────────────────────────────────────────────
+
+interface PostScore {
+  post: Post;
+  score: number;
+}
+
+interface ScoredFeedCache {
+  posts: PostScore[];
+  feedType: 'following' | 'discover';
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function extractHashtags(caption: string): string[] {
+  return (caption.match(/#\w+/g) ?? []).map((h) => h.toLowerCase());
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Injectable()
 export class PostsService {
   constructor(
-    @InjectRepository(Post) private postRepo: Repository<Post>,
-    @InjectRepository(Like) private likeRepo: Repository<Like>,
-    @InjectRepository(LikeReel) private likeReelRepo: Repository<LikeReel>,
-    @InjectRepository(Comment) private commentRepo: Repository<Comment>,
+    @InjectRepository(Post)       private postRepo: Repository<Post>,
+    @InjectRepository(Like)       private likeRepo: Repository<Like>,
+    @InjectRepository(LikeReel)   private likeReelRepo: Repository<LikeReel>,
+    @InjectRepository(Comment)    private commentRepo: Repository<Comment>,
     @InjectRepository(CommentLike) private commentLikeRepo: Repository<CommentLike>,
-    @InjectRepository(SavedPost) private savedPostRepo: Repository<SavedPost>,
-    @InjectRepository(SavedReel) private savedReelRepo: Repository<SavedReel>,
-    @InjectRepository(Reel) private reelRepo: Repository<Reel>,
-    @InjectRepository(Follow) private followRepo: Repository<Follow>,
-    @InjectRepository(Message) private messageRepo: Repository<Message>,
+    @InjectRepository(SavedPost)  private savedPostRepo: Repository<SavedPost>,
+    @InjectRepository(SavedReel)  private savedReelRepo: Repository<SavedReel>,
+    @InjectRepository(Reel)       private reelRepo: Repository<Reel>,
+    @InjectRepository(Follow)     private followRepo: Repository<Follow>,
+    @InjectRepository(Message)    private messageRepo: Repository<Message>,
     private usersService: UsersService,
   ) {}
 
-  // ── Feed (cursor-based) ────────────────────────────────────────────────────
+  // ── Feed (scoring algorithm + offset cursor) ───────────────────────────────
 
   async getFeed(userId: string, cursor?: string, limit = 10): Promise<FeedResponse> {
-    const cacheKey = `feed:${userId}:${cursor ?? 'first'}`;
-    const cached = cacheGet<FeedResponse>(cacheKey);
-    if (cached) return cached;
+    // cursor is an integer offset into the scored list (e.g. "0", "10", "20")
+    const offset = cursor ? parseInt(cursor, 10) : 0;
 
-    const followRows = await this.followRepo.find({
-      where: { followerId: userId },
-      select: ['followingId'],
-    });
-    const followingIds = followRows.map((f) => f.followingId);
-    const isDiscoverMode = followingIds.length === 0;
+    const scoreCacheKey = `feed:score:${userId}`;
+    let cached = cacheGet<ScoredFeedCache>(scoreCacheKey);
 
-    const cursorWhere = cursor ? { createdAt: LessThan(new Date(cursor)) } : {};
+    if (!cached) {
+      // ── Build interest profile from user's liked posts ──────────────────
+      const interestKey = `feed:interests:${userId}`;
+      let interests = cacheGet<Map<string, number>>(interestKey);
 
-    let posts: Post[];
-
-    if (isDiscoverMode) {
-      posts = await this.postRepo.find({
-        where: cursorWhere,
-        order: { likesCount: 'DESC', createdAt: 'DESC' },
-        take: limit + 1,
-      });
-    } else {
-      const includedIds = [...followingIds, userId];
-      posts = await this.postRepo.find({
-        where: { ...cursorWhere, userId: In(includedIds) },
-        order: { createdAt: 'DESC' },
-        take: limit + 1,
-      });
-
-      if (posts.length < limit + 1) {
-        const seenIds = posts.map((p) => p.id);
-        const needed = limit + 1 - posts.length;
-        const fill = await this.postRepo.find({
-          where: { ...cursorWhere, userId: Not(In(includedIds)) },
-          order: { likesCount: 'DESC', createdAt: 'DESC' },
-          take: needed,
+      if (!interests) {
+        interests = new Map<string, number>();
+        const likedRows = await this.likeRepo.find({
+          where: { userId },
+          relations: ['post'],
         });
-        posts = [...posts, ...fill.filter((p) => !seenIds.includes(p.id))];
+        for (const row of likedRows) {
+          if (!row.post?.caption) continue;
+          for (const tag of extractHashtags(row.post.caption)) {
+            interests.set(tag, (interests.get(tag) ?? 0) + 1);
+          }
+        }
+        cacheSet(interestKey, interests, 600_000); // 10 min TTL
       }
+
+      // ── Load following list ─────────────────────────────────────────────
+      const followRows = await this.followRepo.find({
+        where: { followerId: userId },
+        select: ['followingId'],
+      });
+      const followingSet = new Set(followRows.map((f) => f.followingId));
+      const feedType: 'following' | 'discover' =
+        followingSet.size === 0 ? 'discover' : 'following';
+
+      // ── Load up to 200 recent candidate posts (excluding own) ───────────
+      const candidates = await this.postRepo.find({
+        where: { userId: Not(userId) },
+        order: { createdAt: 'DESC' },
+        take: 200,
+      });
+
+      // ── Score each post ─────────────────────────────────────────────────
+      const scored: PostScore[] = candidates.map((post) => {
+        const hoursOld =
+          (Date.now() - new Date(post.createdAt).getTime()) / 3_600_000;
+
+        // Freshness: decays to ~14% after 48 h
+        const recencyScore = 100 * Math.exp(-hoursOld / 48);
+
+        // Popularity: composite of likes and comments, capped at 100
+        const popularityScore = Math.min(
+          100,
+          (post.likesCount / 100) * 50 + (post.commentsCount / 20) * 50,
+        );
+
+        // Interest: hashtag overlap with user's liked-post history
+        const postTags = extractHashtags(post.caption ?? '');
+        const matchWeight = postTags.reduce(
+          (sum, tag) => sum + (interests!.get(tag) ?? 0),
+          0,
+        );
+        const interestScore = Math.min(100, matchWeight * 20);
+
+        // Following bonus: heavy boost for people the user follows
+        const followingBonus = followingSet.has(post.userId) ? 100 : 0;
+
+        const score =
+          recencyScore    * 30 +
+          popularityScore * 25 +
+          interestScore   * 30 +
+          followingBonus  * 15;
+
+        return { post, score };
+      });
+
+      // Sort descending by score
+      scored.sort((a, b) => b.score - a.score);
+
+      cached = { posts: scored, feedType };
+      cacheSet(scoreCacheKey, cached, 120_000); // 2 min TTL
     }
 
-    const hasMore = posts.length > limit;
-    if (hasMore) posts.pop();
+    // ── Slice the sorted list using offset cursor ─────────────────────────
+    const page = cached.posts.slice(offset, offset + limit + 1);
+    const hasMore = page.length > limit;
+    if (hasMore) page.pop();
 
-    const result: FeedResponse = {
-      posts: await Promise.all(
-        posts.map(async (post) => {
-          const [isLiked, isSaved] = await Promise.all([
-            this.likeRepo.findOne({ where: { userId, postId: post.id } }),
-            this.savedPostRepo.findOne({ where: { userId, postId: post.id } }),
-          ]);
-          return {
-            id: post.id,
-            username: post.user.username,
-            avatar: post.user.avatar ?? '',
-            location: post.location ?? '',
-            image: post.imageUrl,
-            likes: post.likesCount,
-            caption: post.caption ?? '',
-            comments: post.commentsCount,
-            timeAgo: this.timeAgo(post.createdAt),
-            isLiked: !!isLiked,
-            isSaved: !!isSaved,
-          };
-        }),
-      ),
-      nextCursor: hasMore ? posts[posts.length - 1].createdAt.toISOString() : null,
-      feedType: isDiscoverMode ? 'discover' : 'following',
+    // ── Batch-load isLiked / isSaved for this page ────────────────────────
+    const postIds = page.map((sp) => sp.post.id);
+    const [likedRows, savedRows] = await Promise.all([
+      postIds.length
+        ? this.likeRepo.find({ where: { userId, postId: In(postIds) }, select: ['postId'] })
+        : [],
+      postIds.length
+        ? this.savedPostRepo.find({ where: { userId, postId: In(postIds) }, select: ['postId'] })
+        : [],
+    ]);
+    const likedSet = new Set(likedRows.map((l) => l.postId));
+    const savedSet = new Set(savedRows.map((s) => s.postId));
+
+    return {
+      posts: page.map(({ post }) => ({
+        id:       post.id,
+        username: post.user.username,
+        avatar:   post.user.avatar ?? '',
+        location: post.location ?? '',
+        image:    post.imageUrl,
+        likes:    post.likesCount,
+        caption:  post.caption ?? '',
+        comments: post.commentsCount,
+        timeAgo:  this.timeAgo(post.createdAt),
+        isLiked:  likedSet.has(post.id),
+        isSaved:  savedSet.has(post.id),
+      })),
+      nextCursor: hasMore ? String(offset + limit) : null,
+      feedType:   cached.feedType,
     };
-
-    cacheSet(cacheKey, result);
-    return result;
   }
 
   // ── Create post ────────────────────────────────────────────────────────────
@@ -183,7 +250,7 @@ export class PostsService {
       order: { createdAt: 'DESC' },
     });
     return posts.map((post) => ({
-      id: post.id,
+      id:   post.id,
       image: post.imageUrl,
       type: 'post',
       date: post.createdAt.toISOString(),
@@ -281,7 +348,6 @@ export class PostsService {
       ...(dto.parentId ? { parentId: dto.parentId } : { parentId: null }),
     });
     const inserted = await this.commentRepo.save(comment);
-
     const saved = await this.commentRepo.findOne({ where: { id: inserted.id } });
     if (!saved) throw new NotFoundException('Comment not found after save');
 
@@ -303,18 +369,18 @@ export class PostsService {
     );
 
     const toDto = (c: Comment, replies: Comment[]): CommentDto => ({
-      id: c.id,
+      id:       c.id,
       username: c.user.username,
-      avatar: c.user.avatar ?? '',
-      content: c.content,
-      likes: c.likesCount,
-      isLiked: likedSet.has(c.id),
-      timeAgo: this.timeAgo(c.createdAt),
+      avatar:   c.user.avatar ?? '',
+      content:  c.content,
+      likes:    c.likesCount,
+      isLiked:  likedSet.has(c.id),
+      timeAgo:  this.timeAgo(c.createdAt),
       parentId: c.parentId,
-      replies: replies.filter((r) => r.parentId === c.id).map((r) => toDto(r, [])),
+      replies:  replies.filter((r) => r.parentId === c.id).map((r) => toDto(r, [])),
     });
 
-    const roots = all.filter((c) => !c.parentId);
+    const roots   = all.filter((c) => !c.parentId);
     const replies = all.filter((c) => !!c.parentId);
     return roots.map((root) => toDto(root, replies));
   }
@@ -342,48 +408,52 @@ export class PostsService {
   async findPostById(postId: string, currentUserId: string): Promise<object> {
     const post = await this.postRepo.findOne({ where: { id: postId } });
     if (!post) throw new NotFoundException('Post not found');
+
     const [isLiked, isSaved] = await Promise.all([
       this.likeRepo.findOne({ where: { userId: currentUserId, postId } }),
       this.savedPostRepo.findOne({ where: { userId: currentUserId, postId } }),
     ]);
+
     return {
-      id: post.id,
+      id:       post.id,
       username: post.user.username,
-      avatar: post.user.avatar,
-      userId: post.userId,
+      avatar:   post.user.avatar,
+      userId:   post.userId,
       location: post.location,
-      image: post.imageUrl,
-      likes: post.likesCount,
-      caption: post.caption,
+      image:    post.imageUrl,
+      likes:    post.likesCount,
+      caption:  post.caption,
       comments: post.commentsCount,
-      timeAgo: this.timeAgo(post.createdAt),
+      timeAgo:  this.timeAgo(post.createdAt),
       createdAt: post.createdAt,
-      isLiked: !!isLiked,
-      isSaved: !!isSaved,
+      isLiked:  !!isLiked,
+      isSaved:  !!isSaved,
     };
   }
 
   async findReelById(reelId: string, userId: string): Promise<object> {
     const reel = await this.reelRepo.findOne({ where: { id: reelId } });
     if (!reel) throw new NotFoundException('Reel not found');
+
     const [isLiked, isSaved] = await Promise.all([
       this.likeReelRepo.findOne({ where: { userId, reelId } }),
       this.savedReelRepo.findOne({ where: { userId, reelId } }),
     ]);
+
     return {
-      id: reel.id,
+      id:       reel.id,
       username: reel.user.username,
-      avatar: reel.user.avatar,
-      userId: reel.userId,
-      caption: reel.caption,
-      audio: reel.audioTitle ?? '🎵 Original Audio',
-      image: reel.thumbnailUrl,
-      likes: reel.likesCount,
+      avatar:   reel.user.avatar,
+      userId:   reel.userId,
+      caption:  reel.caption,
+      audio:    reel.audioTitle ?? '🎵 Original Audio',
+      image:    reel.thumbnailUrl,
+      likes:    reel.likesCount,
       comments: reel.commentsCount,
-      shares: reel.sharesCount,
-      timeAgo: this.timeAgo(reel.createdAt),
-      isLiked: !!isLiked,
-      isSaved: !!isSaved,
+      shares:   reel.sharesCount,
+      timeAgo:  this.timeAgo(reel.createdAt),
+      isLiked:  !!isLiked,
+      isSaved:  !!isSaved,
     };
   }
 
@@ -395,7 +465,6 @@ export class PostsService {
       take: 10,
       skip: (page - 1) * 10,
     });
-
     if (reels.length === 0) return [];
 
     const reelIds = reels.map((r) => r.id);
@@ -407,17 +476,17 @@ export class PostsService {
     const savedSet = new Set(savedRows.map((s) => s.reelId));
 
     return reels.map((reel) => ({
-      id: reel.id,
+      id:       reel.id,
       username: reel.user.username,
-      avatar: reel.user.avatar,
-      caption: reel.caption,
-      audio: reel.audioTitle ?? '🎵 Original Audio',
+      avatar:   reel.user.avatar,
+      caption:  reel.caption,
+      audio:    reel.audioTitle ?? '🎵 Original Audio',
       thumbnail: reel.thumbnailUrl,
-      likes: reel.likesCount,
+      likes:    reel.likesCount,
       comments: reel.commentsCount,
-      shares: reel.sharesCount,
-      isLiked: likedSet.has(reel.id),
-      isSaved: savedSet.has(reel.id),
+      shares:   reel.sharesCount,
+      isLiked:  likedSet.has(reel.id),
+      isSaved:  savedSet.has(reel.id),
     }));
   }
 
@@ -479,7 +548,6 @@ export class PostsService {
     await this.messageRepo.save(this.messageRepo.create({ senderId, receiverId, content }));
     await this.postRepo.increment({ id: postId }, 'sharesCount', 1);
     cacheInvalidateUser(senderId);
-
     return { sent: true };
   }
 
@@ -505,13 +573,11 @@ export class PostsService {
           where: { followerId: f.followingId, followingId: userId },
         });
 
-        const score = msgCount * 2 + (mutualFollow ? 3 : 0);
-
         return {
-          id: f.following.id,
+          id:       f.following.id,
           username: f.following.username,
-          avatar: f.following.avatar,
-          score,
+          avatar:   f.following.avatar,
+          score:    msgCount * 2 + (mutualFollow ? 3 : 0),
         };
       }),
     );
@@ -522,9 +588,9 @@ export class PostsService {
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   private timeAgo(date: Date): string {
-    const diff = Math.floor((Date.now() - date.getTime()) / 1000);
-    if (diff < 60) return `${diff}s ago`;
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    const diff = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+    if (diff < 60)    return `${diff}s ago`;
+    if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
     return `${Math.floor(diff / 86400)}d ago`;
   }

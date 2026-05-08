@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 import { Follow } from './follow.entity';
@@ -104,6 +104,53 @@ export class UsersService {
     const { password: _pw, ...safeUser } = user as User & { password: string };
     return { ...safeUser, isFollowing: !!isFollowing };
   }
+
+  // ── Search users by username or fullName (ILIKE) ───────────────────────────
+
+  async searchUsers(
+    query: string,
+    currentUserId: string,
+  ): Promise<object[]> {
+    if (!query.trim()) return [];
+
+    const results = await this.userRepo
+      .createQueryBuilder('u')
+      .where('u.username ILIKE :q OR u."fullName" ILIKE :q', {
+        q: `%${query.trim()}%`,
+      })
+      .andWhere('u.id != :self', { self: currentUserId })
+      .select([
+        'u.id',
+        'u.username',
+        'u.fullName',
+        'u.avatar',
+        'u.followersCount',
+      ])
+      .take(20)
+      .getMany();
+
+    if (results.length === 0) return [];
+
+    const followedRows = await this.followRepo.find({
+      where: {
+        followerId: currentUserId,
+        followingId: In(results.map((u) => u.id)),
+      },
+      select: ['followingId'],
+    });
+    const followedSet = new Set(followedRows.map((f) => f.followingId));
+
+    return results.map((u) => ({
+      id: u.id,
+      username: u.username,
+      fullName: u.fullName,
+      avatar: u.avatar,
+      followersCount: u.followersCount,
+      isFollowing: followedSet.has(u.id),
+    }));
+  }
+
+  // ── Follow / unfollow ──────────────────────────────────────────────────────
 
   async follow(followerId: string, followingId: string): Promise<void> {
     if (followerId === followingId) return;

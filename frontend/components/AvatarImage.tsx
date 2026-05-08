@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Image, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import { Image, ImageStyle, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 
 interface AvatarImageProps {
   uri?: string | null;
@@ -16,7 +16,7 @@ export default function AvatarImage({ uri, size, style }: AvatarImageProps) {
     return (
       <Image
         source={{ uri }}
-        style={[{ width: size, height: size, borderRadius: radius }, style]}
+        style={[{ width: size, height: size, borderRadius: radius }, style as ImageStyle]}
       />
     );
   }

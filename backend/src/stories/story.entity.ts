@@ -9,8 +9,8 @@ export class Story {
   @ManyToOne(() => User, { eager: true, onDelete: 'CASCADE' })
   user: User;
 
-  @Column({ type: 'text' })
-  imageUrl: string;
+  @Column({ type: 'text', nullable: true })
+  imageUrl: string | null;
 
   @Column({ type: 'jsonb', nullable: true })
   overlays: any[] | null;

@@ -1,0 +1,2 @@
+frontend : npx expo start 
+backend : npm start run:dev

@@ -10,6 +10,7 @@ import { UsersModule } from './users/users.module';
 import { PostsModule } from './posts/posts.module';
 import { MediaModule } from './media/media.module';
 import { ChatModule } from './chat/chat.module';
+import { ChatbotModule } from './chatbot/chatbot.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { StoriesModule } from './stories/stories.module';
 import { AdsModule } from './ads/ads.module';
@@ -43,6 +44,7 @@ ConfigModule.forRoot({
     PostsModule,
     MediaModule,
     ChatModule,
+    ChatbotModule,
     NotificationsModule,
     StoriesModule,
     AdsModule,

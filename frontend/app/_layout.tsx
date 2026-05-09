@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from "../context/AuthContext";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import { UnreadProvider, useUnread } from "../context/UnreadContext";
 import { apiPatch } from "../utils/api";
+import ChatBotWidget from "../components/ChatBotWidget";
 import MessageToast from "../components/MessageToast";
 import NotificationToast from "../components/NotificationToast";
 
@@ -180,6 +181,7 @@ function TabsLayout() {
       {/* Global in-app toasts — renders on top of all screens */}
       <MessageToast activeSenderId={activeSenderId} />
       <NotificationToast />
+      <ChatBotWidget />
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, forwardRef, Get, Inject, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { MediaService } from '../media/media.service';
@@ -9,6 +9,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { ShareProfileDto } from './dto/share-profile.dto';
 import { User } from './user.entity';
 import { UsersService } from './users.service';
+import { PostsService } from '../posts/posts.service';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -16,6 +17,7 @@ export class UsersController {
   constructor(
     private usersService: UsersService,
     private mediaService: MediaService,
+    @Inject(forwardRef(() => PostsService)) private postsService: PostsService,
   ) {}
 
   @Get('me')
@@ -85,13 +87,15 @@ export class UsersController {
   }
 
   @Post(':id/follow')
-  follow(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.usersService.follow(user.id, id);
+  async follow(@Param('id') id: string, @CurrentUser() user: User) {
+    await this.usersService.follow(user.id, id);
+    this.postsService.invalidateFeedCache(user.id);
   }
 
   @Delete(':id/follow')
-  unfollow(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.usersService.unfollow(user.id, id);
+  async unfollow(@Param('id') id: string, @CurrentUser() user: User) {
+    await this.usersService.unfollow(user.id, id);
+    this.postsService.invalidateFeedCache(user.id);
   }
 
   @Delete(':id/follower')

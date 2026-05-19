@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Not, Repository } from 'typeorm';
 import { Post } from './post.entity';
@@ -41,6 +41,12 @@ function cacheSet(key: string, data: unknown, ttlMs = 120_000): void {
 function cacheInvalidateUser(userId: string): void {
   for (const key of feedCache.keys()) {
     if (key.includes(userId)) feedCache.delete(key);
+  }
+}
+
+function cacheInvalidateAllFeeds(): void {
+  for (const key of feedCache.keys()) {
+    if (key.startsWith('feed:score:')) feedCache.delete(key);
   }
 }
 
@@ -115,7 +121,7 @@ export class PostsService {
     @InjectRepository(Reel)       private reelRepo: Repository<Reel>,
     @InjectRepository(Follow)     private followRepo: Repository<Follow>,
     @InjectRepository(Message)    private messageRepo: Repository<Message>,
-    private usersService: UsersService,
+    @Inject(forwardRef(() => UsersService)) private usersService: UsersService,
     private mediaService: MediaService,
     private notificationsService: NotificationsService,
     private notificationsGateway: NotificationsGateway,
@@ -246,11 +252,16 @@ export class PostsService {
 
   // ── Create post ────────────────────────────────────────────────────────────
 
+  invalidateFeedCache(userId: string): void {
+    cacheInvalidateUser(userId);
+  }
+
   async createPost(userId: string, dto: CreatePostDto): Promise<Post> {
     const post = this.postRepo.create({ ...dto, userId });
     const saved = await this.postRepo.save(post);
     await (this.usersService as unknown as { userRepo: Repository<{ id: string }> })
       .userRepo.increment({ id: userId }, 'postsCount', 1);
+    cacheInvalidateAllFeeds();
     return saved;
   }
 

@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs, useRouter, useSegments, useLocalSearchParams } from "expo-router";
+import { Tabs, useRouter, useSegments, useLocalSearchParams, useRootNavigationState } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { AuthProvider, useAuth } from "../context/AuthContext";
@@ -45,13 +45,16 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const { colors } = useTheme();
   const router = useRouter();
   const segments = useSegments();
+  const navigationState = useRootNavigationState();
 
   useEffect(() => {
+    // Wait until the navigator is fully mounted before navigating
+    if (!navigationState?.key) return;
     if (isLoading) return;
     const onAuthScreen = segments[0] === "Auth";
     if (!user && !onAuthScreen) router.replace("/Auth");
     else if (user && onAuthScreen) router.replace("/");
-  }, [user, isLoading, segments]);
+  }, [user, isLoading, segments, navigationState?.key]);
 
   // Register push token when user logs in
   useEffect(() => {

@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Concepts React Native — Projet Social Media</title>
+  <style>
+    :root {
+      --primary: #E1306C;
+      --secondary: #405DE6;
+      --accent: #833AB4;
+      --bg: #ffffff;
+      --surface: #f8f9fa;
+      --border: #e0e0e0;
+      --text: #1a1a2e;
+      --muted: #6c757d;
+      --code-bg: #f0f0f0;
+      --tag-blue: #dbeafe;
+      --tag-blue-text: #1e40af;
+      --tag-purple: #ede9fe;
+      --tag-purple-text: #5b21b6;
+      --tag-green: #dcfce7;
+      --tag-green-text: #166534;
+      --tag-orange: #ffedd5;
+      --tag-orange-text: #9a3412;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    /* ── Cover page ── */
+    .cover {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #405DE6 0%, #833AB4 40%, #E1306C 70%, #FD1D1D 100%);
+      color: white;
+      text-align: center;
+      padding: 60px 40px;
+      page-break-after: always;
+    }
+    .cover .logo {
+      font-size: 64px;
+      margin-bottom: 24px;
+    }
+    .cover h1 {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+    }
+    .cover .subtitle {
+      font-size: 18px;
+      opacity: 0.88;
+      margin-bottom: 32px;
+    }
+    .cover .meta {
+      background: rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 20px 32px;
+      font-size: 14px;
+      line-height: 2;
+    }
+    .cover .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.25);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      margin: 4px;
+    }
+
+    /* ── Content ── */
+    .content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 48px;
+    }
+
+    /* ── TOC ── */
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      border-radius: 10px;
+      padding: 28px 32px;
+      margin-bottom: 48px;
+      page-break-after: always;
+    }
+    .toc h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      color: var(--primary);
+    }
+    .toc ol {
+      padding-left: 22px;
+    }
+    .toc li {
+      margin: 8px 0;
+      font-size: 13.5px;
+    }
+    .toc .sub { font-size: 12px; color: var(--muted); margin-left: 4px; }
+
+    /* ── Section headers ── */
+    .section {
+      margin-bottom: 48px;
+      page-break-inside: avoid;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+    }
+    .section-number {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: white;
+      font-size: 12px;
+      font-weight: 800;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    h2.section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 22px 0 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 22px;
+      font-size: 12.5px;
+    }
+    thead {
+      background: linear-gradient(to right, #405DE6, #833AB4);
+      color: white;
+    }
+    thead th {
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    tbody tr:nth-child(even) { background: var(--surface); }
+    tbody tr:hover { background: #f0e8ff; }
+    tbody td {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    tbody td:first-child { font-weight: 600; }
+
+    /* ── Code ── */
+    code {
+      background: var(--code-bg);
+      border: 1px solid #d0d0d0;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: 'Consolas', 'Fira Code', monospace;
+      font-size: 11.5px;
+      color: #c7254e;
+    }
+    pre {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin: 14px 0 22px;
+      font-family: 'Consolas', 'Fira Code', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      overflow-x: auto;
+      border-left: 4px solid var(--primary);
+    }
+    pre .comment { color: #6c7086; font-style: italic; }
+    pre .keyword { color: #cba6f7; }
+    pre .string { color: #a6e3a1; }
+    pre .type { color: #89b4fa; }
+    pre .fn { color: #89dceb; }
+
+    /* ── Cards / tags ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 22px;
+      margin: 14px 0;
+    }
+    .tag {
+      display: inline-block;
+      border-radius: 5px;
+      padding: 2px 9px;
+      font-size: 11px;
+      font-weight: 600;
+      margin: 3px 3px 3px 0;
+    }
+    .tag-blue { background: var(--tag-blue); color: var(--tag-blue-text); }
+    .tag-purple { background: var(--tag-purple); color: var(--tag-purple-text); }
+    .tag-green { background: var(--tag-green); color: var(--tag-green-text); }
+    .tag-orange { background: var(--tag-orange); color: var(--tag-orange-text); }
+
+    /* ── Grid ── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 14px 0;
+    }
+    .concept-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      border-top: 3px solid var(--primary);
+    }
+    .concept-card.blue { border-top-color: var(--secondary); }
+    .concept-card.green { border-top-color: #22c55e; }
+    .concept-card.orange { border-top-color: #f97316; }
+    .concept-card h4 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .concept-card ul { padding-left: 16px; }
+    .concept-card li { font-size: 12px; margin: 4px 0; }
+
+    /* ── Summary box ── */
+    .summary-box {
+      background: linear-gradient(135deg, #405DE6 0%, #833AB4 50%, #E1306C 100%);
+      border-radius: 14px;
+      padding: 32px 36px;
+      color: white;
+      margin: 32px 0;
+    }
+    .summary-box h3 {
+      color: white;
+      font-size: 16px;
+      text-transform: none;
+      margin: 0 0 20px;
+      letter-spacing: 0;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .summary-item {
+      background: rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 14px 16px;
+      text-align: center;
+    }
+    .summary-item .num {
+      font-size: 28px;
+      font-weight: 800;
+      display: block;
+    }
+    .summary-item .label {
+      font-size: 11px;
+      opacity: 0.85;
+    }
+
+    p { margin: 8px 0; }
+    ul, ol { padding-left: 20px; margin: 8px 0; }
+    li { margin: 5px 0; }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 36px 0;
+    }
+
+    /* ── Print ── */
+    @media print {
+      body { font-size: 11px; }
+      .cover { min-height: 100vh; }
+      .section { page-break-inside: avoid; }
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+      .summary-grid { grid-template-columns: repeat(3, 1fr); }
+      a { color: inherit; text-decoration: none; }
+      pre { background: #1a1a2a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .cover, thead, .summary-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ COVER PAGE ═══════════════ -->
+<div class="cover">
+  <div class="logo">📱</div>
+  <h1>Concepts React Native</h1>
+  <div class="subtitle">Projet Social Media — Analyse complète du frontend</div>
+  <div class="meta">
+    <div><strong>Framework :</strong> React Native + Expo SDK 54</div>
+    <div><strong>Navigation :</strong> Expo Router (file-based)</div>
+    <div><strong>Backend :</strong> NestJS + PostgreSQL + Socket.IO</div>
+    <div style="margin-top:14px;">
+      <span class="badge">React Native</span>
+      <span class="badge">Expo</span>
+      <span class="badge">TypeScript</span>
+      <span class="badge">Socket.IO</span>
+      <span class="badge">Context API</span>
+      <span class="badge">Animated API</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CONTENT ═══════════════ -->
+<div class="content">
+
+  <!-- TABLE OF CONTENTS -->
+  <div class="toc">
+    <h2>Table des matières</h2>
+    <ol>
+      <li>Composants de base React Native <span class="sub">— View, Text, Image, FlatList, Modal…</span></li>
+      <li>APIs React Native <span class="sub">— Animated, Dimensions, Platform, Share…</span></li>
+      <li>Expo SDK — Modules utilisés <span class="sub">— Camera, AV, Router, Notifications…</span></li>
+      <li>React Hooks <span class="sub">— useState, useEffect, useRef, hooks custom…</span></li>
+      <li>Navigation — Expo Router <span class="sub">— File-based routing, tabs, guards…</span></li>
+      <li>Gestion d'état global <span class="sub">— Context API, AsyncStorage…</span></li>
+      <li>Appels réseau &amp; Temps réel <span class="sub">— fetch, FormData, Socket.IO…</span></li>
+      <li>Optimisation des listes <span class="sub">— FlatList avancé, viewability, pagination…</span></li>
+      <li>Layout &amp; Styling <span class="sub">— Flexbox, positionnement, système de thème…</span></li>
+      <li>Patterns UI avancés <span class="sub">— Toast, Bottom sheet, Stories, Reels…</span></li>
+      <li>Résumé global</li>
+    </ol>
+  </div>
+
+  <!-- ─────────── SECTION 1 ─────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">1</div>
+      <h2 class="section-title">Composants de base React Native</h2>
+    </div>
+    <p>Ces composants sont les briques fondamentales de toute interface React Native. Ils remplacent les éléments HTML habituels du web.</p>
+
+    <h3>Conteneurs &amp; Layout</h3>
+    <table>
+      <thead><tr><th>Composant</th><th>Rôle</th><th>Utilisé dans</th></tr></thead>
+      <tbody>
+        <tr><td><code>View</code></td><td>Conteneur principal (équivalent <code>&lt;div&gt;</code>)</td><td>Tous les composants</td></tr>
+        <tr><td><code>SafeAreaView</code></td><td>Respect des encoches, coins arrondis et barre système</td><td>Layout global (<code>_layout.tsx</code>)</td></tr>
+        <tr><td><code>ScrollView</code></td><td>Zone défilable — adapté aux petits contenus</td><td>Profile, Settings</td></tr>
+        <tr><td><code>KeyboardAvoidingView</code></td><td>Décale le layout quand le clavier s'ouvre</td><td>Auth, Chat</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Affichage de contenu</h3>
+    <table>
+      <thead><tr><th>Composant</th><th>Rôle</th><th>Utilisé dans</th></tr></thead>
+      <tbody>
+        <tr><td><code>Text</code></td><td>Affichage de texte (obligatoire, pas de texte nu)</td><td>Partout</td></tr>
+        <tr><td><code>Image</code></td><td>Images locales (<code>require</code>) ou distantes (<code>uri</code>)</td><td>Feed, Profile, Explore</td></tr>
+        <tr><td><code>Video</code> (expo-av)</td><td>Lecture vidéo avec contrôles</td><td>Reels</td></tr>
+        <tr><td><code>ActivityIndicator</code></td><td>Spinner de chargement natif</td><td>Feed, Auth, DMs</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Interactions &amp; Formulaires</h3>
+    <table>
+      <thead><tr><th>Composant</th><th>Rôle</th><th>Propriétés clés</th></tr></thead>
+      <tbody>
+        <tr><td><code>TouchableOpacity</code></td><td>Bouton avec retour d'opacité au toucher</td><td><code>activeOpacity</code>, <code>onPress</code>, <code>onLongPress</code></td></tr>
+        <tr><td><code>Pressable</code></td><td>Alternative moderne, plus flexible</td><td><code>onPress</code>, style dynamique</td></tr>
+        <tr><td><code>TouchableWithoutFeedback</code></td><td>Toucher sans retour visuel</td><td>Overlays Camera</td></tr>
+        <tr><td><code>TextInput</code></td><td>Champ de saisie texte</td><td><code>secureTextEntry</code>, <code>keyboardType</code>, <code>multiline</code></td></tr>
+        <tr><td><code>Switch</code></td><td>Toggle on/off natif</td><td><code>value</code>, <code>onValueChange</code></td></tr>
+        <tr><td><code>Modal</code></td><td>Overlay plein écran ou partiel</td><td><code>visible</code>, <code>transparent</code>, <code>animationType</code></td></tr>
+        <tr><td><code>StatusBar</code></td><td>Contrôle la barre système (couleur, style)</td><td><code>barStyle</code>, <code>backgroundColor</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Listes</h3>
+    <div class="card">
+      <strong>FlatList</strong> — Composant de liste optimisé pour les longues listes (virtualisation). Remplace <code>ScrollView</code> + <code>.map()</code> dès que la liste peut être longue.
+      <br/><br/>
+      Propriétés importantes dans ce projet :
+      <div style="margin-top:8px;">
+        <span class="tag tag-blue">data</span>
+        <span class="tag tag-blue">renderItem</span>
+        <span class="tag tag-blue">keyExtractor</span>
+        <span class="tag tag-purple">numColumns</span>
+        <span class="tag tag-purple">onEndReached</span>
+        <span class="tag tag-green">viewabilityConfig</span>
+        <span class="tag tag-green">pagingEnabled</span>
+        <span class="tag tag-orange">getItemLayout</span>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─────────── SECTION 2 ─────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">2</div>
+      <h2 class="section-title">APIs React Native</h2>
+    </div>
+
+    <h3>StyleSheet</h3>
+    <p><code>StyleSheet.create()</code> définit les styles en dehors du render. Optimisé nativement, c'est l'équivalent du CSS-in-JS côté React Native.</p>
+    <pre><span class="keyword">const</span> styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  header: { flexDirection: <span class="string">'row'</span>, alignItems: <span class="string">'center'</span>, padding: 16 },
+});</pre>
+
+    <h3>Dimensions</h3>
+    <p><code>Dimensions.get('window')</code> retourne <code>{ width, height }</code> de l'écran. Utilisé pour calculer des tailles relatives (ex: largeur des cellules Explore = <code>width / 3 - 1</code>).</p>
+
+    <h3>Platform</h3>
+    <p><code>Platform.OS</code> retourne <code>'ios'</code>, <code>'android'</code> ou <code>'web'</code>. Utilisé pour adapter certains comportements selon l'OS (ex: <code>KeyboardAvoidingView behavior</code>).</p>
+    <pre><span class="keyword">const</span> behavior = Platform.OS === <span class="string">'ios'</span> ? <span class="string">'padding'</span> : <span class="string">'height'</span>;</pre>
+
+    <h3>Animated API</h3>
+    <p>Système d'animation intégré à React Native. Les animations s'exécutent sur le thread natif (<code>useNativeDriver: true</code>) pour des performances optimales.</p>
+    <table>
+      <thead><tr><th>API</th><th>Usage dans le projet</th></tr></thead>
+      <tbody>
+        <tr><td><code>Animated.Value</code></td><td>Valeur animable (position, opacité, scale…)</td></tr>
+        <tr><td><code>Animated.timing()</code></td><td>Animation linéaire ou avec easing — Toasts, overlays</td></tr>
+        <tr><td><code>Animated.spring()</code></td><td>Animation physique type ressort — Bottom sheets</td></tr>
+        <tr><td><code>Animated.sequence()</code></td><td>Enchaîner des animations</td></tr>
+        <tr><td><code>Animated.parallel()</code></td><td>Lancer des animations simultanément</td></tr>
+        <tr><td><code>Animated.loop()</code></td><td>Répéter une animation en boucle</td></tr>
+        <tr><td><code>.interpolate()</code></td><td>Transformer la valeur (ex: 0→1 devient '0deg'→'360deg')</td></tr>
+        <tr><td><code>Animated.View</code></td><td>Composant <code>View</code> qui accepte les valeurs animées</td></tr>
+        <tr><td><code>useNativeDriver: true</code></td><td>Exécution sur thread natif pour 60fps</td></tr>
+      </tbody>
+    </table>
+
+    <pre><span class="comment">// Exemple — Toast animé (utilisé dans Feed, Profile)</span>
+<span class="keyword">const</span> opacity = <span class="keyword">new</span> Animated.<span class="fn">Value</span>(0);
+
+<span class="fn">useEffect</span>(() => {
+  Animated.<span class="fn">sequence</span>([
+    Animated.<span class="fn">timing</span>(opacity, { toValue: 1, duration: 300, useNativeDriver: <span class="keyword">true</span> }),
+    Animated.<span class="fn">delay</span>(2000),
+    Animated.<span class="fn">timing</span>(opacity, { toValue: 0, duration: 300, useNativeDriver: <span class="keyword">true</span> }),
+  ]).<span class="fn">start</span>();
+}, []);</pre>
+
+    <h3>Autres APIs système</h3>
+    <table>
+      <thead><tr><th>API</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>Share.share()</code></td><td>Feuille de partage native iOS/Android</td></tr>
+        <tr><td><code>Linking.openURL()</code></td><td>Ouvrir une URL dans le navigateur système</td></tr>
+        <tr><td><code>Clipboard.setString()</code></td><td>Copier du texte dans le presse-papier</td></tr>
+        <tr><td><code>PanResponder</code></td><td>Reconnaître les gestes de glissement (drag &amp; drop)</td></tr>
+        <tr><td><code>Keyboard</code></td><td>Écouter l'ouverture/fermeture du clavier</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─────────── SECTION 3 ─────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">3</div>
+      <h2 class="section-title">Expo SDK — Modules utilisés</h2>
+    </div>
+
+    <div class="grid-2">
+      <div class="concept-card">
+        <h4>expo-camera</h4>
+        <ul>
+          <li><code>CameraView</code> — Prévisualisation caméra</li>
+          <li><code>useCameraPermissions()</code> — Hook permissions</li>
+          <li><code>CameraType</code> — Avant / arrière</li>
+          <li><code>FlashMode</code> — Flash on/off/auto</li>
+        </ul>
+      </div>
+      <div class="concept-card blue">
+        <h4>expo-av</h4>
+        <ul>
+          <li><code>Video</code> — Lecture vidéo (Reels)</li>
+          <li><code>ResizeMode</code> — Cover / contain</li>
+          <li>Auto-play, loop, play/pause via ref</li>
+        </ul>
+      </div>
+      <div class="concept-card green">
+        <h4>expo-image-picker</h4>
+        <ul>
+          <li>Sélection photos/vidéos depuis la galerie</li>
+          <li><code>requestMediaLibraryPermissionsAsync()</code></li>
+          <li>Upload de contenu (post, story)</li>
+        </ul>
+      </div>
+      <div class="concept-card orange">
+        <h4>expo-location</h4>
+        <ul>
+          <li><code>requestForegroundPermissionsAsync()</code></li>
+          <li><code>getCurrentPositionAsync()</code> — GPS</li>
+          <li><code>reverseGeocodeAsync()</code> — Adresse</li>
+        </ul>
+      </div>
+      <div class="concept-card">
+        <h4>expo-haptics</h4>
+        <ul>
+          <li><code>Haptics.impactAsync()</code> — Vibration légère</li>
+          <li><code>Haptics.notificationAsync()</code> — Feedback de notif</li>
+          <li>Retour tactile sur actions (like, envoi…)</li>
+        </ul>
+      </div>
+      <div class="concept-card blue">
+        <h4>expo-notifications</h4>
+        <ul>
+          <li><code>requestPermissionsAsync()</code></li>
+          <li><code>getExpoPushTokenAsync()</code></li>
+          <li>Push notifications via token Expo</li>
+        </ul>
+      </div>
+      <div class="concept-card green">
+        <h4>@expo/vector-icons</h4>
+        <ul>
+          <li><code>Ionicons</code> — Icônes principales</li>
+          <li><code>AntDesign</code> — Icônes complémentaires</li>
+          <li>Taille et couleur dynamiques</li>
+        </ul>
+      </div>
+      <div class="concept-card orange">
+        <h4>react-native-safe-area-context</h4>
+        <ul>
+          <li><code>useSafeAreaInsets()</code> — Marges dynamiques</li>
+          <li><code>SafeAreaView</code> avec prop <code>edges</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─────────── SECTION 4 ─────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">4</div>
+      <h2 class="section-title">React Hooks</h2>
+    </div>
+
+    <table>
+      <thead><tr><th>Hook</th><th>Rôle</th><th>Exemples dans le projet</th></tr></thead>
+      <tbody>
+        <tr><td><code>useState</code></td><td>État local du composant</td><td>Posts, messages, loading, erreurs…</td></tr>
+        <tr><td><code>useEffect</code></td><td>Effets de bord (appels API, sockets, timers)</td><td>Chargement du feed, connexion socket, auto-dismiss toast</td></tr>
+        <tr><td><code>useRef</code></td><td>Référence mutable sans re-render</td><td>Réf. FlatList (scrollToEnd), Réf. Video (play/pause), Animated.Value</td></tr>
+        <tr><td><code>useCallback</code></td><td>Mémoïse une fonction (stabilité de référence)</td><td>renderItem de FlatList, handlers passés en props</td></tr>
+        <tr><td><code>useMemo</code></td><td>Mémoïse une valeur calculée</td><td>Filtres de recherche, listes transformées</td></tr>
+        <tr><td><code>useContext</code></td><td>Consomme un contexte React</td><td>AuthContext, ThemeContext, UnreadContext</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Hooks Custom</h3>
+    <div class="grid-2">
+      <div class="concept-card">
+        <h4>useAuth()</h4>
+        <ul>
+          <li>Retourne <code>{ user, login, logout }</code></li>
+          <li>Session persistée dans AsyncStorage</li>
+          <li>Consomme <code>AuthContext</code></li>
+        </ul>
+      </div>
+      <div class="concept-card blue">
+        <h4>useTheme()</h4>
+        <ul>
+          <li>Retourne <code>{ colors, isDark, toggleTheme }</code></li>
+          <li>Thème persisté dans AsyncStorage</li>
+          <li>Consomme <code>ThemeContext</code></li>
+        </ul>
+      </div>
+      <div class="concept-card green" style="grid-column: span 2;">
+        <h4>useUnread()</h4>
+        <ul>
+          <li>Compte les messages et notifications non lus</li>
+          <li>Met à jour les badges en temps réel via Socket.IO</li>
+          <li>Partagé via <code>UnreadContext</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─────────── SECTION 5 ─────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">5</div>
+      <h2 class="section-title">Navigation — Expo Router</h2>
+    </div>
+
+    <p>Expo Router utilise le système de fichiers pour définir les routes, exactement comme Next.js. Chaque fichier dans <code>app/</code> devient une route navigable.</p>
+
+    <h3>Structure des routes</h3>
+    <pre>app/
+├── <span class="fn">_layout.tsx</span>      <span class="comment">← Layout racine : providers + AuthGuard + Tabs</span>
+├── <span class="fn">index.tsx</span>        <span class="comment">← Route "/" → Feed (onglet 1)</span>
+├── <span class="fn">explore.tsx</span>      <span class="comment">← Route "/explore" → Explore (onglet 2)</span>
+├── <span class="fn">Reels.tsx</span>        <span class="comment">← Route "/Reels" → Reels (onglet 3)</span>
+├── <span class="fn">DirectMessages.tsx</span> <span class="comment">← Route "/DirectMessages" → DMs (onglet 4)</span>
+├── <span class="fn">Profile.tsx</span>      <span class="comment">← Route "/Profile" → Profil (onglet 5)</span>
+├── <span class="fn">Camera.tsx</span>       <span class="comment">← Route "/Camera" → Caméra (poussée, hors tab)</span>
+└── <span class="fn">Auth.tsx</span>         <span class="comment">← Route "/Auth" → Login (redirection si non connecté)</span></pre>
+
+    <h3>Hooks de navigation</h3>
+    <table>
+      <thead><tr><th>Hook / API</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>useRouter()</code></td><td>Accès au router — <code>push()</code>, <code>replace()</code>, <code>back()</code></td></tr>
+        <tr><td><code>useLocalSearchParams()</code></td><td>Lire les paramètres de la route courante</td></tr>
+        <tr><td><code>useSegments()</code></td><td>Segments actifs de l'URL (utilisé pour l'AuthGuard)</td></tr>
+        <tr><td><code>useFocusEffect()</code></td><td>Code exécuté à chaque fois qu'un écran prend le focus</td></tr>
+        <tr><td><code>&lt;Tabs&gt;</code></td><td>Navigation par onglets en bas de l'écran</td></tr>
+        <tr><td><code>&lt;Link&gt;</code></td><td>Lien déclaratif vers une route</td></tr>
+      </tbody>
+    </table>
+
+    <h3>AuthGuard — Protection des routes</h3>
+    <pre><span class="comment">// app/_layout.tsx — Pattern de garde d'authentification</span>
+<span class="keyword">function</span> <span class="fn">AuthGuard</span>({ children }) {
+  <span class="keyword">const</span> { user } = <span class="fn">useAuth</span>();
+  <span class="keyword">const</span> segments = <span class="fn">useSegments</span>();
+  <span class="keyword">const</span> router = <span class="fn">useRouter</span>();
+
+  <span class="fn">useEffect</span>(() => {
+    <span class="keyword">const</span> inAuth = segments[0] === <span class="string">'Auth'</span>;
+    <span class="keyword">if</span> (!user && !inAuth) router.<span class="fn">replace</span>(<span class="string">'/Auth'</span>);
+    <span class="keyword">if</span> (user && inAuth)  router.<span class="fn">replace</span>(<span class="string">'/'</span>);
+  }, [user, segments]);
+
+  <span class="keyword">return</span> children;
+}</pre>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─────────── SECTION 6 ─────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">6</div>
+      <h2 class="section-title">Gestion d'état global</h2>
+    </div>
+
+    <h3>Architecture des Providers</h3>
+    <pre><span class="comment">// app/_layout.tsx — Ordre des providers</span>
+&lt;<span class="type">ThemeProvider</span>&gt;
+  &lt;<span class="type">AuthProvider</span>&gt;
+    &lt;<span class="type">AuthGuard</span>&gt;
+      &lt;<span class="type">TabsLayout</span> /&gt;   <span class="comment">← App entière</span>
+    &lt;/<span class="type">AuthGuard</span>&gt;
+  &lt;/<span class="type">AuthProvider</span>&gt;
+&lt;/<span class="type">ThemeProvider</span>&gt;</pre>
+
+    <h3>Context API</h3>
+    <table>
+      <thead><tr><th>Contexte</th><th>Données fournies</th><th>Persistance</th></tr></thead>
+      <tbody>
+        <tr><td><code>AuthContext</code></td><td><code>user</code>, <code>login()</code>, <code>logout()</code></td><td>AsyncStorage (<code>@instagram_user</code>)</td></tr>
+        <tr><td><code>ThemeContext</code></td><td><code>colors</code>, <code>isDark</code>, <code>toggleTheme()</code></td><td>AsyncStorage (<code>@instagram_theme</code>)</td></tr>
+        <tr><td><code>UnreadContext</code></td><td>Compteurs messages/notifs non lus</td><td>État en mémoire (temps réel)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>AsyncStorage</h3>
+    <p>Stockage clé-valeur persistant (équivalent de <code>localStorage</code> sur le web). Toutes les opérations sont asynchrones.</p>
+    <pre><span class="keyword">import</span> AsyncStorage <span class="keyword">from</span> <span class="string">'@react-native-async-storage/async-storage'</span>;
+
+<span class="comment">// Sauvegarder</span>
+<span class="keyword">await</span> AsyncStorage.<span class="fn">setItem</span>(<span class="string">'@instagram_user'</span>, JSON.<span class="fn">stringify</span>(user));
+<span class="comment">// Lire</span>
+<span class="keyword">const</span> stored = <span class="keyword">await</span> AsyncStorage.<span class="fn">getItem</span>(<span class="string">'@instagram_user'</span>);
+<span class="comment">// Supprimer</span>
+<span class="keyword">await</span> AsyncStorage.<span class="fn">removeItem</span>(<span class="string">'@instagram_user'</span>);</pre>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─────────── SECTION 7 ─────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">7</div>
+      <h2 class="section-title">Appels réseau &amp; Temps réel</h2>
+    </div>
+
+    <h3>HTTP — Helpers api.ts</h3>
+    <pre><span class="comment">// utils/api.ts — Auto-injection du token JWT</span>
+<span class="keyword">const</span> <span class="fn">apiGet</span> = <span class="keyword">async</span>&lt;T&gt;(path: <span class="type">string</span>): Promise&lt;T&gt; => {
+  <span class="keyword">const</span> token = <span class="keyword">await</span> AsyncStorage.<span class="fn">getItem</span>(<span class="string">'token'</span>);
+  <span class="keyword">const</span> res = <span class="keyword">await</span> <span class="fn">fetch</span>(`${API_URL}${path}`, {
+    headers: { Authorization: <span class="string">`Bearer ${token}`</span> }
+  });
+  <span class="keyword">if</span> (res.status === 401) <span class="fn">handleUnauthorized</span>();
+  <span class="keyword">return</span> res.<span class="fn">json</span>();
+};</pre>
+
+    <p>Upload de fichiers avec <code>FormData</code> (multipart) pour les posts, stories et avatars.</p>
+
+    <h3>WebSockets — Socket.IO</h3>
+    <table>
+      <thead><tr><th>Événement</th><th>Direction</th><th>Usage</th></tr></thead>
+      <tbody>
+        <tr><td><code>newMessage</code></td><td>Serveur → Client</td><td>Réception message chat en temps réel</td></tr>
+        <tr><td><code>sendMessage</code></td><td>Client → Serveur</td><td>Envoi d'un message</td></tr>
+        <tr><td><code>notification</code></td><td>Serveur → Client</td><td>Notif like, follow, commentaire</td></tr>
+        <tr><td><code>joinRoom</code></td><td>Client → Serveur</td><td>Rejoindre une conversation</td></tr>
+      </tbody>
+    </table>
+    <pre><span class="keyword">import</span> { <span class="fn">io</span> } <span class="keyword">from</span> <span class="string">'socket.io-client'</span>;
+
+<span class="keyword">const</span> socket = <span class="fn">io</span>(SOCKET_URL, { auth: { token } });
+
+socket.<span class="fn">on</span>(<span class="string">'newMessage'</span>, (msg) => {
+  <span class="fn">setMessages</span>(prev => [...prev, msg]);
+  <span class="fn">scrollToEnd</span>();
+});
+
+socket.<span class="fn">emit</span>(<span class="string">'sendMessage'</span>, { conversationId, content });</pre>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─────────── SECTION 8 ─────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">8</div>
+      <h2 class="section-title">Optimisation des listes (FlatList)</h2>
+    </div>
+
+    <table>
+      <thead><tr><th>Prop / Technique</th><th>Rôle</th><th>Utilisé dans</th></tr></thead>
+      <tbody>
+        <tr><td><code>keyExtractor</code></td><td>Clé unique par item — évite les re-renders inutiles</td><td>Tous les FlatList</td></tr>
+        <tr><td><code>numColumns={3}</code></td><td>Grille multi-colonnes</td><td>Explore (grid 3 colonnes)</td></tr>
+        <tr><td><code>onEndReached</code></td><td>Appelé quand on atteint la fin — pagination</td><td>Feed, DMs</td></tr>
+        <tr><td><code>onEndReachedThreshold</code></td><td>Seuil (0.5 = 50% avant la fin)</td><td>Feed</td></tr>
+        <tr><td><code>viewabilityConfig</code></td><td>Config de visibilité pour auto-play vidéo</td><td>Reels</td></tr>
+        <tr><td><code>onViewableItemsChanged</code></td><td>Callback quand un item entre/sort du viewport</td><td>Reels (auto-play)</td></tr>
+        <tr><td><code>pagingEnabled</code></td><td>Défilement snap — s'arrête sur un item entier</td><td>Reels (défilement vertical)</td></tr>
+        <tr><td><code>decelerationRate="fast"</code></td><td>Décélération rapide pour un snap précis</td><td>Reels</td></tr>
+        <tr><td><code>getItemLayout</code></td><td>Calcule la hauteur sans mesure (optim. perfs)</td><td>Reels</td></tr>
+        <tr><td><code>ref</code> + <code>scrollToEnd()</code></td><td>Scroll programmatique vers la fin</td><td>Chat (nouveaux messages)</td></tr>
+      </tbody>
+    </table>
+
+    <pre><span class="comment">// Reels — auto-play basé sur la visibilité</span>
+<span class="keyword">const</span> viewabilityConfig = { viewAreaCoveragePercentThreshold: 80 };
+
+<span class="keyword">const</span> onViewableItemsChanged = <span class="fn">useCallback</span>(({ viewableItems }) => {
+  <span class="keyword">if</span> (viewableItems.length > 0) {
+    <span class="fn">setCurrentIndex</span>(viewableItems[0].index);
+  }
+}, []);</pre>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─────────── SECTION 9 ─────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">9</div>
+      <h2 class="section-title">Layout &amp; Styling</h2>
+    </div>
+
+    <h3>Flexbox (modèle de layout unique en React Native)</h3>
+    <table>
+      <thead><tr><th>Propriété</th><th>Valeurs courantes</th><th>Usage</th></tr></thead>
+      <tbody>
+        <tr><td><code>flex</code></td><td><code>1</code></td><td>Prend tout l'espace disponible</td></tr>
+        <tr><td><code>flexDirection</code></td><td><code>'row'</code> / <code>'column'</code></td><td>Direction principale (défaut: column)</td></tr>
+        <tr><td><code>justifyContent</code></td><td><code>'center'</code>, <code>'space-between'</code>…</td><td>Alignement sur l'axe principal</td></tr>
+        <tr><td><code>alignItems</code></td><td><code>'center'</code>, <code>'flex-start'</code>…</td><td>Alignement sur l'axe secondaire</td></tr>
+        <tr><td><code>gap</code></td><td>nombre en pixels</td><td>Espacement entre items</td></tr>
+        <tr><td><code>flex: 0</code></td><td>taille fixe, ne s'étire pas</td><td>Headers, boutons fixes</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Positionnement absolu</h3>
+    <p>Utilisé pour les overlays, les boutons flottants (FAB), les badges de notification, et les contrôles vidéo.</p>
+    <pre><span class="comment">// Bouton flottant "Nouveau post"</span>
+fab: {
+  position: <span class="string">'absolute'</span>,
+  bottom: 24,
+  right: 24,
+  zIndex: 999,
+  width: 56,
+  height: 56,
+  borderRadius: 28,
+}</pre>
+
+    <h3>Système de thème (Light / Dark)</h3>
+    <p>Règle absolue du projet : <strong>jamais de couleurs en dur</strong> dans les composants. Toujours utiliser <code>useTheme()</code>.</p>
+    <div class="card">
+      <strong>Tokens de couleur disponibles :</strong>
+      <div style="margin-top:10px;">
+        <span class="tag tag-blue">background</span>
+        <span class="tag tag-blue">card</span>
+        <span class="tag tag-blue">border</span>
+        <span class="tag tag-blue">text</span>
+        <span class="tag tag-blue">textSecondary</span>
+        <span class="tag tag-purple">primary</span>
+        <span class="tag tag-purple">surface</span>
+        <span class="tag tag-purple">overlay</span>
+        <span class="tag tag-green">inputBg</span>
+        <span class="tag tag-green">iconActive</span>
+        <span class="tag tag-green">iconInactive</span>
+        <span class="tag tag-green">tabBar</span>
+        <span class="tag tag-orange">storyRing</span>
+        <span class="tag tag-orange">like</span>
+      </div>
+    </div>
+    <pre><span class="comment">// Pattern correct — toujours injecter les couleurs dynamiquement</span>
+<span class="keyword">const</span> { colors } = <span class="fn">useTheme</span>();
+&lt;<span class="type">View</span> style={[styles.container, { backgroundColor: colors.background }]}&gt;
+  &lt;<span class="type">Text</span> style={[styles.title, { color: colors.text }]}&gt;Bonjour&lt;/<span class="type">Text</span>&gt;
+&lt;/<span class="type">View</span>&gt;</pre>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─────────── SECTION 10 ─────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">10</div>
+      <h2 class="section-title">Patterns UI avancés</h2>
+    </div>
+
+    <table>
+      <thead><tr><th>Pattern</th><th>Concepts RN utilisés</th><th>Écran</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Toast animé</strong></td><td><code>Animated.timing</code> + <code>useEffect</code> timer + <code>position: absolute</code></td><td>Feed, Profile</td></tr>
+        <tr><td><strong>Bottom sheet</strong></td><td><code>Modal transparent</code> + <code>Animated.spring</code> + <code>FlatList</code></td><td>Commentaires, Share</td></tr>
+        <tr><td><strong>Stories</strong></td><td>Barre de progression via <code>Animated.Value</code> + <code>interpolate</code> + zones de tap</td><td>Composant Stories</td></tr>
+        <tr><td><strong>Reels (TikTok-like)</strong></td><td><code>FlatList</code> vertical paginé + <code>Video</code> ref + <code>viewabilityConfig</code></td><td>Reels.tsx</td></tr>
+        <tr><td><strong>Grille Explore</strong></td><td><code>FlatList</code> + <code>numColumns: 3</code> + <code>Dimensions</code> pour calcul taille</td><td>Explore.tsx</td></tr>
+        <tr><td><strong>Caméra</strong></td><td><code>CameraView</code> + permissions hook + <code>TouchableOpacity</code> overlays</td><td>Camera.tsx</td></tr>
+        <tr><td><strong>Chat temps réel</strong></td><td>Socket.IO + <code>FlatList</code> ref + <code>scrollToEnd</code> + <code>KeyboardAvoidingView</code></td><td>DirectMessages</td></tr>
+        <tr><td><strong>FAB animé</strong></td><td><code>Animated.spring</code> + <code>position: absolute</code></td><td>Feed</td></tr>
+        <tr><td><strong>Badge non-lu</strong></td><td>Context global + <code>position: absolute</code> sur l'icône de tab</td><td>Tab bar</td></tr>
+        <tr><td><strong>Drag &amp; drop</strong></td><td><code>PanResponder</code> + <code>Animated.event</code></td><td>Story editor</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─────────── SUMMARY ─────────── -->
+  <div class="summary-box">
+    <h3>Résumé global — Ce que ce projet couvre</h3>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <span class="num">7</span>
+        <span class="label">Écrans principaux</span>
+      </div>
+      <div class="summary-item">
+        <span class="num">3</span>
+        <span class="label">Contextes globaux</span>
+      </div>
+      <div class="summary-item">
+        <span class="num">8+</span>
+        <span class="label">Modules Expo SDK</span>
+      </div>
+      <div class="summary-item">
+        <span class="num">9</span>
+        <span class="label">APIs Animated</span>
+      </div>
+      <div class="summary-item">
+        <span class="num">10+</span>
+        <span class="label">Patterns UI avancés</span>
+      </div>
+      <div class="summary-item">
+        <span class="num">2</span>
+        <span class="label">Canaux temps réel</span>
+      </div>
+    </div>
+    <div style="margin-top:20px; font-size:12px; opacity:0.85; text-align:center;">
+      Core RN · Navigation Expo Router · Context API · AsyncStorage · Animated API · Camera &amp; AV · Socket.IO · FlatList optimisé · Theming Light/Dark · GPS · Haptics · Push Notifications
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Print instructions ── -->
+<div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:16px 24px;margin:0 48px 40px;font-size:12.5px;color:#92400e;">
+  <strong>Pour sauvegarder en PDF :</strong> appuyez sur <kbd style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:4px;padding:1px 6px;font-family:monospace;">Ctrl+P</kbd> (Windows) ou <kbd style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:4px;padding:1px 6px;font-family:monospace;">Cmd+P</kbd> (Mac), puis choisissez <strong>Enregistrer en PDF</strong> comme destination d'impression. Décochez les en-têtes/pieds de page si vous le souhaitez.
+</div>
+
+</body>
+</html>

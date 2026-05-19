@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Explication Authentication — Projet Sharely</title>
+  <style>
+    :root {
+      --purple: #7C3AED;
+      --purple-light: #EDE9FE;
+      --purple-dark: #5B21B6;
+      --purple-mid: #A78BFA;
+      --green: #059669;
+      --green-light: #D1FAE5;
+      --blue: #2563EB;
+      --blue-light: #DBEAFE;
+      --orange: #D97706;
+      --orange-light: #FEF3C7;
+      --red: #DC2626;
+      --red-light: #FEE2E2;
+      --gray: #6B7280;
+      --gray-light: #F9FAFB;
+      --border: #E5E7EB;
+      --text: #111827;
+      --code-bg: #1E1E2E;
+      --code-text: #CDD6F4;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    /* ── COVER ── */
+    .cover {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #1a0533 0%, #2d1060 40%, #7C3AED 80%, #a855f7 100%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 60px 48px;
+      page-break-after: always;
+      color: white;
+    }
+    .cover .icon { font-size: 72px; margin-bottom: 20px; }
+    .cover h1 { font-size: 42px; font-weight: 900; letter-spacing: -1px; margin-bottom: 10px; }
+    .cover .app-name { font-size: 20px; opacity: .75; margin-bottom: 36px; font-style: italic; }
+    .cover .pills { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 36px; }
+    .cover .pill {
+      background: rgba(255,255,255,.15); border-radius: 20px;
+      padding: 6px 16px; font-size: 12.5px; font-weight: 600; backdrop-filter: blur(4px);
+    }
+    .cover .files-box {
+      background: rgba(255,255,255,.1); border-radius: 16px;
+      padding: 24px 36px; font-size: 13px; line-height: 2.2;
+      border: 1px solid rgba(255,255,255,.2); text-align: left;
+    }
+    .cover .files-box .f { font-family: monospace; font-size: 13px; }
+    .cover .files-box .arrow { color: #c084fc; margin: 0 8px; }
+
+    /* ── LAYOUT ── */
+    .page { max-width: 920px; margin: 0 auto; padding: 48px 52px; }
+
+    /* ── TOC ── */
+    .toc {
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--purple);
+      border-radius: 12px; padding: 28px 32px;
+      background: var(--gray-light); margin-bottom: 48px;
+      page-break-after: always;
+    }
+    .toc h2 { font-size: 17px; color: var(--purple-dark); margin-bottom: 16px; }
+    .toc ol { padding-left: 22px; }
+    .toc li { margin: 7px 0; font-size: 13px; }
+    .toc .sub { color: var(--gray); font-size: 11.5px; }
+
+    /* ── SECTION ── */
+    .section { margin-bottom: 56px; }
+    .section-head {
+      display: flex; align-items: center; gap: 14px;
+      padding-bottom: 12px; border-bottom: 2px solid var(--purple-light);
+      margin-bottom: 22px;
+    }
+    .snum {
+      background: linear-gradient(135deg, var(--purple), var(--purple-dark));
+      color: white; font-size: 12px; font-weight: 800;
+      width: 34px; height: 34px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    h2.stitle { font-size: 21px; font-weight: 800; color: var(--text); }
+    h3 {
+      font-size: 13.5px; font-weight: 700; color: var(--purple-dark);
+      text-transform: uppercase; letter-spacing: .5px;
+      margin: 24px 0 10px; padding-bottom: 4px;
+      border-bottom: 1px dashed var(--purple-light);
+    }
+    p { margin: 9px 0; }
+
+    /* ── CODE ── */
+    code {
+      background: #F3F0FF; border: 1px solid #DDD6FE;
+      border-radius: 4px; padding: 1px 6px;
+      font-family: 'Consolas', 'Fira Code', monospace;
+      font-size: 11.5px; color: var(--purple-dark);
+    }
+    pre {
+      background: var(--code-bg); color: var(--code-text);
+      border-radius: 12px; padding: 20px 24px;
+      font-family: 'Consolas', 'Fira Code', monospace;
+      font-size: 12px; line-height: 1.75;
+      margin: 14px 0 22px; overflow-x: auto;
+      border-left: 4px solid var(--purple);
+    }
+    pre .c  { color: #6C7086; font-style: italic; }
+    pre .k  { color: #CBA6F7; }
+    pre .s  { color: #A6E3A1; }
+    pre .t  { color: #89B4FA; }
+    pre .fn { color: #89DCEB; }
+    pre .n  { color: #FAB387; }
+    pre .op { color: #94E2D5; }
+
+    /* ── TABLES ── */
+    table { width: 100%; border-collapse: collapse; margin: 14px 0 22px; font-size: 12.5px; }
+    thead { background: linear-gradient(to right, var(--purple), var(--purple-dark)); color: white; }
+    thead th { padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+    tbody tr:nth-child(even) { background: var(--gray-light); }
+    tbody td { padding: 9px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tbody td:first-child code { background: none; border: none; color: var(--purple-dark); font-weight: 700; }
+
+    /* ── CALLOUT BOXES ── */
+    .box {
+      border-radius: 12px; padding: 16px 20px; margin: 14px 0 22px;
+      border: 1px solid; page-break-inside: avoid;
+    }
+    .box-purple { background: var(--purple-light); border-color: var(--purple-mid); }
+    .box-green  { background: var(--green-light);  border-color: #6EE7B7; }
+    .box-blue   { background: var(--blue-light);   border-color: #93C5FD; }
+    .box-orange { background: var(--orange-light); border-color: #FCD34D; }
+    .box-red    { background: var(--red-light);    border-color: #FCA5A5; }
+    .box-title  { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+    .box-purple .box-title { color: var(--purple-dark); }
+    .box-green  .box-title { color: var(--green); }
+    .box-blue   .box-title { color: var(--blue); }
+    .box-orange .box-title { color: var(--orange); }
+    .box-red    .box-title { color: var(--red); }
+
+    /* ── GRID ── */
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 14px 0 22px; }
+    .card {
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 16px 18px; background: var(--gray-light);
+      border-top: 3px solid var(--purple);
+    }
+    .card.blue   { border-top-color: var(--blue); }
+    .card.green  { border-top-color: var(--green); }
+    .card.orange { border-top-color: var(--orange); }
+    .card.red    { border-top-color: var(--red); }
+    .card h4 { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .card ul { padding-left: 16px; }
+    .card li { font-size: 12px; margin: 4px 0; }
+
+    /* ── FLOW DIAGRAM ── */
+    .flow {
+      background: #0F0F1A; border-radius: 14px;
+      padding: 28px 32px; margin: 14px 0 22px;
+      font-family: monospace; font-size: 12.5px;
+      color: #CDD6F4; line-height: 2.2;
+    }
+    .flow .arrow { color: #CBA6F7; }
+    .flow .file  { color: #89DCEB; font-weight: bold; }
+    .flow .func  { color: #A6E3A1; }
+    .flow .data  { color: #FAB387; }
+    .flow .note  { color: #6C7086; font-style: italic; }
+
+    /* ── STEP TIMELINE ── */
+    .steps { margin: 14px 0 22px; }
+    .step {
+      display: flex; gap: 16px; margin-bottom: 18px;
+      padding-bottom: 18px; border-bottom: 1px solid var(--border);
+    }
+    .step:last-child { border-bottom: none; }
+    .step-num {
+      background: var(--purple); color: white;
+      font-size: 12px; font-weight: 800;
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .step-body h4 { font-size: 13.5px; font-weight: 700; margin-bottom: 4px; }
+    .step-body p  { font-size: 12.5px; color: #374151; margin: 4px 0; }
+
+    /* ── FINAL BOX ── */
+    .final {
+      background: linear-gradient(135deg, var(--purple) 0%, var(--purple-dark) 100%);
+      color: white; border-radius: 16px; padding: 32px 36px; margin-top: 40px;
+    }
+    .final h3 { color: white; text-transform: none; border: none; letter-spacing: 0; font-size: 17px; margin: 0 0 20px; }
+    .final-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+    .final-item { background: rgba(255,255,255,.15); border-radius: 10px; padding: 14px; text-align: center; }
+    .final-item .num { font-size: 26px; font-weight: 900; display: block; }
+    .final-item .lbl { font-size: 11px; opacity: .85; }
+
+    hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+    .print-note {
+      background: #FFFBEB; border: 1px solid #FCD34D;
+      border-radius: 8px; padding: 14px 22px;
+      font-size: 12px; color: #92400E;
+      margin: 0 52px 40px;
+    }
+
+    @media print {
+      .cover, pre, thead, .final { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .section { page-break-inside: avoid; }
+      .flow { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ COVER ══════════════ -->
+<div class="cover">
+  <div class="icon">🔐</div>
+  <h1>Authentification</h1>
+  <div class="app-name">Projet Sharely — Explication naïve &amp; complète</div>
+  <div class="pills">
+    <span class="pill">Context API</span>
+    <span class="pill">AsyncStorage</span>
+    <span class="pill">useState</span>
+    <span class="pill">useEffect</span>
+    <span class="pill">Expo Router Guard</span>
+    <span class="pill">JWT Token</span>
+    <span class="pill">fetch API</span>
+    <span class="pill">KeyboardAvoidingView</span>
+  </div>
+  <div class="files-box">
+    <div><span class="f">app/Auth.tsx</span><span class="arrow">→</span>Route Expo Router (wrapper)</div>
+    <div><span class="f">components/AuthScreen.tsx</span><span class="arrow">→</span>Toute l'UI (Login + Register)</div>
+    <div><span class="f">context/AuthContext.tsx</span><span class="arrow">→</span>État global + logique métier</div>
+    <div><span class="f">utils/api.ts</span><span class="arrow">→</span>Appels HTTP vers le backend</div>
+    <div><span class="f">app/_layout.tsx</span><span class="arrow">→</span>Guard de protection des routes</div>
+  </div>
+</div>
+
+<!-- ══════════════ CONTENT ══════════════ -->
+<div class="page">
+
+  <!-- TABLE DES MATIÈRES -->
+  <div class="toc">
+    <h2>Table des matières</h2>
+    <ol>
+      <li>Vue d'ensemble — comment les 5 fichiers se parlent <span class="sub">— diagramme de flux complet</span></li>
+      <li>app/Auth.tsx — le fichier de route <span class="sub">— rôle minimal, pattern two-file</span></li>
+      <li>components/AuthScreen.tsx — l'interface <span class="sub">— composants, hooks, formulaires</span></li>
+      <li>Le composant InputField <span class="sub">— useState, focus, secureTextEntry, oeil</span></li>
+      <li>La logique des formulaires <span class="sub">— validation, handleLogin, handleRegister</span></li>
+      <li>context/AuthContext.tsx — l'état global <span class="sub">— createContext, Provider, hooks custom</span></li>
+      <li>utils/api.ts — les appels réseau <span class="sub">— fetch, JWT, gestion 401</span></li>
+      <li>app/_layout.tsx — le garde d'authentification <span class="sub">— AuthGuard, useSegments, redirect</span></li>
+      <li>Scénarios complets pas-à-pas <span class="sub">— Login, Register, Logout, 401</span></li>
+      <li>Résumé de tous les concepts</li>
+    </ol>
+  </div>
+
+  <!-- ─────────── SECTION 1 ─────────── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="snum">1</div>
+      <h2 class="stitle">Vue d'ensemble — comment les 5 fichiers se parlent</h2>
+    </div>
+
+    <p>Avant de plonger dans chaque fichier, voici la vue globale. Ces 5 fichiers forment un système cohérent où chacun a un rôle précis et unique.</p>
+
+    <div class="flow">
+      <div>┌─────────────────────────────────────────────────────────────────┐</div>
+      <div>│                    <span class="data">DÉMARRAGE DE L'APPLICATION</span>                     │</div>
+      <div>└──────────────────────────┬──────────────────────────────────────┘</div>
+      <div>                           │</div>
+      <div>                           ▼</div>
+      <div>              <span class="file">app/_layout.tsx</span>  <span class="note">← premier fichier chargé par Expo Router</span></div>
+      <div>              │  Enveloppe tout avec les Providers</div>
+      <div>              │  &lt;ThemeProvider&gt;</div>
+      <div>              │    &lt;AuthProvider&gt;    <span class="note">← lance AuthContext</span></div>
+      <div>              │      &lt;AuthGuard&gt;    <span class="note">← surveille user + redirige</span></div>
+      <div>              │        &lt;TabsLayout&gt;</div>
+      <div>                           │</div>
+      <div>        ┌──────────────────┴─────────────────────┐</div>
+      <div>        │  <span class="func">user == null ?</span>          <span class="func">user != null ?</span>     │</div>
+      <div>        │       ▼                       ▼         │</div>
+      <div>        │  <span class="file">app/Auth.tsx</span>          <span class="file">app/index.tsx</span>      │</div>
+      <div>        │  (écran login)          (feed home)     │</div>
+      <div>        └──────────────────────────────────────────┘</div>
+      <div>                           │</div>
+      <div>              <span class="file">app/Auth.tsx</span></div>
+      <div>              │  re-exporte juste AuthScreen</div>
+      <div>                           │</div>
+      <div>              <span class="file">components/AuthScreen.tsx</span>  <span class="note">← toute l'UI ici</span></div>
+      <div>              │  appelle  <span class="func">useAuth()</span>  pour obtenir login/register</div>
+      <div>                           │</div>
+      <div>              <span class="file">context/AuthContext.tsx</span></div>
+      <div>              │  login()  <span class="arrow">→</span>  <span class="func">apiPost('/auth/login')</span></div>
+      <div>              │  register() <span class="arrow">→</span>  <span class="func">apiPost('/auth/register')</span></div>
+      <div>                           │</div>
+      <div>              <span class="file">utils/api.ts</span>  <span class="note">← fetch() + JWT + gestion 401</span></div>
+      <div>                           │</div>
+      <div>              <span class="data">BACKEND NestJS  POST /api/auth/login</span></div>
+    </div>
+
+    <div class="box box-purple">
+      <div class="box-title">Règle de séparation des responsabilités</div>
+      <strong>AuthScreen</strong> = seulement l'UI et la validation locale.<br/>
+      <strong>AuthContext</strong> = seulement la logique métier (appels API, sauvegarde token).<br/>
+      <strong>api.ts</strong> = seulement les requêtes HTTP.<br/>
+      <strong>_layout.tsx</strong> = seulement la redirection selon l'état de connexion.<br/>
+      Chaque fichier a <em>une seule</em> responsabilité.
+    </div>
+  </div>
+
+  <hr/>
+
+  <!-- ─────────── SECTION 2 ─────────── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="snum">2</div>
+      <h2 class="stitle">app/Auth.tsx — le fichier de route</h2>
+    </div>
+
+    <pre><span class="c">// app/Auth.tsx — fichier complet (3 lignes !)</span>
+<span class="k">import</span> AuthScreen <span class="k">from</span> <span class="s">"../components/AuthScreen"</span>;
+
+<span class="k">export default</span> AuthScreen;</pre>
+
+    <p>C'est intentionnellement minimaliste. Expo Router exige qu'un fichier dans <code>app/</code> existe pour que la route <code>/Auth</code> existe. Mais tout le vrai code est dans <code>components/AuthScreen.tsx</code>.</p>
+
+    <div class="box box-blue">
+      <div class="box-title">Pattern "two-file" — règle du projet</div>
+      Chaque écran suit ce pattern : <code>app/X.tsx</code> = juste <code>export default from components/X</code>.
+      Cela garde les fichiers de route propres et permet de réutiliser les composants ailleurs si besoin.
+    </div>
+
+    <p>Quand Expo Router voit ce fichier, il créé automatiquement une route <code>/Auth</code> accessible via <code>router.replace('/Auth')</code>. L'URL est dérivée du nom du fichier.</p>
+  </div>
+
+  <hr/>
+
+  <!-- ─────────── SECTION 3 ─────────── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="snum">3</div>
+      <h2 class="stitle">components/AuthScreen.tsx — l'interface utilisateur</h2>
+    </div>
+
+    <h3>Structure globale du JSX</h3>
+    <pre><span class="k">return</span> (
+  <span class="op">&lt;</span><span class="t">SafeAreaView</span><span class="op">&gt;</span>                       <span class="c">← zone sécurisée (hors encoche)</span>
+    <span class="op">&lt;</span><span class="t">KeyboardAvoidingView</span><span class="op">&gt;</span>               <span class="c">← remonte le contenu quand clavier ouvert</span>
+      <span class="op">&lt;</span><span class="t">ScrollView</span><span class="op">&gt;</span>                        <span class="c">← défilement si contenu dépasse l'écran</span>
+
+        <span class="op">&lt;</span><span class="t">View</span><span class="op">&gt;</span> Logo + titre <span class="op">&lt;/</span><span class="t">View</span><span class="op">&gt;</span>
+        <span class="op">&lt;</span><span class="t">View</span><span class="op">&gt;</span> Onglets Connexion/Inscription <span class="op">&lt;/</span><span class="t">View</span><span class="op">&gt;</span>
+        <span class="c">{ error &amp;&amp; &lt;ErrorBox/&gt; }</span>           <span class="c">← affichage conditionnel</span>
+        <span class="c">{ mode === 'login'</span>
+            <span class="c">? &lt;LoginForm/&gt;</span>
+            <span class="c">: &lt;RegisterForm/&gt; }</span>            <span class="c">← rendu conditionnel</span>
+        <span class="op">&lt;</span><span class="t">View</span><span class="op">&gt;</span> Comptes de test <span class="op">&lt;/</span><span class="t">View</span><span class="op">&gt;</span>
+
+      <span class="op">&lt;/</span><span class="t">ScrollView</span><span class="op">&gt;</span>
+    <span class="op">&lt;/</span><span class="t">KeyboardAvoidingView</span><span class="op">&gt;</span>
+
+    <span class="op">&lt;</span><span class="t">View</span><span class="op">&gt;</span> Barre de bas (lien switch) <span class="op">&lt;/</span><span class="t">View</span><span class="op">&gt;</span>  <span class="c">← hors ScrollView = toujours visible</span>
+  <span class="op">&lt;/</span><span class="t">SafeAreaView</span><span class="op">&gt;</span>
+);</pre>
+
+    <h3>SafeAreaView</h3>
+    <p>Sans <code>SafeAreaView</code>, le contenu s'afficherait sous l'encoche (iPhone) ou la caméra punch-hole (Android). Ce composant ajoute automatiquement les marges internes nécessaires selon l'appareil.</p>
+
+    <h3>KeyboardAvoidingView</h3>
+    <p>Quand l'utilisateur appuie sur un <code>TextInput</code>, le clavier virtuel monte et peut cacher les champs du bas. <code>KeyboardAvoidingView</code> décale automatiquement son contenu vers le haut.</p>
+    <pre><span class="op">&lt;</span><span class="t">KeyboardAvoidingView</span>
+  behavior={<span class="t">Platform</span>.OS <span class="op">===</span> <span class="s">'ios'</span> ? <span class="s">'padding'</span> : <span class="k">undefined</span>}
+  style={{ flex: <span class="n">1</span> }}
+<span class="op">&gt;</span></pre>
+    <div class="box box-orange">
+      <div class="box-title">Pourquoi Platform.OS ici ?</div>
+      Sur iOS, le comportement <code>'padding'</code> est nécessaire. Sur Android, React Native gère cela nativement via le manifest (<code>windowSoftInputMode</code>), donc <code>undefined</code> suffit. C'est un des rares endroits où le code doit différer selon l'OS.
+    </div>
+
+    <h3>ScrollView avec keyboardShouldPersistTaps</h3>
+    <pre><span class="op">&lt;</span><span class="t">ScrollView</span>
+  contentContainerStyle={styles.scroll}
+  showsVerticalScrollIndicator={<span class="k">false</span>}
+  keyboardShouldPersistTaps=<span class="s">"handled"</span>
+<span class="op">&gt;</span></pre>
+    <p><code>keyboardShouldPersistTaps="handled"</code> permet de cliquer sur les boutons sans que le clavier se ferme d'abord. Sans ça, le premier tap ferme le clavier au lieu d'appuyer le bouton.</p>
+
+    <h3>Les états useState du composant</h3>
+    <table>
+      <thead><tr><th>Variable d'état</th><th>Type</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>mode</code></td><td><code>"login" | "register"</code></td><td>Quel formulaire afficher</td></tr>
+        <tr><td><code>loading</code></td><td><code>boolean</code></td><td>Désactiver le bouton pendant l'appel API</td></tr>
+        <tr><td><code>error</code></td><td><code>string</code></td><td>Message d'erreur à afficher</td></tr>
+        <tr><td><code>email</code></td><td><code>string</code></td><td>Champ email (login)</td></tr>
+        <tr><td><code>password</code></td><td><code>string</code></td><td>Champ mot de passe (login)</td></tr>
+        <tr><td><code>fullName</code></td><td><code>string</code></td><td>Nom complet (register)</td></tr>
+        <tr><td><code>username</code></td><td><code>string</code></td><td>Nom d'utilisateur (register)</td></tr>
+        <tr><td><code>regEmail</code></td><td><code>string</code></td><td>Email (register)</td></tr>
+        <tr><td><code>regPassword</code></td><td><code>string</code></td><td>Mot de passe (register)</td></tr>
+        <tr><td><code>confirmPassword</code></td><td><code>string</code></td><td>Confirmation du mot de passe</td></tr>
+      </tbody>
+    </table>
+
+    <div class="box box-purple">
+      <div class="box-title">Pourquoi autant de useState séparés ?</div>
+      Chaque champ a son propre état car React re-render seulement les composants dont l'état change. Si tout était dans un seul objet, chaque frappe au clavier re-rendrerait tous les champs. Les états séparés sont plus performants et plus lisibles.
+    </div>
+
+    <h3>Rendu conditionnel — afficher Login OU Register</h3>
+    <pre><span class="c">// Dans le JSX — opérateur ternaire</span>
+{mode <span class="op">===</span> <span class="s">'login'</span> ? (
+  <span class="op">&lt;</span><span class="t">View</span><span class="op">&gt;</span> <span class="c">{/* formulaire login */}</span> <span class="op">&lt;/</span><span class="t">View</span><span class="op">&gt;</span>
+) : (
+  <span class="op">&lt;</span><span class="t">View</span><span class="op">&gt;</span> <span class="c">{/* formulaire register */}</span> <span class="op">&lt;/</span><span class="t">View</span><span class="op">&gt;</span>
+)}</pre>
+    <p>Un seul <code>useState('login')</code> contrôle lequel des deux blocs JSX est rendu. Quand l'utilisateur clique "S'inscrire", <code>setMode('register')</code> change l'état → React re-render → le formulaire registration apparaît, le formulaire login disparaît.</p>
+
+    <h3>Styles conditionnels</h3>
+    <pre><span class="c">// Onglet actif = fond blanc + ombre. Onglet inactif = transparent.</span>
+<span class="op">&lt;</span><span class="t">TouchableOpacity</span>
+  style={[styles.modeTab, mode <span class="op">===</span> <span class="s">'login'</span> <span class="op">&amp;&amp;</span> styles.modeTabActive]}
+  onPress={() => <span class="fn">switchMode</span>(<span class="s">'login'</span>)}
+<span class="op">&gt;</span></pre>
+    <p>Le tableau de styles <code>[styles.base, condition && styles.extra]</code> est le pattern standard React Native pour les styles dynamiques. Si la condition est <code>false</code>, le deuxième style est ignoré.</p>
+  </div>
+
+  <hr/>
+
+  <!-- ─────────── SECTION 4 ─────────── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="snum">4</div>
+      <h2 class="stitle">Le composant InputField — un mini-composant réutilisable</h2>
+    </div>
+
+    <p><code>InputField</code> est un composant défini <em>dans le même fichier</em> qu'AuthScreen. Il encapsule un <code>TextInput</code> avec des fonctionnalités supplémentaires : bordure colorée au focus, et bouton "oeil" pour les mots de passe.</p>
+
+    <h3>Code complet du composant</h3>
+    <pre><span class="k">function</span> <span class="fn">InputField</span>({ placeholder, value, onChangeText,
+                       secureTextEntry = <span class="k">false</span>, keyboardType = <span class="s">'default'</span>,
+                       autoCapitalize = <span class="s">'none'</span> }) {
+
+  <span class="c">// État 1 : le champ est-il actif (en cours de saisie) ?</span>
+  <span class="k">const</span> [focused, setFocused] = <span class="fn">useState</span>(<span class="k">false</span>);
+
+  <span class="c">// État 2 : le mot de passe est-il visible ?</span>
+  <span class="c">// Par défaut : visible si PAS un champ mot de passe</span>
+  <span class="k">const</span> [visible, setVisible] = <span class="fn">useState</span>(!secureTextEntry);
+
+  <span class="k">return</span> (
+    <span class="op">&lt;</span><span class="t">View</span> style={[styles.inputWrap, focused <span class="op">&amp;&amp;</span> styles.inputFocused]}<span class="op">&gt;</span>
+      <span class="op">&lt;</span><span class="t">TextInput</span>
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor=<span class="s">"#aaa"</span>
+        secureTextEntry={secureTextEntry <span class="op">&amp;&amp;</span> !visible}   <span class="c">← masquer SI mot de passe ET non visible</span>
+        keyboardType={keyboardType}                    <span class="c">← clavier email ou normal</span>
+        autoCapitalize={autoCapitalize}                <span class="c">← pas de majuscule auto pour email</span>
+        onFocus={() => <span class="fn">setFocused</span>(<span class="k">true</span>)}              <span class="c">← bordure violette quand actif</span>
+        onBlur={() => <span class="fn">setFocused</span>(<span class="k">false</span>)}              <span class="c">← bordure grise quand inactif</span>
+      <span class="op">/&gt;</span>
+
+      <span class="c">// Bouton oeil — affiché seulement pour les champs mot de passe</span>
+      {secureTextEntry <span class="op">&amp;&amp;</span> (
+        <span class="op">&lt;</span><span class="t">TouchableOpacity</span> onPress={() => <span class="fn">setVisible</span>(!visible)}<span class="op">&gt;</span>
+          <span class="op">&lt;</span><span class="t">Text</span><span class="op">&gt;</span>{visible ? <span class="s">"👁"</span> : <span class="s">"🙈"</span>}<span class="op">&lt;/</span><span class="t">Text</span><span class="op">&gt;</span>
+        <span class="op">&lt;/</span><span class="t">TouchableOpacity</span><span class="op">&gt;</span>
+      )}
+    <span class="op">&lt;/</span><span class="t">View</span><span class="op">&gt;</span>
+  );
+}</pre>
+
+    <div class="grid2">
+      <div class="card">
+        <h4>useState(false) — focused</h4>
+        <ul>
+          <li>Démarre à <code>false</code> (pas de focus)</li>
+          <li><code>onFocus</code> → <code>setFocused(true)</code></li>
+          <li><code>onBlur</code> → <code>setFocused(false)</code></li>
+          <li>Change la couleur de la bordure via style conditionnel</li>
+        </ul>
+      </div>
+      <div class="card blue">
+        <h4>useState(!secureTextEntry) — visible</h4>
+        <ul>
+          <li>Champ email → <code>secureTextEntry=false</code> → <code>visible=true</code></li>
+          <li>Champ mot de passe → <code>secureTextEntry=true</code> → <code>visible=false</code></li>
+          <li>Clic sur l'oeil → toggle <code>setVisible(!visible)</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Props du composant — le "contrat d'interface"</h3>
+    <table>
+      <thead><tr><th>Prop</th><th>Type</th><th>Défaut</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>placeholder</code></td><td>string</td><td>—</td><td>Texte fantôme quand vide</td></tr>
+        <tr><td><code>value</code></td><td>string</td><td>—</td><td>Valeur contrôlée (vient du parent)</td></tr>
+        <tr><td><code>onChangeText</code></td><td>function</td><td>—</td><td>Callback quand l'utilisateur tape</td></tr>
+        <tr><td><code>secureTextEntry</code></td><td>boolean</td><td>false</td><td>Masquer les caractères (mot de passe)</td></tr>
+        <tr><td><code>keyboardType</code></td><td>"default" | "email-address"</td><td>"default"</td><td>Type de clavier affiché</td></tr>
+        <tr><td><code>autoCapitalize</code></td><td>"none" | "words"</td><td>"none"</td><td>Majuscule automatique</td></tr>
+      </tbody>
+    </table>
+
+    <div class="box box-green">
+      <div class="box-title">Composant "contrôlé" (Controlled Component)</div>
+      <code>value={email}</code> + <code>onChangeText={setEmail}</code> = le composant est <em>contrôlé</em> par React.
+      La valeur affichée vient toujours de l'état parent (<code>email</code>). Chaque frappe déclenche <code>setEmail</code> qui met à jour l'état → React re-render → TextInput affiche la nouvelle valeur. C'est le flux à sens unique de React.
+    </div>
+  </div>
+
+  <hr/>
+
+  <!-- ─────────── SECTION 5 ─────────── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="snum">5</div>
+      <h2 class="stitle">La logique des formulaires — validation et soumission</h2>
+    </div>
+
+    <h3>handleLogin — le gestionnaire de connexion</h3>
+    <pre><span class="k">const</span> handleLogin = <span class="k">async</span> () => {
+  <span class="fn">setError</span>(<span class="s">""</span>);                              <span class="c">// 1. Effacer les erreurs précédentes</span>
+
+  <span class="c">// 2. Validation locale AVANT l'appel réseau</span>
+  <span class="k">if</span> (!email.trim() || !password.trim()) {
+    <span class="fn">setError</span>(<span class="s">"Veuillez remplir tous les champs."</span>);
+    <span class="k">return</span>;                                    <span class="c">// ← stop, pas d'appel API</span>
+  }
+
+  <span class="fn">setLoading</span>(<span class="k">true</span>);                           <span class="c">// 3. Activer le spinner</span>
+  <span class="k">const</span> result = <span class="k">await</span> <span class="fn">login</span>(email.trim(), password); <span class="c">// 4. Appel au contexte</span>
+  <span class="fn">setLoading</span>(<span class="k">false</span>);                          <span class="c">// 5. Désactiver le spinner</span>
+
+  <span class="c">// 6. Si échec → afficher l'erreur du serveur</span>
+  <span class="k">if</span> (!result.success) <span class="fn">setError</span>(result.error ?? <span class="s">"Erreur inconnue."</span>);
+  <span class="c">// Si succès → AuthGuard redirige automatiquement (pas de code ici)</span>
+};</pre>
+
+    <div class="box box-orange">
+      <div class="box-title">Pourquoi pas de router.push() après le login ?</div>
+      Parce que <code>login()</code> change <code>user</code> dans le Context → <code>AuthGuard</code> dans <code>_layout.tsx</code> détecte le changement via <code>useEffect([user])</code> → redirige automatiquement vers <code>/</code>. L'écran Auth n'a pas besoin de savoir où naviguer.
+    </div>
+
+    <h3>handleRegister — validations multiples</h3>
+    <pre><span class="k">const</span> handleRegister = <span class="k">async</span> () => {
+  <span class="fn">setError</span>(<span class="s">""</span>);
+
+  <span class="c">// Validation 1 : champs obligatoires</span>
+  <span class="k">if</span> (!fullName.trim() || !username.trim() || !regEmail.trim() || !regPassword.trim()) {
+    <span class="fn">setError</span>(<span class="s">"Veuillez remplir tous les champs."</span>); <span class="k">return</span>;
+  }
+
+  <span class="c">// Validation 2 : longueur du username</span>
+  <span class="k">if</span> (username.trim().<span class="fn">length</span> < <span class="n">3</span>) {
+    <span class="fn">setError</span>(<span class="s">"Le nom d'utilisateur doit contenir au moins 3 caractères."</span>); <span class="k">return</span>;
+  }
+
+  <span class="c">// Validation 3 : longueur du mot de passe</span>
+  <span class="k">if</span> (regPassword.<span class="fn">length</span> < <span class="n">6</span>) {
+    <span class="fn">setError</span>(<span class="s">"Le mot de passe doit contenir au moins 6 caractères."</span>); <span class="k">return</span>;
+  }
+
+  <span class="c">// Validation 4 : confirmation du mot de passe</span>
+  <span class="k">if</span> (regPassword !== confirmPassword) {
+    <span class="fn">setError</span>(<span class="s">"Les mots de passe ne correspondent pas."</span>); <span class="k">return</span>;
+  }
+
+  <span class="fn">setLoading</span>(<span class="k">true</span>);
+  <span class="k">const</span> result = <span class="k">await</span> <span class="fn">register</span>({
+    fullName: fullName.trim(),
+    username: username.trim().<span class="fn">toLowerCase</span>(),   <span class="c">← toujours en minuscule</span>
+    email: regEmail.trim().<span class="fn">toLowerCase</span>(),
+    password: regPassword,
+  });
+  <span class="fn">setLoading</span>(<span class="k">false</span>);
+  <span class="k">if</span> (!result.success) <span class="fn">setError</span>(result.error ?? <span class="s">"Erreur inconnue."</span>);
+};</pre>
+
+    <h3>Le bouton avec état de chargement</h3>
+    <pre><span class="op">&lt;</span><span class="t">TouchableOpacity</span>
+  style={[styles.submitBtn, loading <span class="op">&amp;&amp;</span> styles.submitDisabled]}  <span class="c">← grisé si loading</span>
+  onPress={<span class="fn">handleLogin</span>}
+  disabled={loading}                                             <span class="c">← plus cliquable si loading</span>
+  activeOpacity={<span class="n">0.85</span>}
+<span class="op">&gt;</span>
+  {loading
+    ? <span class="op">&lt;</span><span class="t">ActivityIndicator</span> color=<span class="s">"#fff"</span> <span class="op">/&gt;</span>        <span class="c">← spinner blanc pendant l'attente</span>
+    : <span class="op">&lt;</span><span class="t">Text</span><span class="op">&gt;</span>Se connecter<span class="op">&lt;/</span><span class="t">Text</span><span class="op">&gt;</span>                  <span class="c">← texte normal sinon</span>
+  }
+<span class="op">&lt;/</span><span class="t">TouchableOpacity</span><span class="op">&gt;</span></pre>
+    <p>Ce pattern est universel dans React Native : pendant un appel asynchrone, le bouton montre un spinner et est désactivé pour éviter les doubles soumissions.</p>
+  </div>
+
+  <hr/>
+
+  <!-- ─────────── SECTION 6 ─────────── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="snum">6</div>
+      <h2 class="stitle">context/AuthContext.tsx — l'état global d'authentification</h2>
+    </div>
+
+    <p>C'est le fichier le plus important du système d'auth. Il utilise le <strong>Context API</strong> de React pour partager l'état de connexion avec toute l'application.</p>
+
+    <h3>Pourquoi Context API ?</h3>
+    <div class="box box-blue">
+      <div class="box-title">Le problème sans Context — "Prop drilling"</div>
+      Sans Context, pour partager <code>user</code> entre AuthScreen, Profile, Feed, DMs…
+      il faudrait passer <code>user</code> en prop à chaque composant, puis à ses enfants, puis aux enfants de ses enfants.
+      Le Context résout ça : on met <code>user</code> dans un "store global" accessible par n'importe quel composant via <code>useAuth()</code>.
+    </div>
+
+    <h3>Les 4 pièces du Context API</h3>
+    <div class="grid2">
+      <div class="card">
+        <h4>1. createContext()</h4>
+        <ul>
+          <li>Crée le "conteneur" global</li>
+          <li>Retourne un objet Context</li>
+          <li>Valeur initiale = <code>null</code></li>
+        </ul>
+      </div>
+      <div class="card blue">
+        <h4>2. Provider</h4>
+        <ul>
+          <li>Enveloppe les composants enfants</li>
+          <li>Fournit la valeur via <code>value={...}</code></li>
+          <li>Placé dans <code>_layout.tsx</code></li>
+        </ul>
+      </div>
+      <div class="card green">
+        <h4>3. useContext()</h4>
+        <ul>
+          <li>Lit la valeur du Context</li>
+          <li>Déclenche un re-render si la valeur change</li>
+          <li>Utilisé dans le hook custom</li>
+        </ul>
+      </div>
+      <div class="card orange">
+        <h4>4. Hook custom useAuth()</h4>
+        <ul>
+          <li>Encapsule <code>useContext(AuthContext)</code></li>
+          <li>Ajoute une erreur si utilisé hors Provider</li>
+          <li>Interface propre pour les composants</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Le type AuthContextType — le "contrat"</h3>
+    <pre><span class="k">type</span> <span class="t">AuthContextType</span> = {
+  user: <span class="t">User</span> | <span class="k">null</span>;              <span class="c">// null = non connecté</span>
+  isLoading: <span class="k">boolean</span>;            <span class="c">// true pendant la lecture d'AsyncStorage au démarrage</span>
+  login: (email, password) <span class="k">=&gt;</span> <span class="t">Promise</span>&lt;{ success: <span class="k">boolean</span>; error?: <span class="k">string</span> }&gt;;
+  register: (data) <span class="k">=&gt;</span> <span class="t">Promise</span>&lt;{ success: <span class="k">boolean</span>; error?: <span class="k">string</span> }&gt;;
+  logout: () <span class="k">=&gt;</span> <span class="t">Promise</span>&lt;<span class="k">void</span>&gt;;
+  refreshUser: () <span class="k">=&gt;</span> <span class="t">Promise</span>&lt;<span class="k">void</span>&gt;;
+};</pre>
+
+    <h3>useEffect au démarrage — restaurer la session</h3>
+    <pre><span class="fn">useEffect</span>(() => {
+  (<span class="k">async</span> () => {
+    <span class="k">try</span> {
+      <span class="k">const</span> saved = <span class="k">await</span> AsyncStorage.<span class="fn">getItem</span>(SESSION_KEY);  <span class="c">← lire le disque</span>
+      <span class="k">if</span> (saved) <span class="fn">setUser</span>(JSON.<span class="fn">parse</span>(saved) <span class="k">as</span> <span class="t">User</span>);          <span class="c">← restaurer l'état</span>
+    } <span class="k">catch</span> (_) {
+    } <span class="k">finally</span> {
+      <span class="fn">setLoading</span>(<span class="k">false</span>);                                       <span class="c">← fin du splash screen</span>
+    }
+  })();
+}, []);   <span class="c">← [] = s'exécute UNE SEULE FOIS au montage</span></pre>
+
+    <div class="box box-purple">
+      <div class="box-title">Pourquoi isLoading ?</div>
+      Quand l'app démarre, React monte les composants <em>avant</em> qu'AsyncStorage réponde.
+      Pendant cette fraction de seconde, <code>user</code> est <code>null</code>, ce qui déclencherait une redirection vers <code>/Auth</code>…
+      même si l'utilisateur était connecté. <code>isLoading = true</code> dit à l'AuthGuard "attends, je suis encore en train de vérifier". L'app affiche un spinner à la place.
+    </div>
+
+    <h3>La fonction login()</h3>
+    <pre><span class="k">const</span> login = <span class="k">async</span> (email, password) => {
+  <span class="k">try</span> {
+    <span class="c">// 1. Appel API → reçoit { token, user }</span>
+    <span class="k">const</span> data = <span class="k">await</span> <span class="fn">apiPost</span>&lt;{ token: <span class="k">string</span>; user: <span class="t">User</span> }&gt;(<span class="s">'/auth/login'</span>, { email, password });
+
+    <span class="c">// 2. Sauvegarder le JWT dans AsyncStorage</span>
+    <span class="k">await</span> <span class="fn">setToken</span>(data.token);
+
+    <span class="c">// 3. Sauvegarder les infos user dans AsyncStorage</span>
+    <span class="k">await</span> AsyncStorage.<span class="fn">setItem</span>(SESSION_KEY, JSON.<span class="fn">stringify</span>(data.user));
+
+    <span class="c">// 4. Mettre à jour l'état React → déclenche AuthGuard → redirection</span>
+    <span class="fn">setUser</span>(data.user);
+
+    <span class="k">return</span> { success: <span class="k">true</span> };
+  } <span class="k">catch</span> (err) {
+    <span class="k">return</span> { success: <span class="k">false</span>, error: err.message };
+  }
+};</pre>
+
+    <h3>La fonction logout()</h3>
+    <pre><span class="k">const</span> logout = <span class="k">async</span> () => {
+  <span class="k">await</span> <span class="fn">removeToken</span>();                              <span class="c">← supprimer JWT d'AsyncStorage</span>
+  <span class="k">await</span> AsyncStorage.<span class="fn">removeItem</span>(SESSION_KEY);       <span class="c">← supprimer les infos user</span>
+  <span class="fn">setUser</span>(<span class="k">null</span>);                                    <span class="c">← user=null → AuthGuard redirige vers /Auth</span>
+};</pre>
+
+    <h3>Le gestionnaire 401 global</h3>
+    <pre><span class="fn">useEffect</span>(() => {
+  <span class="fn">setUnauthorizedHandler</span>(() => {
+    AsyncStorage.<span class="fn">removeItem</span>(SESSION_KEY);
+    <span class="fn">setUser</span>(<span class="k">null</span>);                    <span class="c">← déconnecte automatiquement si token expiré</span>
+  });
+}, []);</pre>
+    <p>Si n'importe quel appel API retourne un 401 (token expiré), <code>api.ts</code> appelle ce handler → l'utilisateur est déconnecté et redirigé vers la page de login sans que chaque écran ait à gérer ce cas.</p>
+  </div>
+
+  <hr/>
+
+  <!-- ─────────── SECTION 7 ─────────── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="snum">7</div>
+      <h2 class="stitle">utils/api.ts — les appels réseau</h2>
+    </div>
+
+    <h3>Rôle général</h3>
+    <p>Ce fichier centralise toute communication avec le backend. Au lieu d'écrire <code>fetch()</code> partout avec la même logique de token, on l'écrit une fois ici.</p>
+
+    <h3>Gestion du JWT Token</h3>
+    <pre><span class="k">const</span> TOKEN_KEY = <span class="s">'@token'</span>;
+
+<span class="c">// Sauvegarder dans AsyncStorage (après login)</span>
+<span class="k">export async function</span> <span class="fn">setToken</span>(token: <span class="k">string</span>) {
+  <span class="k">return</span> AsyncStorage.<span class="fn">setItem</span>(TOKEN_KEY, token);
+}
+
+<span class="c">// Lire (avant chaque requête)</span>
+<span class="k">export async function</span> <span class="fn">getToken</span>() {
+  <span class="k">return</span> AsyncStorage.<span class="fn">getItem</span>(TOKEN_KEY);
+}
+
+<span class="c">// Supprimer (au logout)</span>
+<span class="k">export async function</span> <span class="fn">removeToken</span>() {
+  <span class="k">return</span> AsyncStorage.<span class="fn">removeItem</span>(TOKEN_KEY);
+}</pre>
+
+    <h3>authHeaders() — injection automatique du token</h3>
+    <pre><span class="k">async function</span> <span class="fn">authHeaders</span>() {
+  <span class="k">const</span> token = <span class="k">await</span> <span class="fn">getToken</span>();
+  <span class="k">return</span> token ? { Authorization: <span class="s">`Bearer ${token}`</span> } : {};
+  <span class="c">// Résultat si connecté : { Authorization: "Bearer eyJhbGciOiJIUzI1Ni..." }</span>
+  <span class="c">// Résultat si non connecté : {}</span>
+}</pre>
+
+    <h3>apiPost() — détail complet</h3>
+    <pre><span class="k">export async function</span> <span class="fn">apiPost</span>&lt;T&gt;(path: <span class="k">string</span>, body?: <span class="k">unknown</span>): <span class="t">Promise</span>&lt;T&gt; {
+  <span class="k">const</span> headers = <span class="k">await</span> <span class="fn">authHeaders</span>();          <span class="c">// récupère le token</span>
+
+  <span class="k">const</span> res = <span class="k">await</span> <span class="fn">fetch</span>(<span class="s">`${API_URL}${path}`</span>, {
+    method: <span class="s">'POST'</span>,
+    headers: {
+      <span class="s">'Content-Type'</span>: <span class="s">'application/json'</span>,       <span class="c">// dit au serveur que c'est du JSON</span>
+      ...headers                                   <span class="c">// ajoute le Bearer token</span>
+    },
+    body: body ? JSON.<span class="fn">stringify</span>(body) : <span class="k">undefined</span> <span class="c">// sérialise l'objet en string JSON</span>
+  });
+
+  <span class="k">if</span> (res.status === <span class="n">401</span>) <span class="k">return</span> <span class="fn">handleUnauthorized</span>(); <span class="c">// token expiré</span>
+
+  <span class="k">if</span> (!res.ok) {
+    <span class="k">const</span> err = <span class="k">await</span> res.<span class="fn">json</span>().<span class="fn">catch</span>(() => ({ message: res.statusText }));
+    <span class="k">throw new</span> <span class="fn">Error</span>(err.message);                <span class="c">// message d'erreur du serveur</span>
+  }
+
+  <span class="k">const</span> text = <span class="k">await</span> res.<span class="fn">text</span>();
+  <span class="k">return</span> text ? JSON.<span class="fn">parse</span>(text) : <span class="k">undefined</span>;   <span class="c">// désérialiser la réponse</span>
+}</pre>
+
+    <h3>Le gestionnaire 401 global</h3>
+    <pre><span class="k">let</span> _onUnauthorized: (() => <span class="k">void</span>) | <span class="k">null</span> = <span class="k">null</span>;
+
+<span class="c">// AuthContext enregistre ce handler au démarrage</span>
+<span class="k">export function</span> <span class="fn">setUnauthorizedHandler</span>(handler: () => <span class="k">void</span>) {
+  _onUnauthorized = handler;
+}
+
+<span class="k">async function</span> <span class="fn">handleUnauthorized</span>() {
+  <span class="k">await</span> AsyncStorage.<span class="fn">removeItem</span>(TOKEN_KEY);    <span class="c">// supprimer le token corrompu</span>
+  _onUnauthorized?.();                           <span class="c">// appeler le handler d'AuthContext</span>
+  <span class="k">throw new</span> <span class="fn">Error</span>(<span class="s">'Session expirée. Veuillez vous reconnecter.'</span>);
+}</pre>
+
+    <div class="box box-red">
+      <div class="box-title">Flux d'une erreur 401</div>
+      1. Un appel <code>apiGet('/posts/feed')</code> reçoit HTTP 401<br/>
+      2. <code>handleUnauthorized()</code> est appelé<br/>
+      3. Il supprime le token d'AsyncStorage<br/>
+      4. Il appelle le handler enregistré par AuthContext<br/>
+      5. Le handler fait <code>setUser(null)</code><br/>
+      6. AuthGuard détecte <code>user=null</code> → <code>router.replace('/Auth')</code><br/>
+      7. L'utilisateur se retrouve sur la page de login
+    </div>
+  </div>
+
+  <hr/>
+
+  <!-- ─────────── SECTION 8 ─────────── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="snum">8</div>
+      <h2 class="stitle">app/_layout.tsx — le garde d'authentification</h2>
+    </div>
+
+    <h3>La fonction AuthGuard</h3>
+    <pre><span class="k">function</span> <span class="fn">AuthGuard</span>({ children }) {
+  <span class="k">const</span> { user, isLoading } = <span class="fn">useAuth</span>();     <span class="c">// lire l'état global</span>
+  <span class="k">const</span> router = <span class="fn">useRouter</span>();                <span class="c">// accès à la navigation</span>
+  <span class="k">const</span> segments = <span class="fn">useSegments</span>();            <span class="c">// route actuelle ex: ["Auth"] ou [""]</span>
+
+  <span class="c">// Réagit chaque fois que user, isLoading ou segments changent</span>
+  <span class="fn">useEffect</span>(() => {
+    <span class="k">if</span> (isLoading) <span class="k">return</span>;                    <span class="c">// attendre que AsyncStorage réponde</span>
+
+    <span class="k">const</span> onAuthScreen = segments[0] === <span class="s">'Auth'</span>;
+
+    <span class="c">// Non connecté ET pas sur /Auth → rediriger vers /Auth</span>
+    <span class="k">if</span> (!user && !onAuthScreen) router.<span class="fn">replace</span>(<span class="s">'/Auth'</span>);
+
+    <span class="c">// Connecté ET sur /Auth → rediriger vers / (feed)</span>
+    <span class="k">else if</span> (user && onAuthScreen) router.<span class="fn">replace</span>(<span class="s">'/'</span>);
+
+  }, [user, isLoading, segments]);
+
+  <span class="c">// Pendant le chargement → afficher un spinner</span>
+  <span class="k">if</span> (isLoading) {
+    <span class="k">return</span> (
+      <span class="op">&lt;</span><span class="t">View</span> style={styles.splash}<span class="op">&gt;</span>
+        <span class="op">&lt;</span><span class="t">ActivityIndicator</span> size=<span class="s">"large"</span> color={colors.primary} <span class="op">/&gt;</span>
+      <span class="op">&lt;/</span><span class="t">View</span><span class="op">&gt;</span>
+    );
+  }
+
+  <span class="k">return</span> &lt;&gt;{children}&lt;/&gt;;   <span class="c">// sinon, rendre les enfants normalement</span>
+}</pre>
+
+    <h3>useSegments() — détecter la route active</h3>
+    <table>
+      <thead><tr><th>Route active</th><th>segments[0]</th><th>Résultat</th></tr></thead>
+      <tbody>
+        <tr><td><code>/</code> (feed)</td><td><code>""</code> ou <code>"index"</code></td><td><code>onAuthScreen = false</code></td></tr>
+        <tr><td><code>/Auth</code></td><td><code>"Auth"</code></td><td><code>onAuthScreen = true</code></td></tr>
+        <tr><td><code>/Profile</code></td><td><code>"Profile"</code></td><td><code>onAuthScreen = false</code></td></tr>
+        <tr><td><code>/conversation/123</code></td><td><code>"conversation"</code></td><td><code>onAuthScreen = false</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>router.replace() vs router.push()</h3>
+    <div class="grid2">
+      <div class="card">
+        <h4>router.push()</h4>
+        <ul>
+          <li>Ajoute l'écran à la pile de navigation</li>
+          <li>Bouton retour disponible</li>
+          <li>Utilisé pour la navigation normale</li>
+        </ul>
+      </div>
+      <div class="card red">
+        <h4>router.replace()</h4>
+        <ul>
+          <li>Remplace l'écran actuel (pas de retour)</li>
+          <li>Utilisé pour les redirections auth</li>
+          <li>Évite de revenir en arrière vers /Auth après login</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr/>
+
+  <!-- ─────────── SECTION 9 ─────────── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="snum">9</div>
+      <h2 class="stitle">Scénarios complets — pas-à-pas</h2>
+    </div>
+
+    <h3>Scénario A — L'utilisateur se connecte</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>L'utilisateur tape email + mot de passe</h4>
+          <p>Chaque frappe appelle <code>setEmail()</code> ou <code>setPassword()</code>. React re-render, <code>TextInput</code> affiche la nouvelle valeur.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Il clique "Se connecter"</h4>
+          <p><code>handleLogin()</code> est appelé. Validation locale : champs vides ? → erreur affichée, stop.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>setLoading(true)</h4>
+          <p>Le bouton devient grisé et affiche un <code>ActivityIndicator</code>. L'utilisateur ne peut plus cliquer.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>login() dans AuthContext est appelé</h4>
+          <p>AuthContext appelle <code>apiPost('/auth/login', { email, password })</code>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h4>api.ts envoie la requête HTTP</h4>
+          <p><code>fetch('http://backend/api/auth/login', { method: 'POST', body: JSON.stringify({email, password}) })</code></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <h4>Le backend répond avec { token, user }</h4>
+          <p>Le JWT est sauvegardé dans AsyncStorage. Les infos user sont sauvegardées dans AsyncStorage.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">7</div>
+        <div class="step-body">
+          <h4>setUser(data.user) dans AuthContext</h4>
+          <p>L'état global <code>user</code> passe de <code>null</code> à l'objet user. Tous les composants qui consomment ce contexte re-rendent.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">8</div>
+        <div class="step-body">
+          <h4>AuthGuard détecte user != null</h4>
+          <p>Son <code>useEffect([user])</code> se déclenche. <code>user</code> est défini et on est sur <code>/Auth</code> → <code>router.replace('/')</code>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">9</div>
+        <div class="step-body">
+          <h4>L'écran Feed s'affiche</h4>
+          <p>La navigation est complète. <code>setLoading(false)</code> dans AuthScreen s'exécute mais ne change rien (l'écran est démonté).</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Scénario B — L'app redémarre (session persistée)</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>_layout.tsx se monte — AuthProvider démarre</h4>
+          <p><code>isLoading = true</code>, <code>user = null</code> (état initial).</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>AuthGuard voit isLoading = true</h4>
+          <p>Il affiche un spinner et ne redirige pas. Aucune navigation ne se produit.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>useEffect lit AsyncStorage</h4>
+          <p>Trouve les infos user sauvegardées → <code>setUser(parsedUser)</code>. <code>setLoading(false)</code>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>AuthGuard re-déclenche avec user != null</h4>
+          <p>Expo Router est toujours sur <code>/</code> (la route par défaut). <code>user</code> existe et on n'est pas sur <code>/Auth</code> → aucune redirection, le feed s'affiche directement.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Scénario C — Erreur de login</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Mauvais mot de passe → serveur répond 401</h4>
+          <p><code>apiPost</code> appelle <code>handleUnauthorized()</code>... Non ! Ici on n'est PAS encore connecté. Le serveur répond <code>{ message: "Identifiants incorrects" }</code> avec un code 400 ou 401.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>api.ts lance une Error</h4>
+          <p><code>throw new Error(err.message)</code> avec le message du serveur.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>AuthContext catch l'erreur</h4>
+          <p>Retourne <code>{ success: false, error: "Identifiants incorrects" }</code>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>AuthScreen affiche l'erreur</h4>
+          <p><code>setLoading(false)</code>. <code>setError("Identifiants incorrects")</code>. La boîte rouge apparaît sous les onglets.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr/>
+
+  <!-- ─────────── SECTION 10 ─────────── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="snum">10</div>
+      <h2 class="stitle">Résumé de tous les concepts utilisés</h2>
+    </div>
+
+    <table>
+      <thead><tr><th>Concept</th><th>Fichier</th><th>Ce qu'il fait ici</th></tr></thead>
+      <tbody>
+        <tr><td><code>useState</code></td><td>AuthScreen, InputField</td><td>État des champs, mode login/register, loading, focused, visible</td></tr>
+        <tr><td><code>useEffect</code></td><td>AuthContext, _layout</td><td>Restauration session au démarrage, détection changement user</td></tr>
+        <tr><td><code>useContext</code></td><td>AuthScreen, _layout</td><td>Lire user, login(), logout() depuis n'importe où</td></tr>
+        <tr><td><code>createContext</code></td><td>AuthContext</td><td>Crée le store global d'authentification</td></tr>
+        <tr><td><code>Provider</code></td><td>AuthContext, _layout</td><td>Injecte les valeurs globales dans tout l'arbre</td></tr>
+        <tr><td><code>Hook custom</code></td><td>AuthContext</td><td><code>useAuth()</code> = interface propre vers le Context</td></tr>
+        <tr><td><code>AsyncStorage</code></td><td>AuthContext, api.ts</td><td>Persiste session + JWT entre les démarrages</td></tr>
+        <tr><td><code>fetch()</code></td><td>api.ts</td><td>Requêtes HTTP vers le backend NestJS</td></tr>
+        <tr><td><code>JWT Bearer token</code></td><td>api.ts</td><td>Identifie l'utilisateur sur chaque requête protégée</td></tr>
+        <tr><td><code>SafeAreaView</code></td><td>AuthScreen</td><td>Évite les encoches / coins arrondis</td></tr>
+        <tr><td><code>KeyboardAvoidingView</code></td><td>AuthScreen</td><td>Remonte le contenu quand le clavier s'ouvre</td></tr>
+        <tr><td><code>ScrollView</code></td><td>AuthScreen</td><td>Défilement si le formulaire dépasse l'écran</td></tr>
+        <tr><td><code>TextInput</code></td><td>InputField</td><td>Saisie texte contrôlée, clavier email, sécurisé</td></tr>
+        <tr><td><code>TouchableOpacity</code></td><td>AuthScreen, InputField</td><td>Boutons avec retour visuel (opacité)</td></tr>
+        <tr><td><code>ActivityIndicator</code></td><td>AuthScreen, _layout</td><td>Spinner pendant chargement/appel API</td></tr>
+        <tr><td><code>Platform.OS</code></td><td>AuthScreen</td><td>Adapter KeyboardAvoidingView selon iOS/Android</td></tr>
+        <tr><td><code>StyleSheet.create</code></td><td>AuthScreen</td><td>Définir les styles de manière optimisée</td></tr>
+        <tr><td><code>Rendu conditionnel</code></td><td>AuthScreen</td><td><code>mode === 'login' ? FormA : FormB</code></td></tr>
+        <tr><td><code>Styles conditionnels</code></td><td>AuthScreen, InputField</td><td><code>[styles.base, condition && styles.extra]</code></td></tr>
+        <tr><td><code>useRouter</code></td><td>_layout (AuthGuard)</td><td>Rediriger vers /Auth ou / selon l'état</td></tr>
+        <tr><td><code>useSegments</code></td><td>_layout (AuthGuard)</td><td>Savoir sur quelle route on est actuellement</td></tr>
+        <tr><td><code>router.replace</code></td><td>_layout (AuthGuard)</td><td>Redirection sans possibilité de retour arrière</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── FINAL BOX ── -->
+  <div class="final">
+    <h3>Architecture Auth en résumé</h3>
+    <div class="final-grid">
+      <div class="final-item">
+        <span class="num">5</span>
+        <span class="lbl">Fichiers impliqués</span>
+      </div>
+      <div class="final-item">
+        <span class="num">22</span>
+        <span class="lbl">Concepts React Native</span>
+      </div>
+      <div class="final-item">
+        <span class="num">4</span>
+        <span class="lbl">Validations formulaire</span>
+      </div>
+      <div class="final-item">
+        <span class="num">3</span>
+        <span class="lbl">Scénarios couverts</span>
+      </div>
+      <div class="final-item">
+        <span class="num">2</span>
+        <span class="lbl">Stockages persistants</span>
+      </div>
+      <div class="final-item">
+        <span class="num">0</span>
+        <span class="lbl">Bibliothèques d'auth tierces</span>
+      </div>
+    </div>
+    <p style="margin-top:20px; font-size:12px; opacity:.85; text-align:center;">
+      Tout est fait "from scratch" avec les APIs natives de React : Context API + AsyncStorage + fetch()
+    </p>
+  </div>
+
+</div>
+
+<div class="print-note">
+  <strong>Enregistrer en PDF :</strong> appuyez sur
+  <kbd style="background:#fef3c7;border:1px solid #fcd34d;border-radius:4px;padding:1px 6px;font-family:monospace;">Ctrl+P</kbd> →
+  choisissez <strong>Enregistrer en PDF</strong> comme destination.
+  Recommandé : format A4, marges minimales.
+</div>
+
+</body>
+</html>

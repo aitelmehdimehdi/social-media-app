@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../context/ThemeContext";
 import { useUnread } from "../context/UnreadContext";
 import { apiGet, apiPatch } from "../utils/api";
@@ -111,6 +111,7 @@ export default function NotificationsPanel({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <SafeAreaProvider>
       <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -138,6 +139,7 @@ export default function NotificationsPanel({
           />
         )}
       </SafeAreaView>
+      </SafeAreaProvider>
     </Modal>
   );
 }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Post } from './post.entity';
 import { Like } from './like.entity';
@@ -19,7 +19,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Post, Like, LikeReel, Comment, CommentLike, SavedPost, SavedReel, Reel, Follow, Message]),
-    UsersModule,
+    forwardRef(() => UsersModule),
     MediaModule,
     NotificationsModule,
   ],

@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Profile & Related Screens — Sharely</title>
+<style>
+:root{
+  --blue:#2563EB;--blue-l:#DBEAFE;--blue-d:#1E40AF;
+  --indigo:#4F46E5;--indigo-l:#E0E7FF;
+  --purple:#7C3AED;--purple-l:#EDE9FE;--purple-d:#5B21B6;--purple-m:#A78BFA;
+  --green:#059669;--green-l:#D1FAE5;
+  --orange:#D97706;--orange-l:#FEF3C7;
+  --red:#DC2626;--red-l:#FEE2E2;
+  --teal:#0891B2;--teal-l:#CFFAFE;
+  --gray:#6B7280;--gray-l:#F9FAFB;
+  --border:#E5E7EB;--text:#111827;
+  --code-bg:#1E1E2E;--code-fg:#CDD6F4;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;line-height:1.7;color:var(--text);background:#fff}
+
+/* ── COVER ── */
+.cover{
+  min-height:100vh;
+  background:linear-gradient(145deg,#0f0c29 0%,#302b63 45%,#24243e 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:60px 48px;page-break-after:always;color:#fff;
+}
+.cover .icon{font-size:68px;margin-bottom:18px}
+.cover h1{font-size:40px;font-weight:900;letter-spacing:-1px;margin-bottom:8px}
+.cover .sub{font-size:17px;opacity:.7;margin-bottom:36px;font-style:italic}
+.cover .screens{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+  width:100%;max-width:700px;margin-bottom:36px;
+}
+.cover .screen-card{
+  background:rgba(255,255,255,.1);border-radius:12px;padding:14px 10px;
+  border:1px solid rgba(255,255,255,.15);
+}
+.cover .screen-card .num{font-size:22px;font-weight:900;color:var(--purple-m)}
+.cover .screen-card .name{font-size:11px;opacity:.8;margin-top:4px}
+.cover .pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.cover .pill{background:rgba(255,255,255,.15);border-radius:20px;padding:5px 14px;font-size:11.5px;font-weight:600}
+
+/* ── PAGE ── */
+.page{max-width:940px;margin:0 auto;padding:44px 50px}
+
+/* ── TOC ── */
+.toc{border:1px solid var(--border);border-left:5px solid var(--purple);border-radius:12px;padding:26px 30px;background:var(--gray-l);margin-bottom:44px;page-break-after:always}
+.toc h2{font-size:16px;color:var(--purple-d);margin-bottom:14px}
+.toc ol{padding-left:20px}
+.toc li{margin:6px 0;font-size:13px}
+.toc .s{color:var(--gray);font-size:11px}
+
+/* ── SECTION ── */
+.section{margin-bottom:52px}
+.sh{display:flex;align-items:center;gap:13px;padding-bottom:11px;border-bottom:2px solid var(--purple-l);margin-bottom:20px}
+.sn{background:linear-gradient(135deg,var(--purple),var(--purple-d));color:#fff;font-size:12px;font-weight:800;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+h2.st{font-size:20px;font-weight:800}
+.screen-label{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-left:8px}
+.lbl-main{background:var(--purple-l);color:var(--purple-d)}
+.lbl-sub{background:var(--blue-l);color:var(--blue-d)}
+.lbl-sheet{background:var(--teal-l);color:var(--teal)}
+h3{font-size:13px;font-weight:700;color:var(--purple-d);text-transform:uppercase;letter-spacing:.5px;margin:22px 0 9px;padding-bottom:3px;border-bottom:1px dashed var(--purple-l)}
+p{margin:8px 0}
+
+/* ── CODE ── */
+code{background:#F3F0FF;border:1px solid #DDD6FE;border-radius:4px;padding:1px 6px;font-family:'Consolas','Fira Code',monospace;font-size:11.5px;color:var(--purple-d)}
+pre{background:var(--code-bg);color:var(--code-fg);border-radius:12px;padding:18px 22px;font-family:'Consolas','Fira Code',monospace;font-size:11.5px;line-height:1.75;margin:12px 0 20px;border-left:4px solid var(--purple)}
+pre .c{color:#6C7086;font-style:italic}
+pre .k{color:#CBA6F7}
+pre .s{color:#A6E3A1}
+pre .t{color:#89B4FA}
+pre .fn{color:#89DCEB}
+pre .n{color:#FAB387}
+
+/* ── TABLES ── */
+table{width:100%;border-collapse:collapse;margin:12px 0 20px;font-size:12.5px}
+thead{background:linear-gradient(to right,var(--purple),var(--purple-d));color:#fff}
+thead th{padding:9px 13px;text-align:left;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+tbody tr:nth-child(even){background:var(--gray-l)}
+tbody td{padding:8px 13px;border-bottom:1px solid var(--border);vertical-align:top}
+tbody td:first-child code{background:none;border:none;color:var(--purple-d);font-weight:700}
+
+/* ── BOXES ── */
+.box{border-radius:11px;padding:14px 18px;margin:12px 0 20px;border:1px solid;page-break-inside:avoid}
+.bp{background:var(--purple-l);border-color:var(--purple-m)}
+.bb{background:var(--blue-l);border-color:#93C5FD}
+.bg{background:var(--green-l);border-color:#6EE7B7}
+.bo{background:var(--orange-l);border-color:#FCD34D}
+.br{background:var(--red-l);border-color:#FCA5A5}
+.bt{background:var(--teal-l);border-color:#67E8F9}
+.btitle{font-weight:700;font-size:12.5px;margin-bottom:5px}
+.bp .btitle{color:var(--purple-d)}.bb .btitle{color:var(--blue-d)}.bg .btitle{color:var(--green)}
+.bo .btitle{color:var(--orange)}.br .btitle{color:var(--red)}.bt .btitle{color:var(--teal)}
+
+/* ── GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0 20px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:12px 0 20px}
+.card{border:1px solid var(--border);border-radius:11px;padding:14px 16px;background:var(--gray-l);border-top:3px solid var(--purple)}
+.card.cb{border-top-color:var(--blue)}.card.cg{border-top-color:var(--green)}
+.card.co{border-top-color:var(--orange)}.card.cr{border-top-color:var(--red)}
+.card.ct{border-top-color:var(--teal)}.card.ci{border-top-color:var(--indigo)}
+.card h4{font-size:13px;font-weight:700;margin-bottom:7px}
+.card ul{padding-left:16px}.card li{font-size:12px;margin:3px 0}
+
+/* ── FLOW ── */
+.flow{background:#0F0F1A;border-radius:13px;padding:24px 28px;margin:12px 0 20px;font-family:monospace;font-size:12px;color:var(--code-fg);line-height:2.1}
+.flow .ar{color:#CBA6F7}.flow .fi{color:#89DCEB;font-weight:bold}
+.flow .fu{color:#A6E3A1}.flow .da{color:#FAB387}.flow .co{color:#6C7086;font-style:italic}
+
+/* ── STEPS ── */
+.steps{margin:12px 0 20px}
+.step{display:flex;gap:14px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.step:last-child{border-bottom:none}
+.stepn{background:var(--purple);color:#fff;font-size:11px;font-weight:800;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.stepb h4{font-size:13px;font-weight:700;margin-bottom:3px}
+.stepb p{font-size:12.5px;color:#374151;margin:3px 0}
+
+/* ── NAV MAP ── */
+.navmap{background:var(--code-bg);border-radius:13px;padding:22px 26px;margin:12px 0 20px;font-family:monospace;font-size:12px;color:var(--code-fg);line-height:2.2}
+.navmap .f{color:#89DCEB;font-weight:bold}.navmap .a{color:#CBA6F7}
+.navmap .p{color:#FAB387}.navmap .c{color:#6C7086;font-style:italic}
+.navmap .g{color:#A6E3A1}
+
+/* ── FINAL ── */
+.final{background:linear-gradient(135deg,var(--purple) 0%,var(--purple-d) 100%);color:#fff;border-radius:14px;padding:28px 32px;margin-top:36px}
+.final h3{color:#fff;text-transform:none;border:none;letter-spacing:0;font-size:16px;margin:0 0 18px}
+.fg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.fi2{background:rgba(255,255,255,.15);border-radius:9px;padding:12px;text-align:center}
+.fi2 .n2{font-size:24px;font-weight:900;display:block}
+.fi2 .l2{font-size:10px;opacity:.8}
+
+hr{border:none;border-top:1px solid var(--border);margin:38px 0}
+ul{padding-left:18px;margin:6px 0}
+li{margin:4px 0}
+
+.print-note{background:#FFFBEB;border:1px solid #FCD34D;border-radius:8px;padding:12px 20px;font-size:12px;color:#92400E;margin:0 50px 36px}
+
+@media print{
+  .cover,.flow,.navmap,pre,thead,.final{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .section{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ COVER ═══ -->
+<div class="cover">
+  <div class="icon">👤</div>
+  <h1>Écran Profil &amp; Écrans Liés</h1>
+  <div class="sub">Projet Sharely — Analyse naïve et complète</div>
+  <div class="screens">
+    <div class="screen-card"><div class="num">①</div><div class="name">Profile</div></div>
+    <div class="screen-card"><div class="num">②</div><div class="name">Edit Profile</div></div>
+    <div class="screen-card"><div class="num">③</div><div class="name">Change Password</div></div>
+    <div class="screen-card"><div class="num">④</div><div class="name">Share Profile</div></div>
+    <div class="screen-card"><div class="num">⑤</div><div class="name">Follow List</div></div>
+    <div class="screen-card"><div class="num">⑥</div><div class="name">Saved Posts</div></div>
+    <div class="screen-card"><div class="num">⑦</div><div class="name">Liked Posts</div></div>
+    <div class="screen-card"><div class="num">⑧</div><div class="name">Bottom Menu</div></div>
+  </div>
+  <div class="pills">
+    <span class="pill">useFocusEffect</span>
+    <span class="pill">useLocalSearchParams</span>
+    <span class="pill">Animated API</span>
+    <span class="pill">ImagePicker</span>
+    <span class="pill">FormData Upload</span>
+    <span class="pill">expo-haptics</span>
+    <span class="pill">Share API</span>
+    <span class="pill">Clipboard</span>
+    <span class="pill">Linking</span>
+    <span class="pill">Alert.alert</span>
+    <span class="pill">Modal</span>
+    <span class="pill">FlatList numColumns</span>
+    <span class="pill">Dimensions</span>
+    <span class="pill">Switch</span>
+  </div>
+</div>
+
+<!-- ═══ CONTENT ═══ -->
+<div class="page">
+
+<!-- TOC -->
+<div class="toc">
+  <h2>Table des matières</h2>
+  <ol>
+    <li>Carte de navigation — comment les 8 écrans se connectent <span class="s">— flux et params passés entre routes</span></li>
+    <li>Profile.tsx — écran principal <span class="s">— useFocusEffect, ImagePicker, FormData, grid, modals</span></li>
+    <li>Composants internes de Profile <span class="s">— BottomMenu, StatBox, AvatarMenu</span></li>
+    <li>EditProfile.tsx <span class="s">— useLocalSearchParams, multiline TextInput, charCount, refreshUser</span></li>
+    <li>ChangePassword.tsx <span class="s">— composant PasswordField, validations, router.replace</span></li>
+    <li>ProfileShareSheet.tsx <span class="s">— Animated bottom sheet, Share API, Clipboard, Linking, Haptics</span></li>
+    <li>FollowList.tsx <span class="s">— params dynamiques, Alert destructif, FlatList renderItem</span></li>
+    <li>SavedPosts.tsx &amp; LikedPosts.tsx <span class="s">— useFocusEffect + useCallback, grille 3 colonnes, ListEmptyComponent</span></li>
+    <li>Concepts clés utilisés partout <span class="s">— tableau récapitulatif exhaustif</span></li>
+  </ol>
+</div>
+
+<!-- ─── SECTION 1 ─── -->
+<div class="section">
+  <div class="sh"><div class="sn">1</div><h2 class="st">Carte de navigation — comment les 8 écrans se connectent</h2></div>
+
+  <div class="navmap">
+<div>                    <span class="f">Profile.tsx</span>   <span class="c">← écran principal</span></div>
+<div>                         │</div>
+<div>         ┌───────────────┼────────────────────────────────────┐</div>
+<div>         │               │                │                   │</div>
+<div>         ▼               ▼                ▼                   ▼</div>
+<div>  <span class="f">EditProfile</span>   <span class="f">ProfileShareSheet</span>  <span class="f">BottomMenu</span>       <span class="f">FollowList</span></div>
+<div>  <span class="c">router.push(</span>   <span class="c">setVisible(true)</span>   <span class="c">setMenuOpen(true)</span>  <span class="c">router.push(</span></div>
+<div>  <span class="p">pathname, params</span><span class="c">)</span>   <span class="c">← Modal local</span>     <span class="c">← Modal local</span>     <span class="p">{ userId, type }</span><span class="c">)</span></div>
+<div>         │</div>
+<div>         ▼</div>
+<div>  <span class="f">ChangePassword</span>                          <span class="f">BottomMenu</span></div>
+<div>  <span class="c">router.push(</span>                                    │</div>
+<div>  <span class="c">'/ChangePassword')</span>              ┌───────────┬──┴──────────┐</div>
+<div>                                  ▼           ▼             ▼</div>
+<div>                          <span class="f">SavedPosts</span>  <span class="f">LikedPosts</span>  <span class="g">Dark Mode toggle</span></div>
+<div>                          <span class="c">router.push   router.push   setIsDark()</span></div>
+<div>                          <span class="c">('/SavedPosts') ('/LikedPosts')</span></div>
+<div></div>
+<div>  <span class="c">── Paramètres passés entre écrans ───────────────────────────────</span></div>
+<div>  Profile <span class="a">→</span> EditProfile  :  <span class="p">{ fullName, username, email, bio }</span></div>
+<div>  Profile <span class="a">→</span> FollowList  :  <span class="p">{ userId, type: "followers"|"following" }</span></div>
+<div>  Saved/Liked <span class="a">→</span> PostDetail :  <span class="p">{ id, type: "post"|"reel" }</span></div>
+  </div>
+
+  <div class="box bb">
+    <div class="btitle">2 types de navigation utilisés dans ce groupe</div>
+    <strong>router.push()</strong> — ouvre un nouvel écran empilé (retour possible avec flèche). Utilisé vers EditProfile, FollowList, SavedPosts, LikedPosts, ChangePassword.<br/>
+    <strong>Modal local</strong> — affiche un overlay par-dessus l'écran courant sans changer de route. Utilisé pour BottomMenu et ProfileShareSheet (ils n'ont pas de fichier dans <code>app/</code>).
+  </div>
+</div>
+
+<hr/>
+
+<!-- ─── SECTION 2 ─── -->
+<div class="section">
+  <div class="sh"><div class="sn">2</div><h2 class="st">Profile.tsx — l'écran principal <span class="screen-label lbl-main">MAIN SCREEN</span></h2></div>
+
+  <h3>États useState du composant</h3>
+  <table>
+    <thead><tr><th>Variable</th><th>Type</th><th>Rôle</th></tr></thead>
+    <tbody>
+      <tr><td><code>profile</code></td><td>UserProfile | null</td><td>Données du profil chargées depuis l'API</td></tr>
+      <tr><td><code>loading</code></td><td>boolean</td><td>Afficher le spinner pendant le premier chargement</td></tr>
+      <tr><td><code>gridPosts</code></td><td>MediaItem[]</td><td>Posts + reels affichés dans la grille</td></tr>
+      <tr><td><code>menuOpen</code></td><td>boolean</td><td>Ouvrir/fermer le BottomMenu (⋮)</td></tr>
+      <tr><td><code>avatarMenuOpen</code></td><td>boolean</td><td>Ouvrir/fermer le menu de la photo de profil</td></tr>
+      <tr><td><code>shareProfileVisible</code></td><td>boolean</td><td>Ouvrir/fermer la feuille de partage</td></tr>
+      <tr><td><code>hasStories</code></td><td>boolean</td><td>L'utilisateur a-t-il des stories actives ?</td></tr>
+      <tr><td><code>myStoryImageUrl</code></td><td>string | null</td><td>URL de la story active (pour naviguer vers elle)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>useEffect — chargement initial (une seule fois)</h3>
+  <pre><span class="k">useEffect</span>(() => {
+  <span class="k">if</span> (!user) <span class="k">return</span>;
+
+  <span class="c">// Requête 1 : données du profil (bio, stats, avatar)</span>
+  apiGet&lt;<span class="t">UserProfile</span>&gt;(`/users/${user.id}/profile`)
+    .then((data) => setProfile(data))
+    .catch(console.error)
+    .finally(() => setLoading(<span class="k">false</span>));
+
+  <span class="c">// Requête 2 : tous les posts/reels de l'utilisateur</span>
+  apiGet&lt;<span class="t">MediaItem</span>[]&gt;(`/posts/user/${user.id}`)
+    .then(setGridPosts)
+    .catch(() => setGridPosts([]));
+
+}, [user]);  <span class="c">← re-déclenche si user change (connexion d'un autre compte)</span></pre>
+
+  <div class="box bp">
+    <div class="btitle">Pourquoi deux appels API séparés ?</div>
+    Profil et posts peuvent charger à des vitesses différentes. Si on les met dans un seul appel, il faudrait attendre les deux. En les séparant, le profil s'affiche dès qu'il arrive, la grille suit.
+    Le <code>.finally(() => setLoading(false))</code> sur le premier appel suffit : c'est lui le bloquant (le spinner disparaît quand le header est prêt).
+  </div>
+
+  <h3>useFocusEffect — rechargement à chaque retour sur l'écran</h3>
+  <pre><span class="k">useFocusEffect</span>(
+  <span class="k">useCallback</span>(() => {
+    <span class="k">if</span> (!user) <span class="k">return</span>;
+
+    <span class="c">// Recharge la grille à chaque fois qu'on revient sur cet écran</span>
+    apiGet&lt;<span class="t">MediaItem</span>[]&gt;(`/posts/user/${user.id}`)
+      .then(setGridPosts).catch(() => {});
+
+    <span class="c">// Recharge les stories pour savoir si l'anneau de story est actif</span>
+    apiGet&lt;...&gt;(<span class="s">"/stories"</span>)
+      .then((stories) => {
+        <span class="k">const</span> mine = stories.find((s) => s.user.id === user.id);
+        setHasStories(!!mine);
+        setMyStoryImageUrl(mine?.imageUrl ?? <span class="k">null</span>);
+      }).catch(() => { setHasStories(<span class="k">false</span>); });
+
+  }, [user])  <span class="c">← useCallback évite de recréer la fonction à chaque render</span>
+);</pre>
+
+  <div class="box bb">
+    <div class="btitle">useEffect vs useFocusEffect — quelle différence ?</div>
+    <code>useEffect(fn, [])</code> s'exécute <strong>une seule fois</strong> quand le composant se monte.<br/>
+    <code>useFocusEffect(fn)</code> s'exécute <strong>à chaque fois</strong> que l'écran devient actif (y compris au retour depuis EditProfile, CreatePost, etc.).<br/><br/>
+    Exemple concret : si l'utilisateur crée un nouveau post depuis Profile → CreatePost → retour, la grille se rafraîchit automatiquement grâce à <code>useFocusEffect</code>.
+  </div>
+
+  <h3>La grille de posts — Dimensions + flexWrap</h3>
+  <pre><span class="c">// Calculer la taille d'une cellule une seule fois, au niveau du module</span>
+<span class="k">const</span> { width: W } = Dimensions.get(<span class="s">'window'</span>);
+<span class="k">const</span> GRID_SIZE = W / <span class="n">3</span> - <span class="n">1</span>;  <span class="c">← largeur d'une cellule = 1/3 de l'écran moins les gaps</span>
+
+<span class="c">// Dans le JSX — rendu avec .map() (pas FlatList) car imbriqué dans ScrollView</span>
+&lt;<span class="t">View</span> style={styles.grid}&gt;  <span class="c">← flexDirection:'row', flexWrap:'wrap', gap:1.5</span>
+  &lt;<span class="t">TouchableOpacity</span> style={styles.newPostBtn}&gt;  <span class="c">← bouton "+" toujours en premier</span>
+    &lt;<span class="t">Ionicons</span> name=<span class="s">"add"</span> size={32} /&gt;
+  &lt;/<span class="t">TouchableOpacity</span>&gt;
+
+  {gridPosts.map((item) => (
+    &lt;<span class="t">TouchableOpacity</span> key={item.id} style={styles.gridItem}&gt;
+      &lt;<span class="t">Image</span> source={{ uri: item.image }} style={styles.gridImage} /&gt;
+      {item.type === <span class="s">'reel'</span> && (
+        &lt;<span class="t">View</span> style={styles.mediaTypeBadge}&gt;  <span class="c">← badge absolu sur les reels</span>
+          &lt;<span class="t">Ionicons</span> name=<span class="s">"play-circle"</span> size={16} color=<span class="s">"#fff"</span> /&gt;
+        &lt;/<span class="t">View</span>&gt;
+      )}
+    &lt;/<span class="t">TouchableOpacity</span>&gt;
+  ))}
+&lt;/<span class="t">View</span>&gt;</pre>
+
+  <div class="box bo">
+    <div class="btitle">Pourquoi .map() et pas FlatList ici ?</div>
+    La grille est déjà à l'intérieur d'un <code>ScrollView</code>. React Native interdit d'imbriquer deux listes défilantes dans le même sens. <code>FlatList</code> est utilisé quand la liste est la seule chose qui défile. Ici, on défile aussi le header + bio + boutons, donc on utilise <code>ScrollView</code> + <code>flexWrap</code>.
+  </div>
+
+  <h3>Changer la photo de profil — ImagePicker + FormData</h3>
+  <div class="steps">
+    <div class="step"><div class="stepn">1</div><div class="stepb"><h4>Demander la permission galerie</h4><p><code>ImagePicker.requestMediaLibraryPermissionsAsync()</code> → si refusé, Alert pour aller dans les Paramètres.</p></div></div>
+    <div class="step"><div class="stepn">2</div><div class="stepb"><h4>Ouvrir le sélecteur d'images</h4><p><code>launchImageLibraryAsync</code> avec <code>allowsEditing:true</code> (recadrage carré) et <code>aspect:[1,1]</code> + <code>quality:0.85</code>.</p></div></div>
+    <div class="step"><div class="stepn">3</div><div class="stepb"><h4>Construire un FormData</h4><p>Créer un objet FormData et y attacher le fichier image avec son URI, type MIME et nom. C'est obligatoire pour un upload multipart.</p></div></div>
+    <div class="step"><div class="stepn">4</div><div class="stepb"><h4>Envoyer avec fetch() brut</h4><p><code>PATCH /api/users/me/avatar</code> avec le FormData en body. On n'utilise pas <code>apiPatch</code> car il attend du JSON, pas du multipart.</p></div></div>
+    <div class="step"><div class="stepn">5</div><div class="stepb"><h4>Mettre à jour l'UI localement</h4><p><code>setProfile(prev => ({ ...prev, avatar: updated.avatar }))</code> + <code>refreshUser()</code> pour mettre à jour le Context global.</p></div></div>
+  </div>
+
+  <pre><span class="c">// Étapes 3 et 4 — FormData upload</span>
+<span class="k">const</span> uri = result.assets[0].uri;
+<span class="k">const</span> formData = <span class="k">new</span> FormData();
+formData.append(<span class="s">'file'</span>, { uri, type: <span class="s">'image/jpeg'</span>, name: <span class="s">'avatar.jpg'</span> } <span class="k">as any</span>);
+
+<span class="k">const</span> res = <span class="k">await</span> fetch(`${API_URL}/users/me/avatar`, {
+  method: <span class="s">'PATCH'</span>,
+  headers: token ? { Authorization: `Bearer ${token}` } : {},
+  body: formData,  <span class="c">← PAS JSON.stringify — React Native sait que c'est multipart</span>
+});</pre>
+
+  <h3>Navigation avec paramètres vers EditProfile</h3>
+  <pre><span class="c">// Passage des données actuelles comme params de route</span>
+router.push({
+  pathname: <span class="s">'/EditProfile'</span>,
+  params: {
+    fullName: displayFullName,
+    username: displayName,
+    email: displayEmail,
+    bio: displayBio,
+  },
+});
+<span class="c">// EditProfile les récupère avec useLocalSearchParams()</span></pre>
+
+  <div class="box bp">
+    <div class="btitle">Pourquoi passer les données en params au lieu de les re-fetcher dans EditProfile ?</div>
+    Optimisation UX : l'utilisateur voit immédiatement ses infos actuelles dans les champs, sans attendre un appel réseau. Les données sont déjà disponibles dans Profile, autant les réutiliser.
+  </div>
+</div>
+
+<hr/>
+
+<!-- ─── SECTION 3 ─── -->
+<div class="section">
+  <div class="sh"><div class="sn">3</div><h2 class="st">Composants internes de Profile</h2></div>
+
+  <h3>BottomMenu — Modal slide-up</h3>
+  <p>Le menu "hamburger" (⋮) est un composant défini dans le même fichier que Profile. Il est rendu comme un <code>Modal</code> avec <code>animationType="slide"</code>.</p>
+
+  <pre><span class="k">function</span> <span class="fn">BottomMenu</span>({ visible, onClose }) {
+  <span class="k">const</span> { logout } = useAuth();
+  <span class="k">const</span> { isDark, toggleTheme, colors } = useTheme();
+  <span class="k">const</span> router = useRouter();
+
+  <span class="k">return</span> (
+    &lt;<span class="t">Modal</span>
+      visible={visible}           <span class="c">← contrôlé par menuOpen dans Profile</span>
+      transparent                 <span class="c">← fond semi-transparent</span>
+      animationType=<span class="s">"slide"</span>       <span class="c">← glissement depuis le bas</span>
+      onRequestClose={onClose}    <span class="c">← bouton retour Android</span>
+    &gt;
+      <span class="c">// Fond sombre cliquable pour fermer</span>
+      &lt;<span class="t">Pressable</span> style={styles.backdrop} onPress={onClose} /&gt;
+
+      <span class="c">// Carte blanche qui monte depuis le bas</span>
+      &lt;<span class="t">View</span> style={styles.sheet}&gt;
+        &lt;<span class="t">View</span> style={styles.sheetHandle} /&gt;  <span class="c">← petite barre grise décorative</span>
+        ...items du menu...
+      &lt;/<span class="t">View</span>&gt;
+    &lt;/<span class="t">Modal</span>&gt;
+  );
+}</pre>
+
+  <div class="box bt">
+    <div class="btitle">Pattern backdrop + sheet — Comment ça marche</div>
+    Le <code>Modal transparent</code> couvre tout l'écran mais son fond est transparent. À l'intérieur on place :<br/>
+    1. Un <code>Pressable</code> qui prend <code>flex:1</code> = toute la zone sombre. Cliquer dessus → <code>onClose()</code>.<br/>
+    2. Un <code>View</code> avec <code>position:'absolute', bottom:0</code> = la carte blanche collée en bas.<br/>
+    Les deux se superposent via le même Modal.
+  </div>
+
+  <h3>Déconnexion avec confirmation — Alert.alert</h3>
+  <pre><span class="k">const</span> handleLogout = <span class="k">async</span> () => {
+  onClose();
+  <span class="k">await new</span> Promise((res) => setTimeout(res, <span class="n">200</span>));  <span class="c">← laisser le modal se fermer d'abord</span>
+
+  <span class="k">const</span> confirmed =
+    Platform.OS === <span class="s">'web'</span>
+      ? window.confirm(<span class="s">'Êtes-vous sûr...'</span>)           <span class="c">← web fallback</span>
+      : <span class="k">await new</span> Promise&lt;<span class="t">boolean</span>&gt;((resolve) => {
+          Alert.alert(
+            <span class="s">'Déconnexion'</span>,
+            <span class="s">'Êtes-vous sûr de vouloir vous déconnecter ?'</span>,
+            [
+              { text: <span class="s">'Annuler'</span>, style: <span class="s">'cancel'</span>, onPress: () => resolve(<span class="k">false</span>) },
+              { text: <span class="s">'Déconnecter'</span>, style: <span class="s">'destructive'</span>, onPress: () => resolve(<span class="k">true</span>) },
+            ]
+          );
+        });
+
+  <span class="k">if</span> (confirmed) <span class="k">await</span> logout();
+};</pre>
+
+  <div class="box bo">
+    <div class="btitle">Alert.alert() avec style "destructive"</div>
+    <code>style: 'destructive'</code> affiche le bouton en rouge sur iOS (avertit l'utilisateur d'une action irréversible). Sur Android ça n'a pas d'effet visuel mais c'est une bonne pratique sémantique. Le pattern <code>new Promise + resolve</code> convertit l'Alert (callback) en une fonction <code>async/await</code>.
+  </div>
+
+  <h3>Toggle Dark Mode — composant Switch</h3>
+  <pre>&lt;<span class="t">Switch</span>
+  value={isDark}                              <span class="c">← état vient du ThemeContext</span>
+  onValueChange={toggleTheme}                 <span class="c">← appelle context.toggleTheme()</span>
+  trackColor={{ false: <span class="s">'#dbdbdb'</span>, true: <span class="s">'#0095f6'</span> }}  <span class="c">← couleur de la piste</span>
+  thumbColor=<span class="s">'#ffffff'</span>                        <span class="c">← couleur du rond</span>
+/&gt;</pre>
+
+  <h3>StatBox — composant conditionnel cliquable ou non</h3>
+  <pre><span class="k">function</span> <span class="fn">StatBox</span>({ value, label, onPress }) {
+  <span class="k">const</span> inner = (
+    &lt;&gt;
+      &lt;<span class="t">Text</span>&gt;{value.toLocaleString()}&lt;/<span class="t">Text</span>&gt;  <span class="c">← 1500 → "1 500" selon la locale</span>
+      &lt;<span class="t">Text</span>&gt;{label}&lt;/<span class="t">Text</span>&gt;
+    &lt;/&gt;
+  );
+  <span class="c">// Si onPress fourni → cliquable (Followers, Following)</span>
+  <span class="c">// Sinon → simple View (Posts)</span>
+  <span class="k">if</span> (onPress) <span class="k">return</span> &lt;<span class="t">TouchableOpacity</span> onPress={onPress}&gt;{inner}&lt;/<span class="t">TouchableOpacity</span>&gt;;
+  <span class="k">return</span> &lt;<span class="t">View</span>&gt;{inner}&lt;/<span class="t">View</span>&gt;;
+}</pre>
+
+  <h3>Modal de l'avatar — animationType="fade"</h3>
+  <p>Différence avec le BottomMenu : celui-ci utilise <code>animationType="fade"</code> et s'affiche <strong>au centre</strong> de l'écran (pas en bas). Il propose 3 actions : changer la photo, voir les stories (désactivé si aucune), supprimer la photo (affiché seulement si un avatar existe).</p>
+  <pre><span class="c">// Affichage conditionnel du bouton Supprimer</span>
+{displayAvatar && (
+  &lt;&gt;
+    &lt;<span class="t">View</span> style={styles.divider} /&gt;
+    &lt;<span class="t">TouchableOpacity</span> onPress={handleRemovePicture}&gt;
+      &lt;<span class="t">Text</span> style={{ color: <span class="s">'#e74c3c'</span> }}&gt;Remove profile picture&lt;/<span class="t">Text</span>&gt;
+    &lt;/<span class="t">TouchableOpacity</span>&gt;
+  &lt;/&gt;
+)}</pre>
+</div>
+
+<hr/>
+
+<!-- ─── SECTION 4 ─── -->
+<div class="section">
+  <div class="sh"><div class="sn">4</div><h2 class="st">EditProfile.tsx <span class="screen-label lbl-sub">SUB-SCREEN</span></h2></div>
+
+  <h3>useLocalSearchParams — récupérer les params de route</h3>
+  <pre><span class="c">// Profile passe les données actuelles comme params de route</span>
+<span class="k">const</span> params = useLocalSearchParams&lt;{
+  fullName: string;
+  username: string;
+  email: string;
+  bio: string;
+}&gt;();
+
+<span class="c">// Initialiser les champs avec les valeurs reçues</span>
+<span class="k">const</span> [fullName, setFullName] = useState(params.fullName ?? <span class="s">""</span>);
+<span class="k">const</span> [username, setUsername] = useState(params.username ?? <span class="s">""</span>);
+<span class="k">const</span> [email, setEmail] = useState(params.email ?? <span class="s">""</span>);
+<span class="k">const</span> [bio, setBio] = useState(params.bio ?? <span class="s">""</span>);</pre>
+
+  <div class="box bb">
+    <div class="btitle">useLocalSearchParams() — comment ça marche</div>
+    C'est l'équivalent de <code>useParams()</code> en React Router web. Expo Router sérialise les params en strings dans l'URL. Le type générique <code>&lt;{ fullName: string; ... }&gt;</code> sert uniquement à TypeScript pour l'autocomplétion — en runtime tout est toujours une string.
+  </div>
+
+  <h3>useEffect pour synchroniser les params</h3>
+  <pre><span class="c">// Ré-synchronise les champs si les params changent</span>
+<span class="c">// (ex: reconnexion d'un autre compte sans démontage du composant)</span>
+<span class="k">useEffect</span>(() => {
+  setFullName(params.fullName ?? <span class="s">""</span>);
+  setUsername(params.username ?? <span class="s">""</span>);
+  setEmail(params.email ?? <span class="s">""</span>);
+  setBio(params.bio ?? <span class="s">""</span>);
+  setCurrentPassword(<span class="s">""</span>);
+}, [params.fullName, params.username, params.email, params.bio]);</pre>
+
+  <h3>TextInput multiline avec compteur de caractères</h3>
+  <pre>&lt;<span class="t">TextInput</span>
+  style={[styles.fieldInput, styles.bioInput]}
+  value={bio}
+  onChangeText={setBio}
+  placeholder=<span class="s">"Tell the world about yourself..."</span>
+  multiline              <span class="c">← plusieurs lignes</span>
+  maxLength={300}        <span class="c">← limite stricte côté UI</span>
+/&gt;
+&lt;<span class="t">Text</span> style={styles.charCount}&gt;
+  {bio.length}/300       <span class="c">← compteur mis à jour à chaque frappe</span>
+&lt;/<span class="t">Text</span>&gt;</pre>
+
+  <div class="box bg">
+    <div class="btitle">textAlignVertical: "top" — spécifique Android</div>
+    Sur Android, le texte d'un <code>TextInput multiline</code> est centré verticalement par défaut (comportement étrange). <code>textAlignVertical: "top"</code> le colle en haut, comme sur iOS. Style <code>bioInput</code> le contient avec <code>minHeight:80</code>.
+  </div>
+
+  <h3>handleSave — PATCH vers l'API</h3>
+  <pre><span class="k">const</span> handleSave = <span class="k">async</span> () => {
+  <span class="c">// Validation locale</span>
+  <span class="k">if</span> (!fullName.trim()) { Alert.alert(<span class="s">"Validation"</span>, <span class="s">"Full name cannot be empty."</span>); <span class="k">return</span>; }
+  <span class="k">if</span> (!username.trim()) { Alert.alert(<span class="s">"Validation"</span>, <span class="s">"Username cannot be empty."</span>); <span class="k">return</span>; }
+
+  setSaving(<span class="k">true</span>);
+  <span class="k">try</span> {
+    <span class="k">const</span> body = { fullName, username, email, bio };
+    <span class="k">if</span> (currentPassword) body.currentPassword = currentPassword;
+    <span class="c">// currentPassword n'est envoyé que si l'utilisateur l'a rempli</span>
+
+    <span class="k">const</span> res = <span class="k">await</span> fetch(`${API_URL}/users/me`, {
+      method: <span class="s">"PATCH"</span>, headers: { <span class="s">'Content-Type'</span>: <span class="s">'application/json'</span>, Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+
+    <span class="k">if</span> (!res.ok) {
+      <span class="k">const</span> errData = <span class="k">await</span> res.json().catch(() => ({ message: <span class="s">"Update failed"</span> }));
+      <span class="c">// Le message peut être une string ou un tableau (erreurs de validation NestJS)</span>
+      <span class="k">const</span> message = Array.isArray(errData.message)
+        ? errData.message.join(<span class="s">"\n"</span>)
+        : errData.message;
+      Alert.alert(<span class="s">"Error"</span>, message); <span class="k">return</span>;
+    }
+
+    <span class="k">await</span> refreshUser();  <span class="c">← met à jour le Context global avec les nouvelles infos</span>
+    Alert.alert(<span class="s">"Success"</span>, <span class="s">"Profile updated."</span>, [{ text: <span class="s">"OK"</span>, onPress: goBack }]);
+  } <span class="k">finally</span> { setSaving(<span class="k">false</span>); }
+};</pre>
+
+  <h3>Bouton Save dans le Header</h3>
+  <pre><span class="c">// Le bouton Save EST dans le header (à droite), pas en bas de page</span>
+&lt;<span class="t">TouchableOpacity</span> onPress={handleSave} disabled={saving}&gt;
+  {saving
+    ? &lt;<span class="t">ActivityIndicator</span> size=<span class="s">"small"</span> color={colors.primary} /&gt;
+    : &lt;<span class="t">Text</span> style={{ color: colors.primary, fontWeight: <span class="s">'700'</span> }}&gt;Save&lt;/<span class="t">Text</span>&gt;}
+&lt;/<span class="t">TouchableOpacity</span>&gt;</pre>
+
+  <h3>Navigation de retour — router.replace vs router.back</h3>
+  <pre><span class="k">const</span> goBack = () => router.replace(<span class="s">'/Profile'</span>);
+<span class="c">// router.replace et non router.back() car on veut forcer le rechargement</span>
+<span class="c">// du Profile screen avec les nouvelles données</span></pre>
+</div>
+
+<hr/>
+
+<!-- ─── SECTION 5 ─── -->
+<div class="section">
+  <div class="sh"><div class="sn">5</div><h2 class="st">ChangePassword.tsx <span class="screen-label lbl-sub">SUB-SCREEN</span></h2></div>
+
+  <h3>Composant PasswordField — réutilisable dans le même fichier</h3>
+  <pre><span class="k">function</span> <span class="fn">PasswordField</span>({ label, value, onChangeText, placeholder, colors }) {
+  <span class="k">const</span> [visible, setVisible] = useState(<span class="k">false</span>);  <span class="c">← état local indépendant</span>
+
+  <span class="k">return</span> (
+    &lt;<span class="t">View</span>&gt;
+      &lt;<span class="t">Text</span>&gt;{label}&lt;/<span class="t">Text</span>&gt;
+      &lt;<span class="t">View</span> style={styles.row}&gt;
+        &lt;<span class="t">TextInput</span>
+          secureTextEntry={!visible}
+          value={value}
+          onChangeText={onChangeText}
+        /&gt;
+        &lt;<span class="t">TouchableOpacity</span> onPress={() => setVisible(v => !v)}&gt;
+          &lt;<span class="t">Ionicons</span> name={visible ? <span class="s">"eye-off-outline"</span> : <span class="s">"eye-outline"</span>} /&gt;
+        &lt;/<span class="t">TouchableOpacity</span>&gt;
+      &lt;/<span class="t">View</span>&gt;
+    &lt;/<span class="t">View</span>&gt;
+  );
+}</pre>
+
+  <p>Ce composant est utilisé <strong>3 fois</strong> dans l'écran : nouveau mot de passe, confirmation, mot de passe actuel. Chaque instance a son propre <code>useState(false)</code> indépendant — toggle l'un n'affecte pas les autres.</p>
+
+  <div class="box bp">
+    <div class="btitle">hitSlop — élargir la zone cliquable sans changer l'UI</div>
+    <code>hitSlop={{ top:8, bottom:8, left:8, right:8 }}</code> sur l'icône oeil agrandit la zone de toucher de 8px dans chaque direction. Utile pour les petits éléments interactifs — respecte les guidelines d'accessibilité (minimum 44×44 pts).
+  </div>
+
+  <h3>Validations dans handleUpdate</h3>
+  <table>
+    <thead><tr><th>Validation</th><th>Condition</th><th>Message</th></tr></thead>
+    <tbody>
+      <tr><td>Longueur nouveau MDP</td><td><code>newPassword.length &lt; 6</code></td><td>"At least 6 characters"</td></tr>
+      <tr><td>Confirmation</td><td><code>newPassword !== confirmPassword</code></td><td>"Passwords do not match"</td></tr>
+      <tr><td>MDP actuel obligatoire</td><td><code>!currentPassword</code></td><td>"Please enter your current password"</td></tr>
+    </tbody>
+  </table>
+
+  <h3>router.replace('/EditProfile') — pas router.back()</h3>
+  <div class="box bb">
+    <div class="btitle">Pourquoi replace et non back() ?</div>
+    <code>router.back()</code> reviendrait à l'écran précédent dans la pile de navigation, qui pourrait être Profile ou EditProfile selon d'où on vient. <code>router.replace('/EditProfile')</code> garantit qu'on revient toujours à EditProfile, peu importe le chemin emprunté pour arriver ici.
+  </div>
+</div>
+
+<hr/>
+
+<!-- ─── SECTION 6 ─── -->
+<div class="section">
+  <div class="sh"><div class="sn">6</div><h2 class="st">ProfileShareSheet.tsx <span class="screen-label lbl-sheet">BOTTOM SHEET</span></h2></div>
+
+  <p>Ce composant est le plus riche techniquement. C'est une feuille de partage animée qui combine : animation manuelle, API de partage natif, clipboard, haptics, liens profonds, et une liste de contacts filtrée.</p>
+
+  <h3>Animation d'entrée/sortie — Animated.spring + Animated.timing</h3>
+  <pre><span class="c">// slideAnim commence à 600 (hors écran en bas) et descend à 0 (visible)</span>
+<span class="k">const</span> slideAnim = useRef(<span class="k">new</span> Animated.Value(<span class="n">600</span>)).current;
+
+<span class="k">useEffect</span>(() => {
+  <span class="k">if</span> (visible) {
+    <span class="c">// Ouverture : spring = animation physique avec rebond</span>
+    Animated.spring(slideAnim, {
+      toValue: <span class="n">0</span>,
+      useNativeDriver: <span class="k">true</span>,
+      tension: <span class="n">65</span>,    <span class="c">← rigidité du ressort (haut = plus rapide)</span>
+      friction: <span class="n">11</span>,   <span class="c">← amortissement (haut = moins de rebond)</span>
+    }).start();
+  } <span class="k">else</span> {
+    <span class="c">// Fermeture : timing = animation linéaire/courbe, plus contrôlée</span>
+    Animated.timing(slideAnim, {
+      toValue: <span class="n">600</span>,
+      duration: <span class="n">220</span>,
+      useNativeDriver: <span class="k">true</span>,
+    }).start();
+  }
+}, [visible]);</pre>
+
+  <pre><span class="c">// Dans le JSX — translateY appliqué à la View</span>
+&lt;<span class="t">Animated.View</span>
+  style={[styles.sheet, { transform: [{ translateY: slideAnim }] }]}
+&gt;</pre>
+
+  <div class="box bt">
+    <div class="btitle">useRef(new Animated.Value(600)).current — pourquoi useRef ?</div>
+    Si on écrivait <code>const slideAnim = new Animated.Value(600)</code> directement dans le composant, une nouvelle instance serait créée à chaque re-render, et l'animation recommencerait depuis le début. <code>useRef</code> garantit que c'est la <em>même instance</em> qui persiste pendant toute la vie du composant.
+  </div>
+
+  <h3>Share API — partage natif iOS/Android</h3>
+  <pre><span class="c">// "More" → feuille de partage native du système</span>
+<span class="k">await</span> Share.share({
+  message: `Check out @${username} on Sharely! 👉 ${link}`,
+  url: link,  <span class="c">← iOS uniquement : apparaît comme un lien cliquable</span>
+});</pre>
+
+  <h3>Linking — ouvrir WhatsApp / Facebook</h3>
+  <pre><span class="k">const</span> urls = {
+  whatsapp: `whatsapp://send?text=${encodeURIComponent(text)}`,
+  facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`,
+};
+
+<span class="k">const</span> canOpen = <span class="k">await</span> Linking.canOpenURL(url);   <span class="c">← vérifier que l'app est installée</span>
+<span class="k">if</span> (canOpen) {
+  <span class="k">await</span> Linking.openURL(url);                    <span class="c">← ouvrir l'app externe</span>
+} <span class="k">else</span> {
+  <span class="k">await</span> Share.share({ message: text });           <span class="c">← fallback si app non installée</span>
+}</pre>
+
+  <h3>Clipboard + feedback visuel temporaire</h3>
+  <pre><span class="k">const</span> handleCopyLink = <span class="k">async</span> () => {
+  Clipboard.setString(buildProfileLink(username));  <span class="c">← copier dans le presse-papier</span>
+  setCopied(<span class="k">true</span>);                                 <span class="c">← afficher "Copied!" au lieu de "Copy"</span>
+  <span class="k">await</span> Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  setTimeout(() => setCopied(<span class="k">false</span>), <span class="n">2000</span>);       <span class="c">← revenir à "Copy" après 2 secondes</span>
+};</pre>
+
+  <h3>expo-haptics — retour tactile</h3>
+  <table>
+    <thead><tr><th>Fonction</th><th>Sensation</th><th>Utilisé pour</th></tr></thead>
+    <tbody>
+      <tr><td><code>Haptics.impactAsync(Light)</code></td><td>Vibration légère</td><td>Copy link, clic sur réseau social</td></tr>
+      <tr><td><code>Haptics.notificationAsync(Success)</code></td><td>Vibration "succès"</td><td>Envoi d'un profil réussi</td></tr>
+      <tr><td><code>Haptics.notificationAsync(Error)</code></td><td>Vibration "erreur"</td><td>Échec de l'envoi</td></tr>
+    </tbody>
+  </table>
+
+  <h3>FlatList avec filtre de recherche</h3>
+  <pre><span class="c">// La liste filtrée est calculée lors du render — pas de useEffect nécessaire</span>
+<span class="k">const</span> filtered = search.trim()
+  ? contacts.filter((c) => c.username.toLowerCase().includes(search.toLowerCase()))
+  : contacts;  <span class="c">← si recherche vide, afficher tout</span>
+
+&lt;<span class="t">FlatList</span>
+  data={filtered}      <span class="c">← reçoit la liste filtrée (recalculée à chaque frappe)</span>
+  keyExtractor={(c) => c.id}
+  renderItem={({ item }) => &lt;<span class="t">ContactRow</span> ... /&gt;}
+  ListEmptyComponent={  <span class="c">← composant affiché si data est vide</span>
+    &lt;<span class="t">Text</span>&gt;{search ? <span class="s">'No results.'</span> : <span class="s">'Follow people to send them your profile.'</span>}&lt;/<span class="t">Text</span>&gt;
+  }
+/&gt;</pre>
+
+  <h3>État d'envoi par contact — sentIds (Set)</h3>
+  <pre><span class="k">const</span> [sentIds, setSentIds] = useState&lt;Set&lt;<span class="t">string</span>&gt;&gt;(<span class="k">new</span> Set());
+<span class="k">const</span> [sendingId, setSendingId] = useState&lt;<span class="t">string</span> | <span class="k">null</span>&gt;(<span class="k">null</span>);
+
+<span class="k">const</span> handleSend = <span class="k">async</span> (receiverId) => {
+  <span class="k">if</span> (sendingId) <span class="k">return</span>;        <span class="c">← anti-doublon : un seul envoi à la fois</span>
+  setSendingId(receiverId);
+  <span class="k">try</span> {
+    <span class="k">await</span> apiPost(`/users/share-profile/${username}`, { receiverId });
+    setSentIds(prev => <span class="k">new</span> Set([...prev, receiverId]));  <span class="c">← ajouter à l'ensemble</span>
+    <span class="k">await</span> Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  } <span class="k">catch</span> {
+    <span class="k">await</span> Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  } <span class="k">finally</span> { setSendingId(<span class="k">null</span>); }
+};</pre>
+
+  <div class="box bg">
+    <div class="btitle">Pourquoi un Set plutôt qu'un tableau pour sentIds ?</div>
+    <code>Set</code> garantit l'unicité et offre <code>has(id)</code> en O(1) (instantané peu importe la taille). Avec un tableau, on ferait <code>includes(id)</code> qui est O(n). Chaque ContactRow vérifie <code>sentIds.has(item.id)</code> à chaque render, donc la performance compte.
+  </div>
+</div>
+
+<hr/>
+
+<!-- ─── SECTION 7 ─── -->
+<div class="section">
+  <div class="sh"><div class="sn">7</div><h2 class="st">FollowList.tsx <span class="screen-label lbl-sub">SUB-SCREEN</span></h2></div>
+
+  <h3>Un seul écran pour deux cas — paramètre "type"</h3>
+  <pre><span class="k">const</span> { userId, type } = useLocalSearchParams&lt;{
+  userId: string;
+  type: <span class="s">"followers"</span> | <span class="s">"following"</span>;
+}&gt;();
+
+<span class="k">const</span> isFollowers = type === <span class="s">"followers"</span>;
+
+<span class="c">// L'URL API change selon le type</span>
+apiGet&lt;<span class="t">FollowUser</span>[]&gt;(`/users/${userId}/${type}`);
+<span class="c">// → /users/123/followers  ou  /users/123/following</span>
+
+<span class="c">// Le titre du header change aussi</span>
+&lt;<span class="t">Text</span>&gt;{isFollowers ? <span class="s">"Followers"</span> : <span class="s">"Following"</span>}&lt;/<span class="t">Text</span>&gt;</pre>
+
+  <div class="box bb">
+    <div class="btitle">Pattern "écran paramétrique"</div>
+    Plutôt que de créer deux fichiers <code>Followers.tsx</code> et <code>Following.tsx</code> quasi-identiques, on crée un seul <code>FollowList.tsx</code> qui adapte son comportement selon le param <code>type</code>. Moins de code, moins de maintenance.
+  </div>
+
+  <h3>Alert.alert avec action destructive + mise à jour locale</h3>
+  <pre><span class="k">const</span> handleMinus = (person: <span class="t">FollowUser</span>) => {
+  Alert.alert(
+    isFollowers ? <span class="s">"Remove follower"</span> : <span class="s">"Unfollow"</span>,
+    isFollowers ? `Remove @${person.username}?` : `Unfollow @${person.username}?`,
+    [
+      { text: <span class="s">"Cancel"</span>, style: <span class="s">"cancel"</span> },
+      {
+        text: isFollowers ? <span class="s">"Remove"</span> : <span class="s">"Unfollow"</span>,
+        style: <span class="s">"destructive"</span>,
+        onPress: <span class="k">async</span> () => {
+          <span class="k">try</span> {
+            <span class="k">if</span> (isFollowers) <span class="k">await</span> apiDelete(`/users/${person.id}/follower`);
+            <span class="k">else</span>            <span class="k">await</span> apiDelete(`/users/${person.id}/follow`);
+
+            <span class="c">// Mise à jour optimiste — retirer de la liste sans re-fetch</span>
+            setUsers(prev => prev.filter(u => u.id !== person.id));
+          } <span class="k">catch</span> {
+            Alert.alert(<span class="s">"Error"</span>, <span class="s">"Something went wrong."</span>);
+          }
+        },
+      },
+    ]
+  );
+};</pre>
+
+  <div class="box bg">
+    <div class="btitle">Mise à jour "optimiste" de la liste</div>
+    Au lieu de re-faire un <code>apiGet</code> pour recharger toute la liste après la suppression, on filtre directement l'état local avec <code>prev.filter(u => u.id !== person.id)</code>. C'est instantané, donne une sensation de rapidité, et évite un appel réseau inutile.
+  </div>
+
+  <h3>renderItem dans FlatList</h3>
+  <pre><span class="k">const</span> renderItem = ({ item }: { item: <span class="t">FollowUser</span> }) => (
+  &lt;<span class="t">View</span> style={styles.row}&gt;
+    <span class="c">// Zone cliquable → profil de l'utilisateur</span>
+    &lt;<span class="t">TouchableOpacity</span>
+      style={styles.userInfo}  <span class="c">← flex:1, prend tout l'espace à gauche</span>
+      onPress={() => router.push({ pathname: <span class="s">'/user/[username]'</span>, params: { username: item.username } })}
+    &gt;
+      &lt;<span class="t">AvatarImage</span> uri={item.avatar} size={46} /&gt;
+      &lt;<span class="t">Text</span>&gt;{item.username}&lt;/<span class="t">Text</span>&gt;
+    &lt;/<span class="t">TouchableOpacity</span>&gt;
+
+    <span class="c">// Bouton "–" à droite → retirer/ne plus suivre</span>
+    &lt;<span class="t">TouchableOpacity</span>
+      onPress={() => handleMinus(item)}
+      hitSlop={{ top:8, bottom:8, left:8, right:8 }}
+    &gt;
+      &lt;<span class="t">Ionicons</span> name=<span class="s">"remove"</span> size={18} /&gt;
+    &lt;/<span class="t">TouchableOpacity</span>&gt;
+  &lt;/<span class="t">View</span>&gt;
+);</pre>
+
+  <h3>ListEmptyComponent — composant quand la liste est vide</h3>
+  <pre>&lt;<span class="t">FlatList</span>
+  ...
+  ListEmptyComponent={
+    !loading ? (  <span class="c">← n'afficher qu'après le chargement terminé</span>
+      &lt;<span class="t">Text</span>&gt;{isFollowers ? <span class="s">"No followers yet."</span> : <span class="s">"Not following anyone yet."</span>}&lt;/<span class="t">Text</span>&gt;
+    ) : <span class="k">null</span>
+  }
+/&gt;</pre>
+</div>
+
+<hr/>
+
+<!-- ─── SECTION 8 ─── -->
+<div class="section">
+  <div class="sh"><div class="sn">8</div><h2 class="st">SavedPosts.tsx &amp; LikedPosts.tsx <span class="screen-label lbl-sub">SUB-SCREENS</span></h2></div>
+
+  <p>Ces deux écrans sont quasi-identiques. Seuls changent : le titre, l'endpoint API, l'icône vide, et le texte du message "aucun contenu".</p>
+
+  <h3>useFocusEffect + useCallback — la combinaison standard</h3>
+  <pre><span class="k">useFocusEffect</span>(
+  <span class="k">useCallback</span>(() => {
+    apiGet&lt;<span class="t">GridItem</span>[]&gt;(<span class="s">"/posts/saved"</span>)     <span class="c">← ou "/posts/liked"</span>
+      .then(setItems)
+      .catch((err) => console.warn(err))
+      .finally(() => setLoading(<span class="k">false</span>));
+  }, [])  <span class="c">← [] = la fonction ne change jamais</span>
+);</pre>
+
+  <div class="box bp">
+    <div class="btitle">Pourquoi useCallback est obligatoire avec useFocusEffect ?</div>
+    <code>useFocusEffect</code> compare la référence de la fonction à chaque render pour décider si elle doit re-s'abonner. Sans <code>useCallback</code>, une nouvelle fonction est créée à chaque render → <code>useFocusEffect</code> pense que le callback a changé → il se déclenche en boucle infinie. <code>useCallback(fn, [])</code> stabilise la référence : même fonction pour toujours.
+  </div>
+
+  <h3>FlatList 3 colonnes — numColumns + columnWrapperStyle</h3>
+  <pre>&lt;<span class="t">FlatList</span>
+  data={items}
+  numColumns={<span class="n">3</span>}                   <span class="c">← 3 items par ligne automatiquement</span>
+  columnWrapperStyle={styles.row}    <span class="c">← style appliqué à chaque ligne</span>
+  keyExtractor={(item) => item.id}
+  renderItem={({ item }) => (
+    &lt;<span class="t">TouchableOpacity</span> style={styles.gridItem}&gt;
+      &lt;<span class="t">Image</span> source={{ uri: item.image }} style={styles.gridImage} /&gt;
+      {item.type === <span class="s">'reel'</span> && (
+        &lt;<span class="t">View</span> style={styles.mediaTypeBadge}&gt;  <span class="c">← badge absolu</span>
+          &lt;<span class="t">Ionicons</span> name=<span class="s">"play-circle"</span> size={16} color=<span class="s">"#fff"</span> /&gt;
+        &lt;/<span class="t">View</span>&gt;
+      )}
+    &lt;/<span class="t">TouchableOpacity</span>&gt;
+  )}
+/&gt;</pre>
+
+  <pre><span class="c">// Calcul de la taille des cellules avec Dimensions</span>
+<span class="k">const</span> { width: W } = Dimensions.get(<span class="s">'window'</span>);
+<span class="k">const</span> GRID_SIZE = W / <span class="n">3</span> - <span class="n">1</span>;  <span class="c">← soustrait le gap de 1.5px de chaque côté</span>
+
+<span class="c">// Dans les styles</span>
+gridItem: { width: GRID_SIZE, height: GRID_SIZE, marginBottom: <span class="n">1.5</span> }</pre>
+
+  <h3>ListEmptyComponent — état vide illustré</h3>
+  <pre>&lt;<span class="t">View</span> style={styles.empty}&gt;
+  &lt;<span class="t">Ionicons</span> name=<span class="s">"bookmark-outline"</span> size={52} color={colors.textSecondary} /&gt;
+  &lt;<span class="t">Text</span>&gt;No saved posts yet&lt;/<span class="t">Text</span>&gt;
+  &lt;<span class="t">Text</span>&gt;Tap the bookmark icon on any post to save it here.&lt;/<span class="t">Text</span>&gt;
+&lt;/<span class="t">View</span>&gt;</pre>
+
+  <div class="box bg">
+    <div class="btitle">Rendu conditionnel loading → FlatList</div>
+    <pre style="margin:0;background:transparent;color:var(--text);border:none;padding:0;font-size:12px">{loading
+  ? &lt;ActivityIndicator style={{ marginTop: 60 }} /&gt;
+  : &lt;FlatList ... /&gt;
+}</pre>
+    Pattern classique : spinner pendant le chargement, liste après. On n'utilise pas <code>ListFooterComponent</code> ici car les données sont chargées en une seule fois (pas de pagination).
+  </div>
+
+  <h3>Comparaison SavedPosts vs LikedPosts</h3>
+  <table>
+    <thead><tr><th>Aspect</th><th>SavedPosts</th><th>LikedPosts</th></tr></thead>
+    <tbody>
+      <tr><td>API endpoint</td><td><code>/posts/saved</code></td><td><code>/posts/liked</code></td></tr>
+      <tr><td>Titre header</td><td>Saved</td><td>Liked Posts</td></tr>
+      <tr><td>Icône vide</td><td><code>bookmark-outline</code></td><td><code>heart-outline</code></td></tr>
+      <tr><td>Message vide</td><td>"No saved posts yet"</td><td>"No liked posts yet"</td></tr>
+      <tr><td>Structure code</td><td colspan="1">identique</td><td colspan="1">identique</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr/>
+
+<!-- ─── SECTION 9 ─── -->
+<div class="section">
+  <div class="sh"><div class="sn">9</div><h2 class="st">Récapitulatif — tous les concepts par écran</h2></div>
+
+  <table>
+    <thead><tr><th>Concept</th><th>Écran(s)</th><th>Ce qu'il fait</th></tr></thead>
+    <tbody>
+      <tr><td><code>useFocusEffect</code></td><td>Profile, Saved, Liked</td><td>Recharge les données à chaque retour sur l'écran</td></tr>
+      <tr><td><code>useCallback</code></td><td>Profile, Saved, Liked</td><td>Stabilise la référence du callback pour useFocusEffect</td></tr>
+      <tr><td><code>useLocalSearchParams</code></td><td>EditProfile, FollowList</td><td>Lire les paramètres passés lors de la navigation</td></tr>
+      <tr><td><code>useRef + Animated.Value</code></td><td>ShareSheet</td><td>Conserver la valeur animée sans re-render</td></tr>
+      <tr><td><code>Animated.spring</code></td><td>ShareSheet</td><td>Animation d'ouverture physique (rebond)</td></tr>
+      <tr><td><code>Animated.timing</code></td><td>ShareSheet</td><td>Animation de fermeture linéaire/contrôlée</td></tr>
+      <tr><td><code>translateY</code></td><td>ShareSheet</td><td>Déplacer la sheet verticalement</td></tr>
+      <tr><td><code>Modal transparent</code></td><td>BottomMenu, AvatarMenu</td><td>Overlay sur l'écran courant sans changer de route</td></tr>
+      <tr><td><code>animationType="slide"</code></td><td>BottomMenu</td><td>Glissement depuis le bas</td></tr>
+      <tr><td><code>animationType="fade"</code></td><td>AvatarMenu</td><td>Apparition en fondu au centre</td></tr>
+      <tr><td><code>Pressable</code></td><td>BottomMenu, AvatarMenu</td><td>Backdrop cliquable pour fermer le modal</td></tr>
+      <tr><td><code>ImagePicker</code></td><td>Profile</td><td>Sélectionner une photo depuis la galerie</td></tr>
+      <tr><td><code>FormData</code></td><td>Profile</td><td>Envoyer un fichier image en multipart</td></tr>
+      <tr><td><code>Alert.alert</code></td><td>Profile, FollowList, EditProfile, ChangePassword</td><td>Dialogs de confirmation et d'erreur</td></tr>
+      <tr><td><code>Share.share()</code></td><td>ShareSheet</td><td>Feuille de partage native iOS/Android</td></tr>
+      <tr><td><code>Linking.canOpenURL</code></td><td>ShareSheet</td><td>Vérifier si WhatsApp/Facebook est installé</td></tr>
+      <tr><td><code>Linking.openURL</code></td><td>ShareSheet</td><td>Ouvrir une app externe</td></tr>
+      <tr><td><code>Clipboard.setString</code></td><td>ShareSheet</td><td>Copier le lien dans le presse-papier</td></tr>
+      <tr><td><code>expo-haptics</code></td><td>ShareSheet</td><td>Retour tactile sur actions utilisateur</td></tr>
+      <tr><td><code>Set</code> pour sentIds</td><td>ShareSheet</td><td>Tracker les envois sans doublons en O(1)</td></tr>
+      <tr><td><code>FlatList numColumns=3</code></td><td>Profile, Saved, Liked</td><td>Grille 3 colonnes</td></tr>
+      <tr><td><code>Dimensions.get</code></td><td>Profile, Saved, Liked</td><td>Calcul de la taille des cellules</td></tr>
+      <tr><td><code>ListEmptyComponent</code></td><td>FollowList, Saved, Liked, ShareSheet</td><td>UI quand la liste est vide</td></tr>
+      <tr><td><code>Switch</code></td><td>BottomMenu</td><td>Toggle dark mode</td></tr>
+      <tr><td><code>TextInput multiline</code></td><td>EditProfile</td><td>Champ bio multi-lignes avec compteur</td></tr>
+      <tr><td><code>maxLength</code></td><td>EditProfile</td><td>Limiter la longueur de la bio à 300 chars</td></tr>
+      <tr><td><code>router.replace()</code></td><td>EditProfile, ChangePassword, FollowList</td><td>Retour sans possibilité de re-naviguer en arrière</td></tr>
+      <tr><td><code>router.push({ pathname, params })</code></td><td>Profile, FollowList</td><td>Navigation avec données</td></tr>
+      <tr><td><code>hitSlop</code></td><td>Profile, FollowList, ChangePassword</td><td>Agrandir la zone cliquable des petits éléments</td></tr>
+      <tr><td><code>refreshUser()</code></td><td>Profile, EditProfile</td><td>Synchroniser le Context global après modification</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- FINAL -->
+<div class="final">
+  <h3>Ce groupe d'écrans en chiffres</h3>
+  <div class="fg">
+    <div class="fi2"><span class="n2">8</span><span class="l2">Écrans / composants</span></div>
+    <div class="fi2"><span class="n2">30+</span><span class="l2">Concepts RN distincts</span></div>
+    <div class="fi2"><span class="n2">3</span><span class="l2">Types de modals</span></div>
+    <div class="fi2"><span class="n2">4</span><span class="l2">APIs système (Share, Linking, Clipboard, Haptics)</span></div>
+  </div>
+  <p style="margin-top:18px;font-size:12px;opacity:.8;text-align:center">
+    useFocusEffect · useLocalSearchParams · Animated API · ImagePicker · FormData · Alert · Modal · FlatList numColumns · Dimensions · Switch · refreshUser
+  </p>
+</div>
+
+</div>
+
+<div class="print-note">
+  <strong>Sauvegarder en PDF :</strong>
+  <kbd style="background:#fef3c7;border:1px solid #fcd34d;border-radius:4px;padding:1px 6px;font-family:monospace">Ctrl+P</kbd>
+  → Destination : <strong>Enregistrer en PDF</strong> → Marges : Minimales.
+</div>
+
+</body>
+</html>

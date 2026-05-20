@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "sharely",
     "userInterfaceStyle": "automatic",
-"newArchEnabled": true,
+    "newArchEnabled": true,
     "hermes": false,
     "ios": {
       "supportsTablet": true,
@@ -16,8 +16,11 @@
         "NSCameraUsageDescription": "Sharely needs camera access to take photos for stories and posts.",
         "NSPhotoLibraryUsageDescription": "Sharely needs photo library access to select images for posts and your profile.",
         "NSPhotoLibraryAddUsageDescription": "Sharely saves captured photos to your photo library.",
-        "NSMicrophoneUsageDescription": "Sharely needs microphone access when recording video."
-      }
+        "NSMicrophoneUsageDescription": "Sharely needs microphone access when recording video.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bitcode": false,
+      "bundleIdentifier": "com.mehdielrey.sharely"
     },
     "android": {
       "adaptiveIcon": {
@@ -27,7 +30,24 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.CAMERA",
+        "android.permission.INTERNET",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WAKE_LOCK",
+        "android.permission.BLUETOOTH",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO"
+      ],
+      "package": "com.mehdielrey.sharely"
     },
     "web": {
       "output": "static",
@@ -54,6 +74,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": false
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "21866570-d0dc-40ef-b672-2740debb1764"
+      }
+    },
+    "owner": "mehdielrey"
   }
 }

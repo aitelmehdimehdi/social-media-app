@@ -19,7 +19,7 @@ export class MediaController {
   async upload(@UploadedFile() file: Express.Multer.File) {
     if (!file) throw new BadRequestException('No file received — field name must be "file"');
     try {
-      const url = await this.mediaService.uploadFile(file.buffer, file.mimetype);
+      const url = await this.mediaService.uploadFile(file);
       return { url };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);

@@ -21,11 +21,11 @@ import {
   KeyboardAvoidingView,
   PanResponder,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -122,15 +122,15 @@ function DraggableOverlay({
       style={[styles.draggable, { transform: pan.getTranslateTransform() }]}
       {...panResponder.panHandlers}
     >
-      <TouchableOpacity
+      <Pressable
         onLongPress={() => onRemove(item.id)}
         delayLongPress={600}
-        activeOpacity={0.85}
+        style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
       >
         <Text style={[styles.overlayContent, item.color ? { color: item.color } : null]}>
           {item.content}
         </Text>
-      </TouchableOpacity>
+      </Pressable>
     </Animated.View>
   );
 }
@@ -273,7 +273,7 @@ function StoryEditor({
       {/* Background image */}
       <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
 
-      {/* Filter tint overlay */}
+      {/* Filter tint overlay — pointerEvents="none" is correct here */}
       {filter.color !== null && (
         <View
           pointerEvents="none"
@@ -293,9 +293,12 @@ function StoryEditor({
 
       {/* Top bar */}
       <SafeAreaView style={styles.editorTopBar}>
-        <TouchableOpacity onPress={onDiscard} style={styles.iconBtn}>
+        <Pressable
+          onPress={onDiscard}
+          style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.7 : 1 }]}
+        >
           <Text style={styles.iconText}>✕</Text>
-        </TouchableOpacity>
+        </Pressable>
 
         {selectedMusic && !activePanel && (
           <View style={styles.musicBadge}>
@@ -304,9 +307,12 @@ function StoryEditor({
         )}
 
         {activePanel !== null && (
-          <TouchableOpacity style={styles.iconBtn} onPress={() => setActivePanel(null)}>
+          <Pressable
+            style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={() => setActivePanel(null)}
+          >
             <Text style={styles.iconText}>✓</Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
       </SafeAreaView>
 
@@ -320,17 +326,24 @@ function StoryEditor({
             { id: "filter" as const, icon: "🎨" },
           ] as const
         ).map(tool => (
-          <TouchableOpacity
+          <Pressable
             key={tool.id}
-            style={[styles.toolBtn, activePanel === tool.id && styles.toolBtnActive]}
+            style={({ pressed }) => [
+              styles.toolBtn,
+              activePanel === tool.id && styles.toolBtnActive,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
             onPress={() => togglePanel(tool.id)}
           >
             <Text style={styles.toolBtnText}>{tool.icon}</Text>
-          </TouchableOpacity>
+          </Pressable>
         ))}
-        <TouchableOpacity style={styles.toolBtn} onPress={addLocationTag}>
+        <Pressable
+          style={({ pressed }) => [styles.toolBtn, { opacity: pressed ? 0.7 : 1 }]}
+          onPress={addLocationTag}
+        >
           <Text style={styles.toolBtnText}>📍</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* ── Emoji picker ── */}
@@ -341,15 +354,15 @@ function StoryEditor({
             numColumns={8}
             keyExtractor={item => item}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.emojiItem}
+              <Pressable
+                style={({ pressed }) => [styles.emojiItem, { opacity: pressed ? 0.7 : 1 }]}
                 onPress={() => {
                   addOverlay("emoji", item);
                   setActivePanel(null);
                 }}
               >
                 <Text style={styles.emojiText}>{item}</Text>
-              </TouchableOpacity>
+              </Pressable>
             )}
           />
         </View>
@@ -367,15 +380,18 @@ function StoryEditor({
             contentContainerStyle={styles.colorRowContent}
           >
             {TEXT_COLORS.map(c => (
-              <TouchableOpacity
+              <Pressable
                 key={c}
-                style={[
+                style={({ pressed }) => [
                   styles.colorDot,
                   { backgroundColor: c },
                   textColor === c && styles.colorDotActive,
+                  { opacity: pressed ? 0.7 : 1 },
                 ]}
                 onPress={() => setTextColor(c)}
-              />
+              >
+                <View />
+              </Pressable>
             ))}
           </ScrollView>
           <View style={styles.textInputRow}>
@@ -389,9 +405,12 @@ function StoryEditor({
               returnKeyType="done"
               onSubmitEditing={handleAddText}
             />
-            <TouchableOpacity style={styles.textAddBtn} onPress={handleAddText}>
+            <Pressable
+              style={({ pressed }) => [styles.textAddBtn, { opacity: pressed ? 0.7 : 1 }]}
+              onPress={handleAddText}
+            >
               <Text style={styles.textAddBtnText}>Add</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </KeyboardAvoidingView>
       )}
@@ -401,11 +420,12 @@ function StoryEditor({
         <View style={styles.panel}>
           <Text style={styles.panelTitle}>Choose a track</Text>
           {MUSIC_TRACKS.map(track => (
-            <TouchableOpacity
+            <Pressable
               key={track.id}
-              style={[
+              style={({ pressed }) => [
                 styles.trackRow,
                 selectedMusic?.id === track.id && styles.trackRowActive,
+                { opacity: pressed ? 0.7 : 1 },
               ]}
               onPress={() => {
                 setSelectedMusic(prev => (prev?.id === track.id ? null : track));
@@ -420,7 +440,7 @@ function StoryEditor({
               {selectedMusic?.id === track.id && (
                 <Text style={styles.checkmark}>✓</Text>
               )}
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       )}
@@ -434,9 +454,9 @@ function StoryEditor({
             contentContainerStyle={styles.filterRow}
           >
             {FILTERS.map(f => (
-              <TouchableOpacity
+              <Pressable
                 key={f.name}
-                style={styles.filterItem}
+                style={({ pressed }) => [styles.filterItem, { opacity: pressed ? 0.7 : 1 }]}
                 onPress={() => {
                   setFilter(f);
                   setActivePanel(null);
@@ -459,7 +479,7 @@ function StoryEditor({
                 <Text style={[styles.filterName, filter.name === f.name && styles.filterNameActive]}>
                   {f.name}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </ScrollView>
         </View>
@@ -468,8 +488,11 @@ function StoryEditor({
       {/* Bottom bar — hidden while a panel is open */}
       {activePanel === null && (
         <View style={styles.editorBottomBar}>
-          <TouchableOpacity
-            style={styles.storyBtn}
+          <Pressable
+            style={({ pressed }) => [
+              styles.storyBtn,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
             onPress={uploadAndPost}
             disabled={uploading}
           >
@@ -481,10 +504,13 @@ function StoryEditor({
                 <Text style={styles.storyBtnLabel}>Your Story</Text>
               </>
             )}
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity
-            style={styles.shareBtn}
+          <Pressable
+            style={({ pressed }) => [
+              styles.shareBtn,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
             onPress={uploadAndPost}
             disabled={uploading}
           >
@@ -496,7 +522,7 @@ function StoryEditor({
                 <Text style={styles.storyBtnArrow}>→</Text>
               </>
             )}
-          </TouchableOpacity>
+          </Pressable>
         </View>
       )}
     </View>
@@ -546,12 +572,18 @@ export default function CameraScreen() {
     return (
       <View style={styles.centered}>
         <Text style={styles.permText}>📷 Camera access required</Text>
-        <TouchableOpacity style={styles.permBtn} onPress={requestCameraPermission}>
+        <Pressable
+          style={({ pressed }) => [styles.permBtn, { opacity: pressed ? 0.7 : 1 }]}
+          onPress={requestCameraPermission}
+        >
           <Text style={styles.permBtnText}>Grant Permission</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
+        </Pressable>
+        <Pressable
+          onPress={() => router.back()}
+          style={({ pressed }) => [{ marginTop: 16 }, { opacity: pressed ? 0.7 : 1 }]}
+        >
           <Text style={styles.cancelText}>Cancel</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   }
@@ -601,42 +633,58 @@ export default function CameraScreen() {
       )}
 
       <SafeAreaView style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+        <Pressable
+          onPress={() => router.back()}
+          style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.7 : 1 }]}
+        >
           <Text style={styles.iconText}>✕</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={cycleFlash} style={styles.iconBtn}>
+        </Pressable>
+        <Pressable
+          onPress={cycleFlash}
+          style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.7 : 1 }]}
+        >
           <Text style={styles.iconText}>{flashLabel}</Text>
-        </TouchableOpacity>
+        </Pressable>
       </SafeAreaView>
 
       <View style={styles.zoomRow}>
         {[0, 0.25, 0.5].map(z => (
-          <TouchableOpacity
+          <Pressable
             key={z}
-            style={[styles.zoomBtn, zoom === z && styles.zoomBtnActive]}
+            style={({ pressed }) => [
+              styles.zoomBtn,
+              zoom === z && styles.zoomBtnActive,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
             onPress={() => setZoom(z)}
           >
             <Text style={[styles.zoomText, zoom === z && styles.zoomTextActive]}>
               {z === 0 ? "1×" : z === 0.25 ? "2×" : "3×"}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         ))}
       </View>
 
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.galleryBtn}>
+        <Pressable style={styles.galleryBtn}>
           <Text style={styles.iconText}>🖼️</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.shutter, isTaking && styles.shutterActive]}
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [
+            styles.shutter,
+            isTaking && styles.shutterActive,
+            { opacity: pressed ? 0.8 : 1 },
+          ]}
           onPress={takePicture}
-          activeOpacity={0.8}
         >
           <View style={styles.shutterInner} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.flipBtn} onPress={toggleFacing}>
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [styles.flipBtn, { opacity: pressed ? 0.7 : 1 }]}
+          onPress={toggleFacing}
+        >
           <Text style={styles.iconText}>🔄</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );
@@ -882,16 +930,18 @@ const styles = StyleSheet.create({
   filterName: { color: "#bbb", fontSize: 11, fontWeight: "600" },
   filterNameActive: { color: "#8B5CF6" },
 
-  // Bottom action bar
+  // Bottom action bar — zIndex 999 ensures nothing covers these buttons
   editorBottomBar: {
     position: "absolute",
-    bottom: 36,
+    bottom: 0,
     left: 0,
     right: 0,
     flexDirection: "row",
     paddingHorizontal: 20,
+    paddingBottom: 36,
+    paddingTop: 16,
     gap: 12,
-    zIndex: 20,
+    zIndex: 999,
   },
   storyBtn: {
     flex: 1,

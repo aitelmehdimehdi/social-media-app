@@ -99,6 +99,7 @@ function useLikeAnimation() {
 function StoryItem({ item }: { item: Story }) {
   const router = useRouter();
   const { colors } = useTheme();
+  const { user } = useAuth();
   return (
     <TouchableOpacity
       style={styles.storyContainer}
@@ -120,7 +121,15 @@ function StoryItem({ item }: { item: Story }) {
       }}
     >
       <View style={[styles.storyRing, { borderColor: colors.storyRing }, item.isOwn && { borderColor: colors.border }]}>
-        <Image source={{ uri: item.avatar ?? undefined }} style={[styles.storyAvatar, { borderColor: colors.background }]} />
+        {item.isOwn ? (
+          <AvatarImage
+            uri={user?.avatar}
+            size={57}
+            style={[styles.storyAvatar, { borderColor: colors.background }]}
+          />
+        ) : (
+          <Image source={{ uri: item.avatar ?? undefined }} style={[styles.storyAvatar, { borderColor: colors.background }]} />
+        )}
         {item.isOwn && (
           <View style={[styles.storyAddBadge, { backgroundColor: colors.primary, borderColor: colors.background }]}>
             <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>+</Text>
@@ -423,7 +432,7 @@ export default function InstagramHomeScreen() {
     const ownEntry: Story = {
       id: "own",
       username: "Your Story",
-      avatar: user?.avatar ?? "https://i.pravatar.cc/150?img=1",
+      avatar: user?.avatar ?? null,
       isOwn: true,
     };
     apiGet<ApiStory[]>('/stories')
@@ -444,7 +453,7 @@ export default function InstagramHomeScreen() {
     useCallback(() => {
       fetchStories();
       loadFeed(true);
-    }, [fetchStories, loadFeed]),
+    }, [fetchStories, loadFeed, user?.id]),
   );
 
   const handleRefresh = useCallback(async () => {

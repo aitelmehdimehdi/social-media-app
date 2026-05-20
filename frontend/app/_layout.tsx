@@ -52,7 +52,8 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     if (!navigationState?.key) return;
     if (isLoading) return;
     const onAuthScreen = segments[0] === "Auth";
-    if (!user && !onAuthScreen) router.replace("/Auth");
+    const onPublicScreen = onAuthScreen || segments[0] === "ForgotPassword";
+    if (!user && !onPublicScreen) router.replace("/Auth");
     else if (user && onAuthScreen) router.replace("/");
   }, [user, isLoading, segments, navigationState?.key]);
 
@@ -171,6 +172,7 @@ function TabsLayout() {
         <Tabs.Screen name="CreateReel" options={{ href: null, tabBarStyle: { display: "none" } }} />
         <Tabs.Screen name="FollowList" options={{ href: null, tabBarStyle: { display: "none" } }} />
         <Tabs.Screen name="Auth" options={{ href: null, tabBarStyle: { display: "none" } }} />
+        <Tabs.Screen name="ForgotPassword" options={{ href: null, tabBarStyle: { display: "none" } }} />
         <Tabs.Screen name="user/[username]" options={{ href: null }} />
         <Tabs.Screen name="story/[userId]" options={{ href: null, tabBarStyle: { display: "none" } }} />
         <Tabs.Screen name="post/[id]" options={{ href: null, tabBarStyle: { display: "none" } }} />

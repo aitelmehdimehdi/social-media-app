@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
+import { useRouter } from "expo-router";
 
 // Auth screen renders before ThemeProvider is in scope — colours are fixed here.
 
@@ -62,6 +63,7 @@ function InputField({
 
 export default function AuthScreen() {
   const { login, register } = useAuth();
+  const router = useRouter();
 
   const [mode, setMode] = useState<"login" | "register">("login");
   const [loading, setLoading] = useState(false);
@@ -197,7 +199,10 @@ export default function AuthScreen() {
                 secureTextEntry
               />
 
-              <TouchableOpacity style={styles.forgotBtn}>
+              <TouchableOpacity
+                style={styles.forgotBtn}
+                onPress={() => router.push("/ForgotPassword")}
+              >
                 <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
               </TouchableOpacity>
 

@@ -37,6 +37,12 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   pushToken: string | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  resetCode: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  resetCodeExpiry: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

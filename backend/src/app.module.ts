@@ -14,6 +14,7 @@ import { ChatbotModule } from './chatbot/chatbot.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { StoriesModule } from './stories/stories.module';
 import { AdsModule } from './ads/ads.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ ConfigModule.forRoot({
     NotificationsModule,
     StoriesModule,
     AdsModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

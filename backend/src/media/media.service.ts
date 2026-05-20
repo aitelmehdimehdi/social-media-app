@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable } from 'stream';
@@ -17,33 +17,39 @@ export class MediaService {
     cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
   }
 
-  async uploadFile(buffer: Buffer, mimetype: string): Promise<string> {
-    console.log('ENV CHECK:', {
-      cloud: process.env.CLOUDINARY_CLOUD_NAME,
-      key: process.env.CLOUDINARY_API_KEY ? 'SET' : 'MISSING',
-      secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING',
+  async uploadFile(file: Express.Multer.File): Promise<string> {
+    console.log('=== UPLOAD START ===');
+    console.log('File:', file?.originalname, file?.mimetype, file?.size);
+    console.log('Cloudinary config:', {
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY ? 'SET' : 'MISSING',
+      api_secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING',
     });
-    return new Promise((resolve, reject) => {
-      const upload = cloudinary.uploader.upload_stream(
-        { folder: 'sharely', resource_type: 'auto' },
-        (error, result) => {
-          if (error || !result) {
-            console.error('[MediaService] uploadFile error:', error);
-            return reject(error ?? new Error('No result from Cloudinary'));
-          }
-          resolve(result.secure_url);
-        },
+    try {
+      return await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { resource_type: 'auto', folder: 'sharely' },
+          (error, result) => {
+            if (error) {
+              console.error('Stream error:', error);
+              return reject(error);
+            }
+            resolve(result!.secure_url);
+          },
+        ).end(file.buffer);
+      });
+    } catch (err: any) {
+      console.error('=== CLOUDINARY ERROR ===');
+      console.error('Message:', err.message);
+      console.error('HTTP Code:', err.http_code);
+      console.error('Full error:', JSON.stringify(err, null, 2));
+      throw new InternalServerErrorException(
+        `Upload failed: ${err.message || JSON.stringify(err)}`,
       );
-      Readable.from(buffer).pipe(upload);
-    });
+    }
   }
 
   async uploadPostImage(buffer: Buffer): Promise<string> {
-    console.log('ENV CHECK:', {
-      cloud: process.env.CLOUDINARY_CLOUD_NAME,
-      key: process.env.CLOUDINARY_API_KEY ? 'SET' : 'MISSING',
-      secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING',
-    });
     return new Promise((resolve, reject) => {
       const upload = cloudinary.uploader.upload_stream(
         {
@@ -67,11 +73,6 @@ export class MediaService {
   }
 
   async uploadReelVideo(buffer: Buffer): Promise<string> {
-    console.log('ENV CHECK:', {
-      cloud: process.env.CLOUDINARY_CLOUD_NAME,
-      key: process.env.CLOUDINARY_API_KEY ? 'SET' : 'MISSING',
-      secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING',
-    });
     return new Promise((resolve, reject) => {
       const upload = cloudinary.uploader.upload_stream(
         {

@@ -97,6 +97,18 @@ export class UsersService {
     await this.userRepo.update(userId, { pushToken: token });
   }
 
+  async setResetCode(userId: string, code: string, expiry: Date): Promise<void> {
+    await this.userRepo.update(userId, { resetCode: code, resetCodeExpiry: expiry });
+  }
+
+  async clearResetCode(userId: string, hashedPassword: string): Promise<void> {
+    await this.userRepo.update(userId, {
+      password: hashedPassword,
+      resetCode: null,
+      resetCodeExpiry: null,
+    });
+  }
+
   async getProfileByUsername(username: string, currentUserId: string) {
     const user = await this.findByUsername(username);
     if (!user) throw new NotFoundException('User not found');

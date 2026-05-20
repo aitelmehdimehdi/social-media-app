@@ -207,6 +207,9 @@ function StoryEditor({
     setUploading(true);
     try {
       const token = await getToken();
+      console.log("[Story] imageUri:", imageUri);
+      console.log("[Story] API_URL:", API_URL);
+      console.log("[Story] token:", token ? `${token.slice(0, 20)}…` : "MISSING — will 401");
 
       const formData = new FormData();
       formData.append("file", {
@@ -217,11 +220,16 @@ function StoryEditor({
 
       const uploadRes = await fetch(`${API_URL}/media/upload`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
       });
-      if (!uploadRes.ok) throw new Error("Upload failed");
+      console.log("[Story] upload status:", uploadRes.status);
+      if (!uploadRes.ok) {
+        const body = await uploadRes.text().catch(() => uploadRes.statusText);
+        throw new Error(`Upload failed ${uploadRes.status}: ${body}`);
+      }
       const { url } = (await uploadRes.json()) as { url: string };
+      console.log("[Story] cloudinary url:", url);
 
       const overlaysPayload = overlays.map(({ id, type, content, x, y, color }) => ({
         id, type, content, x, y, color,
@@ -232,7 +240,7 @@ function StoryEditor({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           imageUrl: url,
@@ -242,13 +250,19 @@ function StoryEditor({
           location: locationOverlay?.content ?? null,
         }),
       });
-      if (!storyRes.ok) throw new Error("Story creation failed");
+      console.log("[Story] story create status:", storyRes.status);
+      if (!storyRes.ok) {
+        const body = await storyRes.text().catch(() => storyRes.statusText);
+        throw new Error(`Story creation failed ${storyRes.status}: ${body}`);
+      }
 
       Alert.alert("Story posted!", "Your story will be visible for 24 hours.", [
         { text: "OK", onPress: onDone },
       ]);
     } catch (e) {
-      Alert.alert("Error", (e as Error).message ?? "Could not post story.");
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[Story] uploadAndPost error:", msg);
+      Alert.alert("Error", msg);
     } finally {
       setUploading(false);
     }

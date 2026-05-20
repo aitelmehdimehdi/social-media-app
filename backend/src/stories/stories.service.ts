@@ -30,7 +30,12 @@ export class StoriesService {
       location: dto.location ?? null,
       expiresAt,
     });
-    return this.repo.save(story);
+    try {
+      return await this.repo.save(story);
+    } catch (err) {
+      console.error('[StoriesService] create() failed:', err);
+      throw err;
+    }
   }
 
   async findActive(): Promise<Story[]> {

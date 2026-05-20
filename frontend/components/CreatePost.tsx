@@ -60,18 +60,34 @@ export default function CreatePostScreen() {
       formData.append("file", { uri: imageUri, type: "image/jpeg", name: "post.jpg" } as any);
 
       const token = await getToken();
+      console.log("[CreatePost] uploading to:", `${API_URL}/media/post`);
+      console.log("[CreatePost] token:", token ? `${token.slice(0, 20)}…` : "MISSING");
+
       const uploadRes = await fetch(`${API_URL}/media/post`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
       });
-      if (!uploadRes.ok) throw new Error("Upload failed");
-      const { url: imageUrl } = await uploadRes.json();
 
-      await apiPost("/posts", { imageUrl, caption: caption.trim() || undefined, location: location.trim() || undefined });
+      console.log("[CreatePost] upload status:", uploadRes.status);
+      if (!uploadRes.ok) {
+        const body = await uploadRes.text().catch(() => uploadRes.statusText);
+        throw new Error(`Upload failed ${uploadRes.status}: ${body}`);
+      }
+      const { url: imageUrl } = await uploadRes.json();
+      console.log("[CreatePost] imageUrl:", imageUrl);
+
+      await apiPost("/posts", {
+        imageUrl,
+        caption: caption.trim() || undefined,
+        location: location.trim() || undefined,
+      });
+      console.log("[CreatePost] post created — navigating back");
       router.back();
-    } catch {
-      Alert.alert("Error", "Failed to share post. Please try again.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[CreatePost] handleShare error:", msg);
+      Alert.alert("Error", `Failed to share post.\n\n${msg}`);
     } finally {
       setSubmitting(false);
     }

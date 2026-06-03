@@ -1,0 +1,74 @@
+\chapter{Technologies, Défis et Solutions}
+
+\section{Technologies Utilisées}
+
+\begin{longtable}{@{}p{4.2cm}p{1.8cm}p{7.2cm}@{}}
+  \caption{Principales dépendances du frontend}\label{tab:deps} \\
+  \toprule
+  \textbf{Bibliothèque} & \textbf{Version} & \textbf{Rôle} \\
+  \midrule
+  \endfirsthead
+  \midrule
+  \textbf{Bibliothèque} & \textbf{Version} & \textbf{Rôle} \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endfoot
+  react-native             & 0.79.x    & Framework mobile cross-platform \\
+  react                    & 19.1.0    & Bibliothèque UI de base \\
+  typescript               & $\sim$5.x & Typage statique \\
+  expo                     & $\sim$54.0 & SDK Expo, accès APIs natives \\
+  expo-router              & $\sim$6.0 & Routing basé sur les fichiers \\
+  expo-camera              & $\sim$55.0 & Capture photo/vidéo (stories) \\
+  expo-image-picker        & $\sim$17.0 & Sélection de médias depuis galerie \\
+  expo-av                  & $\sim$16.0 & Lecture et enregistrement vidéo \\
+  expo-location            & $\sim$19.0 & Géolocalisation + géocodage inverse \\
+  expo-notifications       & —          & Notifications push (Expo Push Service) \\
+  expo-media-library       & $\sim$55.0 & Accès médiathèque de l'appareil \\
+  socket.io-client         & $\sim$4.8 & WebSockets (chat + notifications) \\
+  async-storage            & 2.2.0     & Persistance locale (token, thème) \\
+  react-native-reanimated  & $\sim$4.1 & Animations sur le UI thread \\
+  react-native-gesture-handler & $\sim$2.28 & Gestion des gestes tactiles \\
+  @expo/vector-icons       & $\sim$14.x & Icônes Ionicons et autres sets \\
+\end{longtable}
+
+\subsection{Justification des choix clés}
+
+\begin{description}
+  \item[\textbf{Expo Router vs React Navigation seul.}] Expo Router ajoute la convention fichier $\to$ route, rendant l'arbre de navigation immédiatement lisible et éliminant le code de registration manuelle des routes.
+  \item[\textbf{Context API vs Redux/Zustand.}] Pour un projet de cette taille, Redux ajouterait une complexité (actions, reducers, selectors) non justifiée. Context couvre l'ensemble des besoins de partage global.
+  \item[\textbf{Socket.io-client vs WebSocket natif.}] Socket.io offre reconnexion automatique, gestion des namespaces, et compatibilité directe avec le serveur NestJS/Socket.io.
+  \item[\textbf{TypeScript.}] A permis de typer les réponses API (union \texttt{FeedItem = Post | AdItem}), détectant des erreurs de cohérence dès la compilation.
+\end{description}
+
+\section{Défis Rencontrés et Solutions}
+
+\subsection{Persistance des connexions WebSocket lors des navigations}
+
+\textbf{Problème.} Les connexions Socket.io créées dans un composant d'écran sont détruites lors du démontage de ce composant, entraînant la perte des événements temps réel.
+
+\textbf{Solution.} Les connexions ont été déplacées dans \texttt{utils/socket.ts} (singleton) et initialisées au montage de \texttt{UnreadContext} (durée de vie = toute la session). Elles ne sont jamais liées à un composant d'écran individuel.
+
+\subsection{Performance du fil d'actualité}
+
+\textbf{Problème.} Le curseur de pagination et le pool de publicités stockés en \texttt{useState} déclenchaient des re-rendus complets de la \texttt{FlatList} à chaque chargement de page.
+
+\textbf{Solution.} Migration vers \texttt{useRef} pour ces données non-réactives. Combinée à l'Optimistic UI et au paramètre \texttt{onEndReachedThreshold=\{0.4\}}, cette approche maintient un défilement fluide même sur des fils longs.
+
+\subsection{Superpositions déplaçables sur la caméra}
+
+\textbf{Problème.} Rendre des overlays emoji/texte/localisation librement repositionnables sur une prévisualisation caméra live sans bibliothèque tierce incompatible avec Expo Managed.
+
+\textbf{Solution.} Utilisation de \texttt{PanResponder} (API React Native core). Chaque overlay a son propre \texttt{PanResponder} qui met à jour ses coordonnées (x, y) dans le tableau d'état \texttt{overlays}. Les overlays sont rendus en \texttt{position: "absolute"} au-dessus de la vue caméra.
+
+\subsection{URL d'API selon la plateforme}
+
+\textbf{Problème.} L'URL du serveur varie : \texttt{localhost} pour le Web/simulateur iOS, \texttt{10.0.2.2} pour l'émulateur Android, et l'IP réseau local pour les appareils physiques.
+
+\textbf{Solution.} \texttt{config/env.ts} centralise un switch sur \texttt{Platform.OS}. Cette localisation unique évite toute duplication d'adresse dans les composants.
+
+\subsection{Gestion des jetons JWT expirés}
+
+\textbf{Problème.} À la réouverture de l'application après une longue absence, le jeton stocké peut être expiré, causant des erreurs 401 sur toutes les requêtes.
+
+\textbf{Solution.} Un intercepteur dans \texttt{utils/api.ts} détecte chaque réponse 401 et déclenche \texttt{logout()} depuis \texttt{AuthContext}, effaçant l'état et redirigeant vers l'écran d'authentification via \texttt{AuthGuard}.

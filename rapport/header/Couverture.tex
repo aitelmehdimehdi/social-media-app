@@ -1,0 +1,117 @@
+\begin{titlepage}
+    \providecommand{\HRule}{\rule{\linewidth}{0.5mm}}
+
+    % Couleurs personnalisées
+    \definecolor{darkblue}{RGB}{10, 35, 80}
+    \definecolor{accentblue}{RGB}{30, 90, 180}
+    \definecolor{lightgray}{RGB}{245, 246, 250}
+
+    % Fond coloré via TikZ
+    \begin{tikzpicture}[remember picture, overlay]
+        % Bande latérale gauche
+        \fill[darkblue] (current page.north west) rectangle
+            ([xshift=1.8cm]current page.south west);
+        % Bande décorative diagonale en haut
+        \fill[accentblue!80]
+            ([yshift=-5cm]current page.north west) --
+            ([xshift=1.8cm, yshift=-5cm]current page.north west) --
+            ([xshift=1.8cm, yshift=-7.5cm]current page.north west) --
+            ([yshift=-6cm]current page.north west) -- cycle;
+        % Rectangle décoratif en bas
+        \fill[darkblue!90]
+            (current page.south west) rectangle
+            ([yshift=2cm]current page.south east);
+        % Ligne accentuée horizontale
+        \draw[accentblue, line width=3pt]
+            ([xshift=1.8cm, yshift=-0.1cm]current page.south west) --
+            ([yshift=-0.1cm]current page.south east);
+        % Petit carré décoratif
+        \fill[accentblue]
+            ([xshift=1.8cm, yshift=-12cm]current page.north west) rectangle
+            ([xshift=2.3cm, yshift=-13.2cm]current page.north west);
+    \end{tikzpicture}
+
+    \centering
+
+    %% -------- LOGOS --------
+    \vspace*{0.6cm}
+    \begin{minipage}{0.45\textwidth}
+        \raggedright
+        \includegraphics[width=0.85\linewidth]{logo/Logofsdm.png}
+    \end{minipage}%
+    \hfill
+    \begin{minipage}{0.45\textwidth}
+        \raggedleft
+        \includegraphics[width=0.85\linewidth]{logo/logoSorbonne.jpeg}
+    \end{minipage}
+
+    \vspace{1cm}
+
+    %% -------- FILIÈRE --------
+    \begin{tikzpicture}
+        \node[fill=darkblue!8, rounded corners=6pt,
+              inner xsep=18pt, inner ysep=10pt] {
+            \Large\bfseries\color{darkblue}
+            Master Web Intelligence \& Science de Données
+        };
+    \end{tikzpicture}
+
+    \vspace{1.2cm}
+
+    %% -------- FILET + MATIÈRE --------
+    {\color{accentblue}\rule{\linewidth}{2pt}}\par
+    \vspace{0.15cm}
+    {\color{darkblue!30}\rule{\linewidth}{0.5pt}}\par
+
+    \vspace{0.6cm}
+    {\fontsize{15}{20}\selectfont\bfseries\color{darkblue}
+        DÉVELOPPEMENT MOBILE\par}
+    \vspace{0.6cm}
+
+    {\color{darkblue!30}\rule{\linewidth}{0.5pt}}\par
+    \vspace{0.15cm}
+    {\color{accentblue}\rule{\linewidth}{2pt}}\par
+
+    \vspace{1cm}
+
+    %% -------- SUJET --------
+    \begin{tikzpicture}
+        \node[draw=accentblue, line width=1.2pt,
+              rounded corners=5pt, fill=accentblue!6,
+              inner xsep=20pt, inner ysep=12pt,
+              text width=0.82\linewidth, align=center] {
+            {\small\color{accentblue}\textbf{--- Intitulé du Projet ---}}\\[6pt]
+            {\large\bfseries\color{darkblue}
+            Application Mobile de Réseau Social\\[4pt]
+            \normalfont\normalsize\color{darkblue!80}
+            Rapport Frontend --- React Native avec Expo}
+        };
+    \end{tikzpicture}
+
+    \vfill
+
+    %% -------- ÉTUDIANT + ENCADRANT --------
+    \begin{minipage}[t]{0.47\textwidth}
+        \raggedright
+        \color{darkblue}
+        {\small\textbf{\MakeUppercase{Réalisé par}}}\\[4pt]
+        {\color{accentblue}\rule{3cm}{1.2pt}}\\[8pt]
+        {\normalsize\textsc{Ait El Mehdi Mehdi}}\\
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{0.47\textwidth}
+        \raggedleft
+        \color{darkblue}
+        {\small\textbf{\MakeUppercase{Encadrant :}}}\\[4pt]
+        {\color{accentblue}\rule{3cm}{1.2pt}}\\[8pt]
+        {\normalsize\textsc{Pr. Alj Abdelkamel}}\\
+        {\small Professeur}
+    \end{minipage}
+
+    \vspace{1.2cm}
+
+    %% -------- PIED DE PAGE --------
+    {\color{white}\small Année Universitaire \textbf{2025--2026}\par}
+    \vspace{0.5cm}
+
+\end{titlepage}

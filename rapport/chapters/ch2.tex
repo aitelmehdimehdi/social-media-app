@@ -1,0 +1,83 @@
+\chapter{Architecture et Navigation}
+
+\section{Fondations Technologiques}
+
+Le frontend repose sur \textbf{React Native 0.79} avec \textbf{Expo SDK 54} et \textbf{TypeScript}. Expo fournit un accès simplifié aux APIs natives (caméra, localisation, notifications) sans code natif Swift/Kotlin. \textbf{Expo Router 6} assure une navigation basée sur les fichiers, à la manière de Next.js, éliminant toute configuration manuelle des routes.
+
+\section{Organisation du Code Source}
+
+\begin{table}[H]
+  \centering\small
+  \begin{tabularx}{\textwidth}{@{}lX@{}}
+    \toprule
+    \textbf{Répertoire} & \textbf{Rôle} \\
+    \midrule
+    \texttt{app/}        & Fichiers de routes (Expo Router) — un fichier = une URL navigable \\
+    \texttt{components/} & Logique et rendu effectif de chaque écran \\
+    \texttt{context/}    & Fournisseurs d'état global (ThemeContext, AuthContext, UnreadContext) \\
+    \texttt{utils/}      & Couche API REST (\texttt{api.ts}) et gestion des WebSockets (\texttt{socket.ts}) \\
+    \texttt{config/}     & URL de l'API selon la plateforme (\texttt{env.ts}) \\
+    \texttt{assets/}     & Images, polices et icônes statiques \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Structure des répertoires du frontend}
+\end{table}
+
+\subsection{Patron deux fichiers}
+
+Chaque écran suit un \textbf{patron deux fichiers} : \texttt{app/Profile.tsx} est un wrapper minimal qui importe et exporte le composant \texttt{components/Profile.tsx}, lequel contient toute la logique, l'état et le rendu. Cette séparation maintient les routes propres et rend les composants testables indépendamment.
+
+\section{Navigation avec Expo Router}
+
+Le fichier \texttt{app/\_layout.tsx} définit la racine de l'application. Il configure une barre d'onglets avec cinq destinations principales et plusieurs routes cachées ou dynamiques.
+
+\begin{table}[H]
+  \centering\small
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    \textbf{Route} & \textbf{Composant} & \textbf{Rôle} \\
+    \midrule
+    \texttt{index}          & InstagramHomeScreen & Fil d'actualité \\
+    \texttt{explore}        & ExploreScreen       & Recherche et découverte \\
+    \texttt{Reels}          & ReelsScreen         & Vidéos courtes \\
+    \texttt{DirectMessages} & DirectMessages      & Messagerie \\
+    \texttt{Profile}        & Profile             & Profil personnel \\
+    \midrule
+    \texttt{user/[username]}    & UserProfile      & Profil d'un tiers \\
+    \texttt{story/[userId]}     & StoryViewer      & Visualiseur story \\
+    \texttt{post/[id]}          & PostDetail       & Détail publication \\
+    \texttt{conversation/[id]}  & ConversationScreen & Chat 1-à-1 \\
+    \texttt{Camera, CreatePost, CreateReel} & --- & Création de contenu \\
+    \bottomrule
+  \end{tabular}
+  \caption{Routes de l'application}
+\end{table}
+
+\subsection{Garde d'authentification}
+
+Le composant \texttt{AuthGuard}, monté dans le layout racine, surveille l'état \texttt{user} du contexte d'authentification. Tout utilisateur non connecté est redirigé vers \texttt{/Auth} ; toute tentative d'accès à \texttt{/Auth} par un utilisateur connecté le renvoie vers l'accueil.
+
+\section{Chaîne des Providers}
+
+Les contextes sont imbriqués dans un ordre précis :
+\[
+\texttt{ThemeProvider} \to \texttt{AuthProvider} \to \texttt{UnreadProvider} \to \texttt{AuthGuard} \to \texttt{TabsLayout}
+\]
+Cette hiérarchie garantit que chaque provider peut accéder aux contextes dont il dépend — \texttt{UnreadProvider} utilise l'identifiant utilisateur fourni par \texttt{AuthProvider} pour initialiser ses connexions Socket.io.
+
+\section{Composants Globaux}
+
+Trois composants sont rendus au-dessus de tous les écrans via le layout racine :
+\begin{itemize}
+  \item \texttt{MessageToast} — toast pour les messages directs entrants (auto-dismissal 4~s).
+  \item \texttt{NotificationToast} — toast pour les J'aime, commentaires et nouveaux abonnés.
+  \item \texttt{ChatBotWidget} — bouton d'action flottant donnant accès à l'assistant IA.
+\end{itemize}
+
+\section{Principes Architecturaux}
+
+\begin{description}
+  \item[\textbf{Optimistic UI.}] Les actions (J'aime, abonnement, sauvegarde) modifient l'état local immédiatement avant la confirmation API, offrant une réactivité perçue optimale.
+  \item[\textbf{Pagination par curseur.}] Le curseur de pagination est stocké dans une \texttt{useRef} (non réactive) pour éviter les re-rendus inutiles lors des chargements successifs.
+  \item[\textbf{Singletons WebSocket.}] Les connexions Socket.io sont gérées comme des singletons dans \texttt{utils/socket.ts} : une seule instance par namespace, réutilisée lors de toutes les navigations.
+\end{description}

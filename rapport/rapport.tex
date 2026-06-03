@@ -1,0 +1,106 @@
+\documentclass[a4paper,11pt,twoside]{report}
+
+%%% ================== PACKAGES ================== %%%
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{csquotes}
+\usepackage{tikz}
+\usepackage{xcolor}
+\usepackage{ragged2e}
+\usepackage{microtype}
+\usepackage{etoolbox}
+\usepackage{enumitem}
+
+\usepackage[top=2.2cm, bottom=2.2cm, left=2.8cm, right=2.4cm]{geometry}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage[bottom]{footmisc}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{titlesec}
+\usepackage{listings}
+
+%%% ================== CONFIGURATION ================== %%%
+\renewcommand{\thechapter}{\Roman{chapter}}
+
+\definecolor{darkblue}{RGB}{10, 35, 80}
+\definecolor{accentblue}{RGB}{30, 90, 180}
+\definecolor{codebg}{RGB}{248, 249, 250}
+
+\lstset{
+  basicstyle=\small\ttfamily,
+  backgroundcolor=\color{codebg},
+  frame=single, framesep=3pt, rulecolor=\color{gray!40},
+  breaklines=true, showstringspaces=false
+}
+
+\AtBeginDocument{\justifying}
+\pretocmd{\chapter}{\justifying}{}{}
+\pretocmd{\section}{\justifying}{}{}
+\pretocmd{\subsection}{\justifying}{}{}
+
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries\huge}
+  {\chaptertitlename\ \thechapter}{16pt}{\huge}
+\titlespacing*{\chapter}{0pt}{-20pt}{30pt}
+
+\titlespacing*{\section}{0pt}{10pt}{4pt}
+\titlespacing*{\subsection}{0pt}{8pt}{2pt}
+
+\renewcommand{\thefootnote}{\arabic{footnote}}
+\renewcommand{\footnoterule}{\kern-3pt\hrule width 0.4\columnwidth\kern2.6pt}
+\setlength{\footnotesep}{0.4cm}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\thepage}
+\fancyhead[RE]{\nouppercase{\leftmark}}
+\fancyhead[LO]{\nouppercase{\rightmark}}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\setlength{\parskip}{3pt}
+\setlist[itemize]{noitemsep, topsep=2pt, leftmargin=1.4em}
+\setlist[description]{noitemsep, topsep=2pt, leftmargin=1.4em}
+
+%%% ============ DOCUMENT ============ %%%
+\begin{document}
+
+  \pagenumbering{Alph}
+  \input{header/Couverture}
+
+  \pagenumbering{roman}
+  \input{header/Remerciements}
+
+  \tableofcontents
+  \addcontentsline{toc}{chapter}{Table des matières}
+
+  \pagenumbering{arabic}
+
+  \cleardoublepage
+  \input{chapters/ch1}
+
+  \cleardoublepage
+  \input{chapters/ch2}
+
+  \cleardoublepage
+  \input{chapters/ch3}
+
+  \cleardoublepage
+  \input{chapters/ch4}
+
+  \cleardoublepage
+  \input{chapters/ch5}
+
+  \cleardoublepage
+  \input{chapters/ch6}
+
+\end{document}

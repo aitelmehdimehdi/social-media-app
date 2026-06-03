@@ -1,0 +1,26 @@
+\chapter*{Conclusion}
+\addcontentsline{toc}{chapter}{Conclusion}
+\markboth{Conclusion}{Conclusion}
+
+Ce projet a permis de développer le frontend complet de \textbf{Sharely}, une application mobile de réseau social de qualité professionnelle, en exploitant l'écosystème React Native / Expo SDK~54.
+
+\medskip
+
+L'architecture retenue --- routing par fichiers (Expo Router), état global via Context API, couche API centralisée, WebSockets en singleton --- s'est révélée efficace et maintenable pour un projet de cette envergure. Le patron deux fichiers (\texttt{app/} $\to$ \texttt{components/}), la règle des tokens de couleurs, et l'Optimistic UI ont contribué à un code cohérent et à une expérience utilisateur fluide.
+
+\medskip
+
+\textbf{Fonctionnalités couvertes :} authentification JWT, fil d'actualité infini, stories avec overlays, reels, messagerie temps réel, exploration, notifications et assistant IA intégré.
+
+\medskip
+
+\textbf{Perspectives d'amélioration :}
+\begin{itemize}
+  \item Extraction de la logique métier vers des hooks personnalisés (\texttt{useInfiniteFeed}, \texttt{useSocket}).
+  \item Mise en place de tests automatisés (Jest + Testing Library).
+  \item Optimisation du chargement des images avec mise en cache (\texttt{expo-image}).
+  \item Internationalisation (Arabe, Français, Anglais) via \texttt{i18n-js}.
+  \item Audit d'accessibilité (\texttt{accessibilityLabel}, \texttt{accessibilityRole}).
+\end{itemize}
+
+Ce projet constitue une base technique solide, illustrant la puissance et la flexibilité de React Native pour répondre aux exigences d'une application sociale moderne multi-plateforme.

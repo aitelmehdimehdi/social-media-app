@@ -1,0 +1,46 @@
+\chapter*{Conclusion}
+\addcontentsline{toc}{chapter}{Conclusion}
+
+\markboth{Conclusion}{Conclusion}
+
+Ce projet a permis de concevoir et de développer le frontend d'une application mobile de réseau social complète, \textbf{Sharely}, en adoptant les technologies et les pratiques les plus en vogue dans l'industrie du développement mobile.
+
+\section*{Bilan Technique}
+
+L'architecture retenue --- React Native avec Expo SDK~54, Expo Router pour la navigation, et l'API Context pour la gestion d'état --- a prouvé son efficacité pour un projet de cette envergure. Le patron deux fichiers (\texttt{app/} $\to$ \texttt{components/}) a maintenu une séparation nette entre la déclaration des routes et la logique métier. Le recours aux \texttt{refs} React pour les données non-réactives (curseurs, pools), l'Optimistic UI pour les interactions, et les connexions WebSocket en singleton ont permis d'atteindre un niveau de réactivité et de fluidité satisfaisant.
+
+Le système de thèmes via des tokens de couleurs sémantiques a garanti une cohérence visuelle entre le mode clair et le mode sombre à travers toute l'interface, tandis que les animations ciblées (J'aime, progress bar de story, modals glissants) ont enrichi l'expérience utilisateur sans compromettre les performances.
+
+\section*{Fonctionnalités Réalisées}
+
+L'application couvre un spectre fonctionnel large :
+\begin{itemize}[leftmargin=1.5em, itemsep=0.2em]
+    \item Authentification complète avec persistance de session et renouvellement automatique.
+    \item Fil d'actualité infini avec injection de publicités et mode découverte.
+    \item Stories avec filtres, superpositions interactives et musique.
+    \item Reels en défilement vertical avec lecture automatique.
+    \item Messagerie directe en temps réel via WebSockets.
+    \item Exploration avec recherche d'utilisateurs et grille de découverte.
+    \item Notifications en temps réel sous forme de toasts et panneau dédié.
+    \item Chatbot IA intégré accessible depuis tous les écrans.
+\end{itemize}
+
+\section*{Perspectives d'Amélioration}
+
+Bien que l'application soit fonctionnelle, plusieurs axes d'amélioration méritent d'être envisagés dans des développements futurs :
+
+\begin{description}[leftmargin=1.8em]
+    \item[\textbf{Hooks personnalisés.}] Extraire la logique d'état et les appels API des composants vers des hooks dédiés (\texttt{useInfiniteFeed}, \texttt{useSocket}, \texttt{useProfile}) améliorerait la testabilité et la réutilisabilité.
+
+    \item[\textbf{Tests automatisés.}] L'absence de tests unitaires et d'intégration représente un risque à mesure que la base de code grandit. L'adoption de Jest avec Testing Library permettrait de couvrir les composants et la logique métier.
+
+    \item[\textbf{Optimisation des images.}] L'intégration d'une bibliothèque comme \texttt{expo-image} avec mise en cache agressive réduirait la consommation de données et améliorerait les temps de chargement.
+
+    \item[\textbf{Internationalisation.}] L'ajout d'un support multilingue (Arabic, Français, Anglais) via \texttt{i18n-js} ou \texttt{react-intl} élargirait l'audience cible de l'application.
+
+    \item[\textbf{Accessibilité.}] Un audit d'accessibilité (propriétés \texttt{accessibilityLabel}, \texttt{accessibilityRole}) rendrait l'application utilisable par les personnes en situation de handicap.
+\end{description}
+
+\section*{Conclusion Générale}
+
+Ce projet a été une occasion unique de mettre en pratique, dans un contexte réaliste, l'ensemble des compétences abordées dans le module Développement Mobile. La complexité fonctionnelle de Sharely --- combinant navigation avancée, temps réel, multimédia et thèmes dynamiques --- a révélé la puissance de l'écosystème React Native / Expo pour développer des applications mobiles de qualité professionnelle. Il constitue une base solide sur laquelle pourront s'appuyer des évolutions futures aussi bien techniques que fonctionnelles.

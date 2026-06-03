@@ -1,0 +1,41 @@
+\chapter{Présentation du Projet}
+
+\section{Contexte et Objectifs}
+
+Ce projet a été réalisé dans le cadre du module \textit{Développement Mobile} de la deuxième année du Master \textbf{Web Intelligence et Science des Données (WISD)} à la Faculté des Sciences Dhar El Mahraz (FSDM), Université Sidi Mohamed Ben Abdellah de Fès. L'objectif est de maîtriser le cycle complet de développement d'une application mobile : conception d'interface, navigation, gestion d'état, intégration API et communication temps réel.
+
+\section{L'Application Sharely}
+
+\textbf{Sharely} est une application mobile de réseau social inspirée d'Instagram, développée en React Native avec Expo. Elle cible les plateformes \textbf{iOS}, \textbf{Android} et \textbf{Web} depuis une base de code unique en TypeScript. Ses fonctionnalités couvrent :
+
+\begin{itemize}
+  \item \textbf{Compte utilisateur} : inscription, connexion JWT, édition du profil et gestion de l'avatar.
+  \item \textbf{Fil d'actualité} : publications photo, défilement infini par curseur, injection de publicités.
+  \item \textbf{Stories} : capture caméra avec filtres, superpositions déplaçables et musique de fond.
+  \item \textbf{Reels} : flux vertical de vidéos courtes à lecture automatique (style TikTok).
+  \item \textbf{Messagerie directe} : conversations en temps réel via WebSockets (Socket.io).
+  \item \textbf{Exploration} : recherche d'utilisateurs avec suivi/désabonnement, grille de découverte.
+  \item \textbf{Notifications} : toasts temps réel (J'aime, commentaire, abonnement) et panneau dédié.
+  \item \textbf{Assistant IA} : chatbot intégré accessible depuis tout écran via un bouton flottant.
+\end{itemize}
+
+\section{Périmètre du Rapport}
+
+Ce rapport porte \textbf{exclusivement sur le frontend} React Native. La partie back-end (NestJS, PostgreSQL) est mentionnée uniquement lorsqu'elle éclaire un choix d'implémentation côté client.
+
+\begin{table}[H]
+  \centering\small
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    \textbf{Couche} & \textbf{Technologie} & \textbf{Couvert} \\
+    \midrule
+    Interface mobile & React Native + Expo & Oui \\
+    Navigation & Expo Router 6 & Oui \\
+    État global & Context API (React) & Oui \\
+    Temps réel client & Socket.io-client & Oui \\
+    API REST serveur & NestJS & Référence seulement \\
+    Base de données & PostgreSQL & Non \\
+    \bottomrule
+  \end{tabular}
+  \caption{Périmètre du rapport}
+\end{table}

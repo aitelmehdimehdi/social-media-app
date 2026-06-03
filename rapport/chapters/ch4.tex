@@ -1,0 +1,79 @@
+\chapter{UI/UX et Gestion d'État}
+
+\section{Système de Thèmes}
+
+\texttt{ThemeContext} fournit à toute l'application un thème \textbf{clair/sombre} persisté dans AsyncStorage (\texttt{@instagram\_theme}). Il expose \texttt{\{ colors, isDark, toggleTheme \}} via le hook \texttt{useTheme()}.
+
+La règle absolue du projet : \textbf{aucune valeur hexadécimale n'est codée en dur} dans un composant — toute couleur est lue depuis l'objet \texttt{colors}. La seule exception documentée est \texttt{ReelsScreen}, qui utilise toujours des couleurs sombres (fond de vidéo plein écran).
+
+\begin{table}[H]
+  \centering\small
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    \textbf{Token} & \textbf{Clair} & \textbf{Sombre} & \textbf{Usage} \\
+    \midrule
+    \texttt{background} & \#FFFFFF & \#000000 & Fond global \\
+    \texttt{card}       & \#FAFAFA & \#1A1A1A & Cartes, modals \\
+    \texttt{text}       & \#262626 & \#FAFAFA & Texte principal \\
+    \texttt{primary}    & \#7C3AED & \#7C3AED & Accent violet \\
+    \texttt{like}       & \#FF385C & \#FF385C & Bouton J'aime \\
+    \texttt{storyRing}  & \#7C3AED & \#7C3AED & Anneau story \\
+    \bottomrule
+  \end{tabular}
+  \caption{Tokens de couleurs (extrait)}
+\end{table}
+
+\section{Animations et Interactions}
+
+L'application utilise l'API \texttt{Animated} de React Native pour des micro-interactions ciblées :
+
+\begin{itemize}
+  \item \textbf{J'aime double-tap} : un c\oe{}ur apparaît en animation \textit{spring} (scale 0 $\to$ 1.2 $\to$ 1) puis disparaît.
+  \item \textbf{Bouton J'aime} : légère animation de mise à l'échelle au clic (retour tactile).
+  \item \textbf{Barre de progression story} : \texttt{Animated.timing} sur 5~secondes, largeur 0 $\to$ 100~\%.
+  \item \textbf{Modals glissants} : \texttt{CommentsSheet} et \texttt{ChatBotWidget} slidant depuis le bas (\texttt{Animated.timing} sur l'axe Y).
+  \item \textbf{Indicateur de frappe} : trois points animés en séquence décalée dans le chatbot.
+  \item \textbf{Overlays caméra} : chaque superposition dispose de son propre \texttt{PanResponder} qui traduit les événements tactiles en coordonnées (x, y) absolues.
+\end{itemize}
+
+\section{Gestion d'État par Contexte React}
+
+En l'absence de bibliothèque externe (Redux, Zustand), l'état global est géré par trois contextes React :
+
+\subsection{AuthContext}
+Centralise l'authentification. État : \texttt{user \{id, username, email, fullName, avatar\} | null}. Actions : \texttt{login()}, \texttt{register()}, \texttt{logout()}, \texttt{refreshUser()}. Persistance : AsyncStorage (clés \texttt{@instagram\_user} et \texttt{@token}). Un intercepteur global dans \texttt{utils/api.ts} déclenche \texttt{logout()} sur toute réponse 401.
+
+\subsection{UnreadContext}
+Gère les compteurs de non-lus en temps réel. Au montage, il initialise les compteurs par \texttt{GET /chat/conversations} et \texttt{GET /notifications}, puis établit deux connexions Socket.io (namespaces \texttt{/chat} et \texttt{/notifications}). Les événements \texttt{"newMessage"} et \texttt{"notification"} incrémentent les compteurs et alimentent les toasts correspondants.
+
+\subsection{ThemeContext}
+Détaillé à la section~5.1.
+
+\section{Couche API REST}
+
+\texttt{utils/api.ts} expose quatre fonctions génériques (\texttt{apiGet}, \texttt{apiPost}, \texttt{apiPatch}, \texttt{apiDelete}) avec :
+\begin{itemize}
+  \item Injection automatique du jeton JWT (\texttt{Authorization: Bearer \{token\}}) à chaque requête.
+  \item Extraction du message d'erreur depuis le JSON de réponse.
+  \item Intercepteur 401 : suppression du token et déclenchement de la déconnexion.
+\end{itemize}
+
+L'URL de base est définie dans \texttt{config/env.ts} selon \texttt{Platform.OS} : \texttt{localhost:3000/api} pour le Web, \texttt{\{IP\_locale\}:3000/api} pour les appareils mobiles.
+
+\section{Communication Temps Réel (Socket.io)}
+
+\texttt{utils/socket.ts} expose deux fonctions singleton :
+\begin{itemize}
+  \item \texttt{getSocket(userId)} : connexion au namespace \texttt{/chat}, émission de \texttt{joinRoom} à la connexion.
+  \item \texttt{getNotifSocket(userId)} : namespace \texttt{/notifications}, émission de \texttt{subscribe}.
+\end{itemize}
+
+Le transport est restreint à WebSocket pur (sans long-polling) pour minimiser la latence. Les connexions sont initialisées une seule fois au démarrage (dans \texttt{UnreadContext}) et réutilisées sans interruption pendant toute la session.
+
+\medskip
+
+Le flux de la messagerie directe suit : émission \texttt{sendMessage} $\to$ serveur $\to$ réception \texttt{newMessage} sur le socket de l'interlocuteur $\to$ mise à jour de \texttt{UnreadContext} $\to$ affichage du \texttt{MessageToast}.
+
+\section{Notifications Push}
+
+Au démarrage, \texttt{expo-notifications} enregistre le jeton push Expo et l'envoie au serveur (\texttt{PATCH /users/me/push-token}). Un handler de réponse aux notifications push navigue directement vers la conversation concernée lorsque l'utilisateur tape sur une notification reçue en arrière-plan.

@@ -1,0 +1,52 @@
+\chapter{Écrans Principaux et Fonctionnalités}
+
+\section{Authentification}
+
+L'écran \texttt{AuthScreen} propose deux modes (Connexion / Inscription) commutables par onglets. La connexion envoie \texttt{POST /auth/login} et stocke le jeton JWT dans AsyncStorage ; l'inscription valide côté client (nom d'utilisateur~$\geq$~3 caractères, mot de passe~$\geq$~6 caractères, confirmation identique) avant \texttt{POST /auth/register}. Un intercepteur 401 global déclenche la déconnexion automatique en cas de jeton expiré.
+
+\section{Fil d'Actualité}
+
+L'\texttt{InstagramHomeScreen} combine un bandeau de stories horizontal et un fil de publications en défilement infini.
+
+\begin{description}
+  \item[\textbf{Stories.}] La liste est initialisée par \texttt{GET /stories}. La première entrée est toujours la story de l'utilisateur courant avec bouton d'ajout.
+  \item[\textbf{Publications.}] Chargées par tranches de dix via \texttt{GET /posts/feed?limit=10\&cursor=\{c\}}. Le curseur est conservé dans une \texttt{ref} pour éviter les re-rendus. Une publicité (\texttt{AdCard}) est injectée tous les huit posts depuis un pool chargé en amont.
+  \item[\textbf{Interactions.}] Chaque \texttt{PostCard} offre : J'aime (double-tap ou bouton), sauvegarde, commentaires (\texttt{CommentsSheet} slide-up avec réponses imbriquées), partage (\texttt{ShareSheet}). L'Optimistic UI garantit un retour immédiat.
+  \item[\textbf{Mode Discover.}] Lorsque l'API retourne \texttt{feedType: "discover"}, une bannière invite à suivre des comptes.
+\end{description}
+
+\section{Exploration et Recherche}
+
+\texttt{ExploreScreen} remplit deux rôles :
+\begin{itemize}
+  \item \textbf{Recherche d'utilisateurs} : barre de recherche avec debounce 400~ms, appel \texttt{GET /users/search?q=\{q\}}, bouton Suivre/Ne plus suivre avec mise à jour optimiste.
+  \item \textbf{Grille de découverte} : affichage des publications récentes en trois colonnes ; tap $\to$ \texttt{post/[id]}.
+\end{itemize}
+
+\section{Reels}
+
+\texttt{ReelsScreen} propose un flux vertical plein écran (chargé via \texttt{GET /posts/reels}). La vidéo démarre automatiquement dès que le reel est visible et se met en pause au défilement. Un tap bascule lecture/pause. La barre latérale droite regroupe J'aime, commentaire, partage, sauvegarde et accès au profil de l'auteur. Les compteurs sont formatés (1,2k / 3,5M).
+
+\section{Messagerie Directe}
+
+\subsection{Liste des conversations}
+\texttt{DirectMessages} affiche toutes les conversations avec badge non-lu, dernière message, heure et indicateur en ligne. La section \og~Actifs maintenant~\fg{} liste les utilisateurs connectés. Un modal \textit{Composer} permet de démarrer une conversation parmi les abonnements.
+
+\subsection{Écran de conversation}
+\texttt{ConversationScreen} (route \texttt{conversation/[id]}) charge l'historique via \texttt{GET /chat/\{otherId\}/messages} puis reçoit les nouveaux messages en temps réel (Socket.io : émission \texttt{sendMessage}, écoute \texttt{newMessage}). Les bulles adoptent des couleurs différenciées selon l'expéditeur et le thème actif.
+
+\section{Profil Utilisateur}
+
+\subsection{Profil personnel}
+\texttt{Profile} affiche avatar, bio, statistiques (publications, abonnés, abonnements) et une grille de publications en trois colonnes. L'utilisateur peut modifier son avatar via la galerie (upload \texttt{multipart/form-data} vers \texttt{PATCH /users/me/avatar}) ou le supprimer. Un menu de paramètres donne accès à l'édition du profil, aux publications sauvegardées/aimées, à la bascule thème et à la déconnexion.
+
+\subsection{Profil d'un tiers}
+\texttt{UserProfile} (route \texttt{user/[username]}) affiche le profil public en lecture seule avec boutons Suivre/Ne plus suivre et Message (ouvre une conversation).
+
+\section{Création de Contenu}
+
+\begin{description}
+  \item[\textbf{Camera (Story).}] Capture via \texttt{expo-camera}, choix parmi six filtres couleur (Normal, Warm, Cool, Noir, Fade, Vivid), superpositions emoji/texte/localisation déplaçables par \texttt{PanResponder}, musique de fond Bensound. Envoi via \texttt{POST /media/story}.
+  \item[\textbf{CreatePost.}] Sélection image (\texttt{expo-image-picker}), légende (2200 caractères max), lieu, tags. Upload \texttt{POST /media/post} puis \texttt{POST /posts}.
+  \item[\textbf{CreateReel.}] Enregistrement vidéo via \texttt{expo-av}, envoi similaire à CreatePost.
+\end{description}
